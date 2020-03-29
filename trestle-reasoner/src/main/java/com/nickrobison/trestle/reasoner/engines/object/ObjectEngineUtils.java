@@ -105,6 +105,17 @@ public class ObjectEngineUtils {
         }
     }
 
+    /**
+     * Determine if a given individual exists in the {@link com.nickrobison.trestle.ontology.ITrestleOntology}
+     *
+     * @param individualIRI - {@link IRI} resource to check for
+     * @return - {@code true} individual exists in ontology. {@code false} individual does not exist
+     */
+    @Timed
+    public boolean checkExists(IRI individualIRI) {
+        return ontology.containsResource(individualIRI);
+    }
+
 
     /**
      * Determines if a given Java class is registered with the reasoner
@@ -114,16 +125,5 @@ public class ObjectEngineUtils {
      */
     boolean checkRegisteredClass(Class<?> clazz) {
         return this.registry.isRegistered(clazz);
-    }
-
-    /**
-     * Determine if a given individual exists in the {@link com.nickrobison.trestle.ontology.ITrestleOntology}
-     *
-     * @param individualIRI - {@link IRI} resource to check for
-     * @return - {@code true} individual exists in ontology. {@code false} individual does not exist
-     */
-    @Timed
-    boolean checkExists(IRI individualIRI) {
-        return ontology.containsResource(individualIRI);
     }
 }

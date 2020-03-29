@@ -18,10 +18,8 @@ import com.nickrobison.trestle.reasoner.parser.*;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorFactory;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
-import com.nickrobison.trestle.types.TemporalScope;
-import com.nickrobison.trestle.types.TrestleFact;
-import com.nickrobison.trestle.types.TrestleObjectResult;
-import com.nickrobison.trestle.types.TrestleObjectState;
+import com.nickrobison.trestle.types.*;
+import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.PointTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
@@ -37,9 +35,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.time.*;
 import java.time.temporal.Temporal;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -47,6 +43,7 @@ import java.util.stream.Collectors;
 import static com.nickrobison.trestle.common.IRIUtils.parseStringToIRI;
 import static com.nickrobison.trestle.iri.IRIVersion.V1;
 import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseTemporalToOntologyDateTime;
+import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseToTemporal;
 
 /**
  * Created by nickrobison on 2/13/18.
@@ -374,6 +371,37 @@ public class TrestleObjectReader implements ITrestleObjectReader {
     }
 
     @Override
+    public Optional<TrestleObjectHeader> readObjectHeader(Class<?> clazz, String individual) {
+        final OWLClass objectClass = this.classParser.getObjectClass(clazz);
+        final IRI individualIRI = parseStringToIRI(this.reasonerPrefix, individual);
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
+        try {
+            final String headerQuery = this.qb.buildObjectHeaderQuery(objectClass, df.getOWLNamedIndividual(individualIRI));
+            final TrestleResultSet trestleResultSet = this.ontology.executeSPARQLResults(headerQuery);
+            return trestleResultSet
+                    .getResults()
+                    .stream()
+                    .map(result -> {
+                        final Optional<OWLLiteral> existsToLiteral = result.getLiteral("et");
+                        final @Nullable Temporal existsTo;
+                        //noinspection OptionalIsPresent
+                        if (existsToLiteral.isPresent()) {
+                            existsTo = parseToTemporal(existsToLiteral.get(), OffsetDateTime.class);
+                        } else {
+                            existsTo = null;
+                        }
+                        return new TrestleObjectHeader(
+                                result.unwrapIndividual("m").toStringID(),
+                                parseToTemporal(result.unwrapLiteral("ef"), OffsetDateTime.class),
+                                existsTo);
+                    })
+                    .findFirst();
+        } finally {
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
+        }
+    }
+
+    @Override
     public List<Object> getFactValues(Class<?> clazz, String individual, String factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
 //        Parse String to Fact IRI
         final IRI factIRI = this.classParser.getFactIRI(clazz, factName)
@@ -457,6 +485,56 @@ public class TrestleObjectReader implements ITrestleObjectReader {
             return ExceptionUtils.rethrow(e.getCause());
         } catch (ExecutionException e) {
             logger.error("Cannot get values for fact {} on dataset {}", factName, datasetClass, e);
+            return ExceptionUtils.rethrow(e.getCause());
+        }
+    }
+
+    @Override
+    public <T> List<T> getRelatedObjects(Class<T> clazz, String identifier, ObjectRelation relation, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
+        final IRI individualIRI = parseStringToIRI(this.reasonerPrefix, identifier);
+
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
+
+//        Be careful, there's an inference issue here. Java things the List is of type ?, not T.
+//        So we have to do the manual type assertion
+        final CompletableFuture<List<T>> relatedFuture = CompletableFuture.supplyAsync(() -> {
+            final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+            try {
+                final Optional<List<OWLObjectPropertyAssertionAxiom>> objectProperties = this.ontology.getIndividualObjectProperty(individualIRI, relation.getIRI());
+                if (objectProperties.isPresent()) {
+                    final List<T> relatedObjects = objectProperties
+                            .get()
+                            .stream()
+                            .map(objectRelation -> {
+                                final OWLNamedIndividual objectIndividual = objectRelation.getObject().asOWLNamedIndividual();
+                                try {
+                                    return this.readTrestleObject(clazz, objectIndividual.getIRI(), false, validAt, dbAt);
+                                } catch (NoValidStateException e) {
+                                    logger.debug("Cannot read {} at {} and {}", objectIndividual, validAt, dbAt);
+                                    return null;
+                                }
+                            })
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toList());
+                    return relatedObjects;
+                } else {
+                    return Collections.emptyList();
+                }
+            } finally {
+                this.ontology.returnAndCommitTransaction(tt);
+            }
+        }, this.objectReaderThreadPool);
+
+        try {
+            return relatedFuture.get();
+        } catch (InterruptedException e) {
+            logger.error("Interrupted while get related objects for {}", individualIRI, e);
+            Thread.currentThread().interrupt();
+            return ExceptionUtils.rethrow(e.getCause());
+
+        } catch (ExecutionException e) {
+            final Throwable rootCause = ExceptionUtils.getRootCause(e);
+            logger.error("Error when getting related objects for {}", individualIRI, rootCause);
             return ExceptionUtils.rethrow(e.getCause());
         }
     }

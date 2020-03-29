@@ -10,8 +10,8 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLClass;
 
-import javax.measure.quantity.Length;
 import javax.measure.Unit;
+import javax.measure.quantity.Length;
 import java.time.temporal.Temporal;
 import java.util.List;
 import java.util.Optional;
@@ -55,7 +55,7 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      *
      * @param datasetClassID - {@link String} ID of dataset {@link OWLClass}
      * @param wkt            - {@link String} WKT boundary
-     * @param buffer         - {@link Double} buffer to extend around buffer. 0 is no buffer (defaults to {@link si.uom.SI#METER}
+     * @param buffer         - {@link Double} buffer to extend around buffer. 0 is no buffer (defaults to {@link METRE}
      * @param atTemporal     - {@link Temporal} valid at restriction
      * @param dbTemporal     - {@link Temporal} database at restriction
      * @return - {@link Optional} {@link List} of {@link TrestleIndividual}

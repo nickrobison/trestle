@@ -20,6 +20,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Created by detwiler on 2/16/17.
@@ -94,8 +96,8 @@ public class TigerLoader {
                 .withOntology(IRI.create(ontLocation))
                 .withPrefix(ontPrefix)
                 .withInputClasses(TigerCountyObject.class)
-//                .withoutCaching()
-//                .initialize()
+                .withoutCaching()
+                .initialize()
                 .build();
 
         for(int count=0; count<tigerObjs.size(); count++)
@@ -246,18 +248,45 @@ public class TigerLoader {
         return allEquivalent;
     }
 
+    public void computeRelations() throws TrestleClassException, MissingOntologyEntity {
+        TrestleReasoner reasoner = new TrestleBuilder()
+                .withDBConnection(connectStr, username, password)
+                .withName(reponame)
+                .withOntology(IRI.create(ontLocation))
+                .withPrefix(ontPrefix)
+                .withInputClasses(TigerCountyObject.class)
+                .trackObjectRelations()
+                .withoutMetrics()
+                .build();
+
+//        Make a set of unique IDs
+//        But only for the pacific
+        final Set<String> objectIDs = tigerObjs
+                .stream()
+                .filter(obj -> obj.getState().equals("Washington"))
+                .map(TigerCountyObject::getGeoid)
+                .collect(Collectors.toSet());
+
+//        Set the computation time
+        final LocalDate validAt = LocalDate.of(2013, 8, 1);
+
+        for (String id : objectIDs) {
+            final Instant computeStart = Instant.now();
+            logger.info("Computing relationships for {}", id);
+            reasoner.calculateSpatialAndTemporalRelationships(TigerCountyObject.class, id, validAt);
+            logger.info("Writing relations for object {} took {} ms", id, Duration.between(computeStart, Instant.now()).toMillis());
+        }
+    }
+
     public static void main(String[] args)
     {
         System.out.println("start time: "+Instant.now());
         try {
             TigerLoader loader = new TigerLoader();
             loader.loadObjects();
+            loader.computeRelations();
             loader.verifyObjects();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (MissingOntologyEntity e) {
-            e.printStackTrace();
-        } catch (TrestleClassException e) {
+        } catch (SQLException | MissingOntologyEntity | TrestleClassException e) {
             e.printStackTrace();
         }
         System.out.println("end time: "+Instant.now());

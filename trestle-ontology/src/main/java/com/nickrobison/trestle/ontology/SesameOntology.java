@@ -249,6 +249,46 @@ public abstract class SesameOntology extends TransactingOntology {
     }
 
     @Override
+    public void removeIndividualObjectProperty(OWLNamedIndividual subject, OWLObjectProperty property, @Nullable OWLNamedIndividual object) {
+        final org.eclipse.rdf4j.model.IRI subjectIRI = vf.createIRI(getFullIRIString(subject));
+        final org.eclipse.rdf4j.model.IRI propertyIRI = vf.createIRI(getFullIRIString(property.getNamedProperty()));
+
+        final org.eclipse.rdf4j.model.@Nullable IRI objectIRI;
+        if (object == null) {
+            objectIRI = null;
+        } else {
+            objectIRI = vf.createIRI(getFullIRIString(object));
+        }
+        this.openTransaction(true);
+        try {
+            getThreadConnection().remove(subjectIRI, propertyIRI, objectIRI);
+        } finally {
+            this.commitTransaction(true);
+        }
+    }
+
+    @Override
+    public void removeIndividualDataProperty(OWLNamedIndividual individual, OWLDataProperty property, @Nullable OWLLiteral literal) {
+        final org.eclipse.rdf4j.model.IRI subjectIRI = vf.createIRI(getFullIRIString(individual));
+        final org.eclipse.rdf4j.model.IRI propertyIRI = vf.createIRI(getFullIRIString(property));
+
+        final @Nullable Value literalValue;
+        if (literal == null) {
+            literalValue = null;
+        } else {
+            literalValue = createLiteral(literal);
+        }
+
+        this.openTransaction(true);
+        try {
+            getThreadConnection().remove(subjectIRI, propertyIRI, literalValue);
+        } finally {
+            this.commitTransaction(true);
+        }
+
+    }
+
+    @Override
     public boolean containsResource(IRI individualIRI) {
         return containsResource(df.getOWLNamedIndividual(individualIRI));
     }
@@ -270,7 +310,7 @@ public abstract class SesameOntology extends TransactingOntology {
         try {
             fso = Files.newOutputStream(new File(path.toURI()).toPath());
         } catch (IOException e) {
-            logger.error("Cannot open file path: {}",path, e);
+            logger.error("Cannot open file path: {}", path, e);
             return;
         }
         final RDFWriter writer = Rio.createWriter(RDFFormat.RDFXML, fso);

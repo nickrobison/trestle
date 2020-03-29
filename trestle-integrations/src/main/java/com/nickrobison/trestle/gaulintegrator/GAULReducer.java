@@ -54,13 +54,13 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
 
     private static final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), inputSR.getID());
     private static final WKBReader wkbReader = new WKBReader(geometryFactory);
-    //    Controls the granularity of the union matcher
-    private static final double THRESHOLD = 0.95;
 
     private LocalDate configStartDate;
     private LocalDate configEndDate;
     private TrestleReasoner reasoner;
     private File metricsFile;
+//    Controls the granularity of the union matcher
+    private double configEqualityCutoff;
 
     @Override
     protected void setup(Context context) throws IOException {
@@ -74,6 +74,8 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
         final String location = conf.get("metrics.path");
         final String taskID = context.getTaskAttemptID().getTaskID().toString();
         metricsFile = new File(location + taskID + ".log");
+
+        configEqualityCutoff = Double.parseDouble(conf.get("equality.cutoff"));
 
 
 //        Setup the Trestle Reasoner
@@ -196,7 +198,7 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
 
         logger.warn("{}-{}-{} calculating equality", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
         final Instant start = Instant.now();
-        final Optional<UnionEqualityResult<GAULObject>> matchOptional = this.reasoner.getEqualityEngine().calculateSpatialUnion(matchedObjects, INPUTSRS, THRESHOLD);
+        final Optional<UnionEqualityResult<GAULObject>> matchOptional = this.reasoner.getEqualityEngine().calculateSpatialUnion(matchedObjects, INPUTSRS, configEqualityCutoff);
         logger.warn("{}-{}-{} calculating equality took {} ms", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate(), Duration.between(start, Instant.now()).toMillis());
         if (matchOptional.isPresent()) {
             // do something here
@@ -296,7 +298,7 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
                 matchedObject.getObjectName(),
                 matchedObject.getStartDate());
         // test of approx equality
-        if (this.reasoner.getEqualityEngine().isApproximatelyEqual(newGAULObject, matchedObject, THRESHOLD) && !newGAULObject.equals(matchedObject)) {
+        if (this.reasoner.getEqualityEngine().isApproximatelyEqual(newGAULObject, matchedObject, configEqualityCutoff) && !newGAULObject.equals(matchedObject)) {
             // do something here
             logger.info("found approximate equality between GAULObjects {} and {}", newGAULObject.getID(), matchedObject.getID());
 //            Write a spatial equals
@@ -307,7 +309,7 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
 //        Spatial interactions are exhaustive
 
 //                    newGAUL within matchedObject? Covers, or Contains? IF Covers, also contains
-        final SpatialComparisonReport spatialComparisonReport = this.reasoner.compareTrestleObjects(newGAULObject, matchedObject, THRESHOLD);
+        final SpatialComparisonReport spatialComparisonReport = this.reasoner.compareTrestleObjects(newGAULObject, matchedObject, configEqualityCutoff);
 
 //        Write all the relations from the spatial report
 //        Overlaps?
@@ -325,7 +327,7 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
                 .forEach(relation -> reasoner.writeObjectRelationship(newGAULObject, matchedObject, relation));
 
 //        Try it in the other direction
-        final SpatialComparisonReport inverseSpatialReport = this.reasoner.compareTrestleObjects(matchedObject, newGAULObject, THRESHOLD);
+        final SpatialComparisonReport inverseSpatialReport = this.reasoner.compareTrestleObjects(matchedObject, newGAULObject, configEqualityCutoff);
 
 //        Do all the non-overlaps relations
         inverseSpatialReport

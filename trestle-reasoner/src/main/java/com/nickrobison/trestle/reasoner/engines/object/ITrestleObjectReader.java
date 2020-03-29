@@ -2,6 +2,8 @@ package com.nickrobison.trestle.reasoner.engines.object;
 
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
+import com.nickrobison.trestle.types.TrestleObjectHeader;
+import com.nickrobison.trestle.types.relations.ObjectRelation;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
@@ -107,6 +109,15 @@ public interface ITrestleObjectReader {
     <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt);
 
     /**
+     * Retrieve {@link TrestleObjectHeader} for the given Individual
+     *
+     * @param clazz      - {@link Class} Java class to retrieve
+     * @param individual - {@link String} individual to retrieve header for
+     * @return - {@link Optional} {@link TrestleObjectHeader}
+     */
+    Optional<TrestleObjectHeader> readObjectHeader(Class<?> clazz, String individual);
+
+    /**
      * Retrieve historical states of a given Fact
      * Returns an optional list of Java Objects that match the datatype of the given Fact
      * Allows for optional temporal filter to restrict results to only Fact states valid during the provided temporal window
@@ -150,4 +161,20 @@ public interface ITrestleObjectReader {
     List<Object> sampleFactValues(Class<?> clazz, String factName, long sampleLimit);
 
     List<Object> sampleFactValues(Class<?> clazz, OWLDataProperty factName, long sampleLimit);
+
+    /**
+     * Get Objects which satistify the given {@link ObjectRelation} for the specified individual
+     * Note: This currently only works for objects of the same class
+     * If either of the temporal values are missing, the current time is used.
+     *
+     * @param clazz      - Java {@link Class} of the specified objects
+     * @param identifier - {@link String} object Identifier
+     * @param relation   - {@link ObjectRelation} to use for retrieving objects
+     * @param validAt    - {@link Temporal} optional temporal to specify valid at intersection
+     * @param dbAt       - {@link Temporal} optional temporal to specificy database at intersection
+     * @param <T>        - {@link T} generic type parameter
+     * @return - {@link List} of {@link T} objects which satisfy the given object relationship
+     * @since 0.9
+     */
+    <T> List<T> getRelatedObjects(Class<T> clazz, String identifier, ObjectRelation relation, @Nullable Temporal validAt, @Nullable Temporal dbAt);
 }

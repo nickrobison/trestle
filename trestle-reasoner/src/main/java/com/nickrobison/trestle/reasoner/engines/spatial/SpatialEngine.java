@@ -23,21 +23,22 @@ import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
-import org.locationtech.jts.geom.Geometry;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.rdf4j.query.QueryEvaluationException;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.io.WKTWriter;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import si.uom.SI;
 
 import javax.cache.Cache;
 import javax.inject.Inject;
-import javax.measure.quantity.Length;
-import si.uom.SI;
 import javax.measure.Unit;
+import javax.measure.quantity.Length;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
@@ -225,15 +226,20 @@ public class SpatialEngine implements ITrestleSpatialEngine {
 
     @Override
     public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit, @Nullable Temporal temporalAt, @Nullable Temporal dbAt) {
-        final OWLNamedIndividual owlNamedIndividual = this.tp.classParser.getIndividual(inputObject);
-        final Optional<String> wktString = SpatialParser.getSpatialValueAsString(inputObject);
+        // Reproject the input object into WGS 84, which is what the underlying ontologies use
+        final Geometry projectedGeom = SpatialEngineUtils.reprojectObject(inputObject, this.tp.classParser.getClassProjection(inputObject.getClass()), 4326, this.geometryCache);
+        final WKTWriter writer = new WKTWriter();
+        final String wkt = writer.write(projectedGeom);
 
-        if (wktString.isPresent()) {
-            return spatialIntersect((Class<T>) inputObject.getClass(), wktString.get(), buffer, bufferUnit, temporalAt, null);
-        }
+//        final Optional<String> wktString = SpatialParser.getSpatialValueAsString(inputObject);
 
-        logger.info("{} doesn't have a spatial component", owlNamedIndividual);
-        return Optional.empty();
+//        if (wktString.isPresent()) {
+//
+//        }
+
+        return spatialIntersect((Class<T>) inputObject.getClass(), wkt, buffer, bufferUnit, temporalAt, null);
+//        logger.info("{} doesn't have a spatial component", owlNamedIndividual);
+//        return Optional.empty();
     }
 
     @Override
@@ -345,7 +351,7 @@ public class SpatialEngine implements ITrestleSpatialEngine {
         final Geometry bPolygon = SpatialEngineUtils.getGeomFromCache(objectB, bSRID, this.geometryCache);
 
 //        Reproject to coordinate system of Geometry A
-        logger.debug("Reprojecting {} from {} to {}", objectBID, bSRID, aSRID);
+        logger.debug("Potentially reprojecting {} from {} to {}", objectBID, bSRID, aSRID);
         final Geometry transformedB = SpatialEngineUtils.reprojectGeometry(bPolygon, bSRID, aSRID, this.geometryCache, objectB.hashCode());
 
 

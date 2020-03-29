@@ -204,4 +204,15 @@ public class TigerCountyObject {
                         append(rate_natural_increase, rhs.rate_natural_increase).
                         isEquals();
     }
+
+    @Override
+    public String toString() {
+        return "TigerCountyObject{" +
+                "geoid='" + geoid + '\'' +
+                ", region='" + region + '\'' +
+                ", division='" + division + '\'' +
+                ", state='" + state + '\'' +
+                ", county='" + county + '\'' +
+                '}';
+    }
 }

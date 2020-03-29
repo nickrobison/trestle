@@ -150,7 +150,7 @@ public class VisualizationResource {
 //                Do a piecewise comparison for each individual
             logger.debug("Beginning piecewise comparison");
             final Instant compareStart = Instant.now();
-            final Optional<List<SpatialComparisonReport>> spatialComparisonReports = this.reasoner.compareTrestleObjects("gaul-test", request.getCompare(), request.getCompareAgainst(), 4326, MATCH_THRESHOLD);
+            final Optional<List<SpatialComparisonReport>> spatialComparisonReports = this.reasoner.compareTrestleObjects("GAUL", request.getCompare(), request.getCompareAgainst(), 4326, MATCH_THRESHOLD);
             logger.debug("Comparison took {} ms", Duration.between(compareStart, Instant.now()).toMillis());
             spatialComparisonReports.ifPresent(comparisonReport::addAllReports);
 
@@ -167,7 +167,7 @@ public class VisualizationResource {
             //        Look for spatial union
             logger.debug("Executing union");
             final Instant unionStart = Instant.now();
-            final Optional<UnionContributionResult> objectUnionEqualityResult = this.reasoner.calculateSpatialUnionWithContribution("gaul-test", compareIndividuals, 4326, MATCH_THRESHOLD);
+            final Optional<UnionContributionResult> objectUnionEqualityResult = this.reasoner.calculateSpatialUnionWithContribution("GAUL", compareIndividuals, 4326, MATCH_THRESHOLD);
             logger.debug("Union computation took {} ms", Duration.between(unionStart, Instant.now()).toMillis());
             objectUnionEqualityResult.ifPresent(comparisonReport::setUnion);
 

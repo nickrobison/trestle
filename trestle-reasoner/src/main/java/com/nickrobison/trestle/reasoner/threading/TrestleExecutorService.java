@@ -42,7 +42,7 @@ public class TrestleExecutorService implements ExecutorService {
         try {
             executorSize = config.getInt(executorName + ".size");
         } catch (ConfigException.Missing e) {
-            logger.warn("Unable to find configuration for {}. Falling back to defaults", executorName);
+            logger.debug("Unable to find configuration for {}. Falling back to defaults", executorName);
             executorSize = config.getInt("default-pool.size");
         }
 
@@ -135,7 +135,7 @@ public class TrestleExecutorService implements ExecutorService {
 
     @NonNull
     @Override
-    public <T> List<Future<T>> invokeAll(@NonNull Collection<? extends Callable<T>> tasks) throws InterruptedException {
+    public <T> List<Future<T>> invokeAll(@NonNull Collection<? extends Callable<T>> tasks) {
         return tasks.stream().map(this::submit).collect(Collectors.toList());
     }
 

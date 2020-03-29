@@ -1,7 +1,7 @@
 (ns com.nickrobison.trestle.reasoner.parser.utils.members
   (:import (org.semanticweb.owlapi.model IRI OWLDataFactory)
            (com.nickrobison.trestle.common StaticIRI)
-           (com.nickrobison.trestle.reasoner.annotations Spatial Fact TrestleDataProperty)
+           (com.nickrobison.trestle.reasoner.annotations Spatial Fact)
            (java.lang.invoke MethodHandles MethodHandle)
            (java.lang.reflect Constructor Method Field)
            (com.nickrobison.trestle.reasoner.exceptions InvalidClassException InvalidClassException$State))
@@ -41,7 +41,7 @@
   (if (pred/hasAnnotation? member Fact)
     ; Reflection is ok here, we're trying to paper over Field/Method differences
     (IRI/create prefix (.name ^Fact (.getAnnotation member Fact)))
-    (if (pred/hasAnnotation? member Spatial)
+     (if (pred/hasAnnotation? member Spatial)
       ; If spatial, use the GEOSPARQL prefix
       (IRI/create StaticIRI/GEOSPARQLPREFIX "asWKT")
       ; Otherwise, use the member-name
@@ -62,13 +62,13 @@
   ; We need to use invokeWithArguments to work around IDEA-154967
   ([^MethodHandle handle object]
    (try
-     (log/debugf "Invoking method handle %s on %s" handle object)
+     (log/tracef "Invoking method handle %s on %s" handle object)
      (.invokeWithArguments handle (object-array [object]))
      (catch Exception e
        (log/error "Problem invoking" e))))
   ([^MethodHandle handle object & args]
    (try
-     (log/debugf "Invoking method handle %s on %s with args %s"
+     (log/tracef "Invoking method handle %s on %s with args %s"
                  handle
                  object
                  args)
@@ -81,13 +81,13 @@
   ; We need to use invokeWithArguments to work around IDEA-154967
   ([^MethodHandle handle]
    (try
-     (log/debugf "Invoking constructor %s" handle)
+     (log/tracef "Invoking constructor %s" handle)
      (.invokeWithArguments handle (object-array []))
      (catch Exception e
        (log/error "Problem invoking" e))))
   ([^MethodHandle handle & args]
    (try
-     (log/debugf "Invoking constructor %s with args %s" handle args)
+     (log/tracef "Invoking constructor %s with args %s" handle args)
      ; I honestly have no idea why we need to do first, but that's how it is
      (.invokeWithArguments handle (object-array (first args)))
      (catch Exception e
@@ -166,19 +166,22 @@
 (defmulti filter-constructor-name
           "Filter the member to determine the appropriate name for the constructor
           This allows us to to special casing for mult-lang members, since we can't use the fact name due to language overloading"
-          (fn [member type] type))
+          (fn [_member type] type))
 (defmethod filter-constructor-name ::pred/language
-  [member type]
+  [member _type]
   ; If we're a language, we need to use the java member name
   (filter-java-member-name member))
 (defmethod filter-constructor-name :default
-  [member type]
-  (if-let [data-annotation (pred/get-common-annotation member TrestleDataProperty)]
-    ; Reflection is ok here, we're trying to paper over annotation differences
-    (if (not= "" (.name data-annotation))
-      (.name data-annotation)
-      (filter-java-member-name member))
-    (filter-java-member-name member)))
+  [member _type]
+  (filter-java-member-name member)
+  ; TODO: TRESTLE-724: Add more flexible support for constructor name overriding
+  ;(if-let [data-annotation (pred/get-common-annotation member TrestleDataProperty)]
+  ;  ; Reflection is ok here, we're trying to paper over annotation differences
+  ;  (if (not= "" (.name data-annotation))
+  ;    (.name data-annotation)
+  ;    (filter-java-member-name member))
+  ;  (filter-java-member-name member))
+  )
 
 ; Spatial methods
 (defn get-projection

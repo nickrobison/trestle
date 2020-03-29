@@ -62,19 +62,19 @@ public class TestClasses {
     public static class JTSGeometryTest implements Serializable {
         private static final long serialVersionUID = 42L;
 
-        private final Integer adm0_code;
+        private final Integer code;
         private final Geometry geom;
         private LocalDate date;
 
-        public JTSGeometryTest(Integer adm0_code, Geometry geom, LocalDate date) {
-            this.adm0_code = adm0_code;
+        public JTSGeometryTest(Integer code, Geometry geom, LocalDate date) {
+            this.code = code;
             this.geom = geom;
             this.date = date;
         }
 
         @IndividualIdentifier
-        public Integer getAdm0_code() {
-            return this.adm0_code;
+        public Integer getCode() {
+            return this.code;
         }
 
         @Spatial(projection = 4269)
@@ -94,13 +94,13 @@ public class TestClasses {
 
             JTSGeometryTest that = (JTSGeometryTest) o;
 
-            if (!getAdm0_code().equals(that.getAdm0_code())) return false;
+            if (!getCode().equals(that.getCode())) return false;
             return getGeom().equalsExact(that.getGeom(), .01);
         }
 
         @Override
         public int hashCode() {
-            int result = getAdm0_code().hashCode();
+            int result = getCode().hashCode();
             result = 31 * result + getGeom().hashCode();
             return result;
         }
@@ -190,7 +190,7 @@ public class TestClasses {
     public static class GAULTestClass implements Serializable {
         private static final long serialVersionUID = 42L;
 
-        @Fact(name = "adm0_code", datatype = OWL2Datatype.XSD_INTEGER)
+        @Fact(name = "id", datatype = OWL2Datatype.XSD_INTEGER)
         public int adm0_code;
         public String adm0_name;
         @IndividualIdentifier
@@ -228,7 +228,6 @@ public class TestClasses {
             this.wkt = wkt;
             this.time = time;
             this.endTime = endTime;
-
         }
 
         @Override
@@ -677,14 +676,14 @@ public class TestClasses {
         @IndividualIdentifier
         public final String id;
         private final LocalDate startTemporal;
-        private final int adm0_code;
+        private final int code;
         private final String name;
         private final int population;
 
-        public CountyRelated(String id, LocalDate startTemporal, int adm0_code, String name, int population) {
+        public CountyRelated(String id, LocalDate startTemporal, int code, String name, int population) {
             this.id = id;
             this.startTemporal = startTemporal;
-            this.adm0_code = adm0_code;
+            this.code = code;
             this.name = name;
             this.population = population;
         }
@@ -695,8 +694,8 @@ public class TestClasses {
         }
 
         @Related
-        public int getAdm0_code() {
-            return adm0_code;
+        public int getCode() {
+            return code;
         }
 
         public String getName() {
@@ -713,21 +712,21 @@ public class TestClasses {
 
         private static final long serialVersionUID = 42L;
 
-        private final Integer adm0_code;
+        private final Integer code;
         private final Geometry geom;
         private LocalDate date;
         public final int population;
 
-        public JTSExtended(Integer adm0_code, Geometry geom, LocalDate date, int population) {
-            this.adm0_code = adm0_code;
+        public JTSExtended(Integer code, Geometry geom, LocalDate date, int population) {
+            this.code = code;
             this.geom = geom;
             this.date = date;
             this.population = population;
         }
 
         @IndividualIdentifier
-        public Integer getAdm0_code() {
-            return this.adm0_code;
+        public Integer getCode() {
+            return this.code;
         }
 
         @Spatial(projection = 4269)

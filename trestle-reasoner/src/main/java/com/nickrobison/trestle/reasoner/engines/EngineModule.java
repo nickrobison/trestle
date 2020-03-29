@@ -15,6 +15,9 @@ import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectWriter;
 import com.nickrobison.trestle.reasoner.engines.object.TrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.object.TrestleObjectWriter;
+import com.nickrobison.trestle.reasoner.engines.relations.RelationTracker;
+import com.nickrobison.trestle.reasoner.engines.relations.RelationTrackerImpl;
+import com.nickrobison.trestle.reasoner.engines.relations.RelationTrackerNoOp;
 import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.AggregationEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentEngine;
@@ -33,10 +36,12 @@ public class EngineModule extends PrivateModule {
 
     private final boolean mergedEnabled;
     private final boolean eventEnabled;
+    private final boolean trackEnabled;
 
-    public EngineModule(boolean mergeEnabled, boolean eventEnabled) {
+    public EngineModule(boolean mergeEnabled, boolean eventEnabled, boolean trackEnabled) {
         this.mergedEnabled = mergeEnabled;
         this.eventEnabled = eventEnabled;
+        this.trackEnabled = trackEnabled;
     }
 
     @Override
@@ -87,6 +92,17 @@ public class EngineModule extends PrivateModule {
                     .asEagerSingleton();
         }
 
+//        Relationship Tracker
+        if (this.trackEnabled) {
+            bind(RelationTracker.class)
+                    .to(RelationTrackerImpl.class)
+                    .asEagerSingleton();
+        } else {
+            bind(RelationTracker.class)
+                    .to(RelationTrackerNoOp.class)
+                    .asEagerSingleton();
+        }
+
 
 //        Expose some things
         expose(ITrestleObjectWriter.class);
@@ -99,5 +115,6 @@ public class EngineModule extends PrivateModule {
         expose(IndividualEngine.class);
         expose(TrestleEventEngine.class);
         expose(TrestleMergeEngine.class);
+        expose(RelationTracker.class);
     }
 }

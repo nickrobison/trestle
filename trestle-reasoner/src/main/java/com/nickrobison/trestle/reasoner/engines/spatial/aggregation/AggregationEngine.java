@@ -3,10 +3,13 @@ package com.nickrobison.trestle.reasoner.engines.spatial.aggregation;
 import com.nickrobison.trestle.common.LambdaUtils;
 import com.nickrobison.trestle.common.StaticIRI;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
+import com.nickrobison.trestle.ontology.ReasonerPrefix;
+import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngineUtils;
 import com.nickrobison.trestle.reasoner.exceptions.NoValidStateException;
+import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.parser.IClassParser;
 import com.nickrobison.trestle.reasoner.parser.ITypeConverter;
 import com.nickrobison.trestle.reasoner.parser.TemporalParser;
@@ -14,6 +17,7 @@ import com.nickrobison.trestle.reasoner.parser.TrestleParser;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorFactory;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
+import com.nickrobison.trestle.types.relations.ObjectRelation;
 import org.locationtech.jts.geom.*;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -25,13 +29,13 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.time.temporal.Temporal;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+import static com.nickrobison.trestle.common.IRIUtils.parseStringToIRI;
 import static com.nickrobison.trestle.reasoner.engines.object.TrestleObjectReader.MISSING_FACT_ERROR;
 
 /**
@@ -42,6 +46,7 @@ public class AggregationEngine {
     private static final Logger logger = LoggerFactory.getLogger(AggregationEngine.class);
     private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
 
+    private final String reasonerPrefix;
     private final ITrestleObjectReader reader;
     private final IClassParser parser;
     private final ITypeConverter typeConverter;
@@ -50,11 +55,13 @@ public class AggregationEngine {
     private final TrestleExecutorService aggregationPool;
 
     @Inject
-    public AggregationEngine(ITrestleObjectReader objectReader,
+    public AggregationEngine(@ReasonerPrefix String reasonerPrefix,
+                             ITrestleObjectReader objectReader,
                              QueryBuilder queryBuilder,
                              ITrestleOntology ontology,
                              TrestleParser trestleParser,
                              TrestleExecutorFactory factory) {
+        this.reasonerPrefix = reasonerPrefix;
         this.reader = objectReader;
         this.qb = queryBuilder;
         this.ontology = ontology;
@@ -153,6 +160,61 @@ public class AggregationEngine {
         }
     }
 
+    /**
+     * Build the spatial adjacency graph for a given class.
+     *
+     * @param clazz       - Java {@link Class} of objects to retrieve
+     * @param objectID    - {@link String} ID of object to begin graph computation with
+     * @param edgeCompute - {@link Computable} function to use for computing edge weights
+     * @param filter      - {@link Filterable} function to use for determining whether or not to compute the given node
+     * @param validAt     - {@link Temporal} optional validAt restriction
+     * @param dbAt        - {@link Temporal} optional dbAt restriction
+     * @param <T>         - {@link T} type parameter for object class
+     * @param <B>         - {@link B} type parameter for return type from {@link Computable} function
+     * @return
+     */
+    public <T extends @NonNull Object, B extends Number> AdjacencyGraph<T, B> buildSpatialGraph(Class<T> clazz, String objectID, Computable<T, T, B> edgeCompute, Filterable<T> filter, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
+        final AdjacencyGraph<T, B> adjacencyGraph = new AdjacencyGraph<>();
+        final IRI startIRI = parseStringToIRI(this.reasonerPrefix, objectID);
+
+        Set<String> visited = new HashSet<>();
+        Queue<String> individualQueue = new ArrayDeque<>();
+        individualQueue.add(startIRI.toString());
+
+        while (!individualQueue.isEmpty()) {
+            final String fromID = individualQueue.poll();
+            visited.add(fromID);
+
+            try {
+//            Get the initial individual
+                final T from = this.reader.readTrestleObject(clazz, fromID, validAt, dbAt);
+
+//            Get everything it touches
+                final List<Edge<T, B>> relatedEdges = this.reader.getRelatedObjects(clazz, fromID, ObjectRelation.SPATIAL_MEETS, validAt, dbAt)
+                        .stream()
+                        .filter(filter::filter)
+//                        Remove self
+                        .filter(related -> !this.parser.getIndividual(related).toStringID().equals(startIRI.toString()))
+                        .map(related -> new Edge<>(from, related, edgeCompute.compute(from, related)))
+                        .collect(Collectors.toList());
+
+//            Add everything to the graph
+                relatedEdges.forEach(adjacencyGraph::addEdge);
+//                Only add things we haven't seen before
+                relatedEdges
+                        .stream()
+                        .map(edge -> this.parser.getIndividual(edge.to))
+                        .map(OWLIndividual::toStringID)
+                        .filter(individual -> !visited.contains(individual))
+                        .forEach(individualQueue::add);
+            } catch (TrestleClassException | MissingOntologyEntity | NoValidStateException e) {
+                logger.error("Can't read individual", e);
+            }
+        }
+
+        return adjacencyGraph;
+    }
+
     private String buildAggregationQuery(Class<?> clazz, OWLClass datasetClass, IRI factIRI, Class<?> factDatatype, AggregationRestriction restriction, @Nullable AggregationOperation operation, OffsetDateTime atTemporal, OffsetDateTime dbTemporal) {
 
 //        final String filterStatement;
@@ -227,6 +289,147 @@ public class AggregationEngine {
 
         public void setValue(Object value) {
             this.value = value;
+        }
+    }
+
+    public static class AdjacencyGraph<A, B extends Number> {
+
+        private Set<A> nodes;
+        private Set<Edge<A, B>> edges;
+        private Map<A, List<Edge<A, B>>> adj;
+
+        public AdjacencyGraph() {
+            this.nodes = new HashSet<>();
+            this.edges = new HashSet<>();
+            this.adj = new HashMap<>();
+        }
+
+        public void addEdge(Edge<A, B> edge) {
+            this.nodes.add(edge.from);
+            this.edges.add(edge);
+            this.updateNodeEdge(edge.from, edge);
+            this.updateNodeEdge(edge.to, edge);
+        }
+
+        public void removeEdge(Edge<A, B> edge) {
+            this.edges.remove(edge);
+            this.removeNodeEdge(edge.from, edge);
+            this.removeNodeEdge(edge.to, edge);
+        }
+
+        public Optional<List<Edge<A, B>>> getNodeEdges(A node) {
+            //noinspection Convert2MethodRef
+            return getNodeEdges(node, (a, b) -> noopComparator(a, b));
+        }
+
+        public Optional<List<Edge<A, B>>> getNodeEdges(A node, Comparator<Edge<A, B>> comparator) {
+            final List<Edge<A, B>> edges = this.adj.get(node);
+            if (edges == null) {
+                return Optional.empty();
+            }
+            return Optional.of(edges
+                    .stream()
+                    .sorted(comparator)
+                    .collect(Collectors.toList()));
+        }
+
+        public List<Edge<A, B>> getEdges() {
+            //noinspection Convert2MethodRef
+            return getEdges((a, b) -> noopComparator(a, b));
+        }
+
+        public List<Edge<A, B>> getEdges(Comparator<Edge<A, B>> comparator) {
+            final List<Edge<A, B>> collect = edges
+                    .stream()
+                    .sorted(comparator)
+                    .collect(Collectors.toList());
+//            Deduplicate it
+            final List<Edge<A, B>> output = new ArrayList<>();
+            Set<Integer> seen = new HashSet<>();
+            for (Edge<A, B> edge : collect) {
+                final int hash = edge.from.hashCode() ^ edge.to.hashCode();
+                if (seen.contains(hash)) {
+                    continue;
+                }
+
+                output.add(edge);
+                seen.add(hash);
+            }
+
+            return output;
+        }
+
+        private void updateNodeEdge(A node, Edge<A, B> edge) {
+            final List<Edge<A, B>> nodeEdges = this.adj.get(node);
+            if (nodeEdges == null) {
+                List<Edge<A, B>> edges = new ArrayList<>();
+                edges.add(edge);
+                this.adj.put(node, edges);
+            } else {
+                nodeEdges.add(edge);
+                this.adj.put(node, nodeEdges);
+            }
+        }
+
+        private void removeNodeEdge(A node, Edge<A, B> edge) {
+            final List<Edge<A, B>> nodeEdges = this.adj.get(node);
+            if (nodeEdges != null) {
+                nodeEdges.remove(edge);
+            }
+        }
+
+        private int noopComparator(Edge<A, B> a, Edge<A, B> b) {
+            return 0;
+        }
+    }
+
+
+    public static class Edge<A, B extends Number> {
+
+        private final A from;
+        private final A to;
+        private final B weight;
+
+        public Edge(A from, A to, B weight) {
+            this.from = from;
+            this.to = to;
+            this.weight = weight;
+        }
+
+        public A getFrom() {
+            return from;
+        }
+
+        public A getTo() {
+            return to;
+        }
+
+        public B getWeight() {
+            return weight;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Edge<?, ?> edge = (Edge<?, ?>) o;
+            return Objects.equals(from, edge.from) &&
+                    Objects.equals(to, edge.to);
+        }
+
+        @Override
+        public int hashCode() {
+
+            return from.hashCode() ^ to.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "Edge{" +
+                    "from=" + from +
+                    ", to=" + to +
+                    ", weight=" + weight +
+                    '}';
         }
     }
 }
