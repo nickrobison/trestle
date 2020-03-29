@@ -209,3 +209,4 @@ stages:
               jdkArchitectureOption: 'x64'
               mavenAuthenticateFeed: true
               goals: 'deploy -DskipTests' # Not sure why the skip has to be here
+              publishJUnitResults: false
