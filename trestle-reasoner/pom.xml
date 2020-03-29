@@ -183,22 +183,6 @@
         </dependency>
     </dependencies>
     <build>
-        <testResources>
-            <testResource>
-                <directory>${basedir}/../data</directory>
-                <includes>
-                    <include>king_county/*</include>
-                    <include>tiger_kc/*</include>
-                </includes>
-                <excludes>
-                    <exclude>tiger_kc/tiger_kc.zip</exclude>
-                    <exclude>king_county/kc.zip</exclude>
-                </excludes>
-            </testResource>
-            <testResource>
-                <directory>src/test/resources</directory>
-            </testResource>
-        </testResources>
         <plugins>
             <plugin>
                 <groupId>com.theoryinpractise</groupId>
