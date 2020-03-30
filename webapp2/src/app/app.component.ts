@@ -1,9 +1,8 @@
 /**
  * Created by nrobison on 1/19/17.
  */
-import {Component, HostListener, ViewChild, ViewEncapsulation} from "@angular/core";
+import {Component, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation} from "@angular/core";
 import {TrestleUser} from "./user/trestle-user";
-import {Subscription} from "rxjs";
 import {AuthService, Privileges} from "./user/authentication.service";
 import {Router} from "@angular/router";
 import {MatSidenav} from "@angular/material/sidenav";
@@ -15,14 +14,14 @@ import {MD5} from "crypto-js";
   styleUrls: ["./app.component.scss"],
   encapsulation: ViewEncapsulation.None
 })
-export class AppComponent {
+export class AppComponent implements OnInit, OnDestroy {
   public gravatarURL: string;
   // We need this in order to access the Privileges enum from the template
   public Privileges = Privileges;
   public user: TrestleUser | null;
 
-  @ViewChild("sidenav") public sideNav: MatSidenav;
-  private loginSubscription: Subscription;
+  @ViewChild("sidenav")
+  public sideNav: MatSidenav | null;
 
   constructor(private authService: AuthService,
               private router: Router
@@ -46,7 +45,7 @@ export class AppComponent {
   }
 
   public ngOnDestroy(): void {
-    this.loginSubscription.unsubscribe();
+    // this.loginSubscription.unsubscribe();
   }
 
   /**
@@ -96,15 +95,15 @@ export class AppComponent {
 
 //    Resize function for sidenav
   @HostListener("window:resize", ["$event"])
-  public onResize(event: any): void {
+  public onResize(_event: any): void {
     this.checkMenu();
   }
 
   private checkMenu() {
     if (window.innerWidth <= 800) {
-      this.sideNav.close();
+      this.sideNav?.close();
     } else {
-      this.sideNav.open();
+      this.sideNav?.open();
     }
   }
 }

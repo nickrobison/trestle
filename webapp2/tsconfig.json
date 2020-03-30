@@ -15,10 +15,12 @@
       "es2018",
       "dom"
     ],
+    "types": ["jest"],
     "strictPropertyInitialization": false
   },
   "angularCompilerOptions": {
     "fullTemplateTypeCheck": true,
-    "strictInjectionParameters": true
+    "strictInjectionParameters": true,
+    "enableIvy": false
   }
 }

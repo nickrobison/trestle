@@ -1,0 +1,193 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AppComponent should create the app 1`] = `
+<app-root
+  Privileges={[Function Object]}
+  authService={[Function AuthService]}
+  router={[Function Router]}
+>
+  <mat-toolbar
+    class="top-layout z-depth-4 mat-toolbar"
+    color="primary"
+  >
+    <h4>
+      TRESTLE
+    </h4>
+    <span
+      class="toolbar-spacer"
+    />
+    
+    
+  </mat-toolbar><mat-sidenav-container
+    class="mat-drawer-container mat-sidenav-container"
+  >
+    
+    <mat-sidenav
+      class="z-depth-3 mat-drawer mat-sidenav ng-tns-c3-0 ng-trigger ng-trigger-transform"
+      color="'accent'"
+      mode="side"
+      tabindex="-1"
+    >
+      <div
+        class="mat-drawer-inner-container"
+      >
+        <mat-nav-list
+          class="mat-nav-list mat-list-base"
+          role="navigation"
+        >
+          <div
+            id="user-actions"
+          >
+            <h5
+              mat-list-subheader=""
+            >
+              Explore
+            </h5>
+            <mat-divider
+              class="mat-divider"
+              role="separator"
+            />
+            <a
+              aria-label="dataset viewer link"
+              class="mat-list-item mat-focus-indicator"
+              id="viewer"
+              mat-list-item=""
+            >
+              <div
+                class="mat-list-item-content"
+              >
+                <div
+                  class="mat-list-item-ripple mat-ripple"
+                  mat-ripple=""
+                />
+                <div
+                  class="mat-list-text"
+                />
+                <mat-icon
+                  aria-hidden="true"
+                  class="mat-icon notranslate"
+                  role="img"
+                >
+                  map
+                </mat-icon>
+                VIEWER
+              </div>
+            </a>
+            <a
+              aria-label="visualizer link"
+              class="mat-list-item mat-focus-indicator"
+              id="visualize"
+              mat-list-item=""
+            >
+              <div
+                class="mat-list-item-content"
+              >
+                <div
+                  class="mat-list-item-ripple mat-ripple"
+                  mat-ripple=""
+                />
+                <div
+                  class="mat-list-text"
+                />
+                <mat-icon
+                  aria-hidden="true"
+                  class="mat-icon notranslate"
+                  role="img"
+                >
+                  view_carousel
+                </mat-icon>
+                VISUALIZER
+              </div>
+            </a>
+            <a
+              aria-label="query link"
+              class="mat-list-item mat-focus-indicator"
+              id="query"
+              mat-list-item=""
+            >
+              <div
+                class="mat-list-item-content"
+              >
+                <div
+                  class="mat-list-item-ripple mat-ripple"
+                  mat-ripple=""
+                />
+                <div
+                  class="mat-list-text"
+                />
+                <mat-icon
+                  aria-hidden="true"
+                  class="mat-icon notranslate"
+                  role="img"
+                >
+                  query_builder
+                </mat-icon>
+                QUERY
+              </div>
+            </a>
+            <a
+              aria-label="compare links"
+              class="mat-list-item mat-focus-indicator"
+              id="compare"
+              mat-list-item=""
+            >
+              <div
+                class="mat-list-item-content"
+              >
+                <div
+                  class="mat-list-item-ripple mat-ripple"
+                  mat-ripple=""
+                />
+                <div
+                  class="mat-list-text"
+                />
+                <mat-icon
+                  aria-hidden="true"
+                  class="mat-icon notranslate"
+                  role="img"
+                >
+                  compare
+                </mat-icon>
+                COMPARE
+              </div>
+            </a>
+            <a
+              aria-label="aggregate links"
+              class="mat-list-item mat-focus-indicator"
+              id="aggregate"
+              mat-list-item=""
+            >
+              <div
+                class="mat-list-item-content"
+              >
+                <div
+                  class="mat-list-item-ripple mat-ripple"
+                  mat-ripple=""
+                />
+                <div
+                  class="mat-list-text"
+                />
+                <mat-icon
+                  aria-hidden="true"
+                  class="mat-icon notranslate"
+                  role="img"
+                >
+                  call_merge
+                </mat-icon>
+                AGGREGATE
+              </div>
+            </a>
+          </div>
+          
+          
+          <mat-divider
+            class="mat-divider"
+            role="separator"
+          />
+        </mat-nav-list>
+      </div>
+    </mat-sidenav>
+    
+  </mat-sidenav-container>
+</app-root>
+`;
