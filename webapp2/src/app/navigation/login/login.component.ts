@@ -61,6 +61,7 @@ export class LoginComponent implements OnInit {
             // this.eventBus.publish(new UserLoginEvent(true));
             this.router.navigate([this.returnUrl]);
         }, (error: Response) => {
+          console.debug("Logged?", error);
             console.error("Error logging in: ", error.status);
             if (error.status == 401) {
                 this.errorState = "active";
