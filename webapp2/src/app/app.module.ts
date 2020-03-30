@@ -8,6 +8,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import {UserModule} from "./user/user.module";
 import {MaterialModule} from "./material/material.module";
 import {NavigationModule} from "./navigation/navigation.module";
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 @NgModule({
   declarations: [
@@ -21,7 +22,8 @@ import {NavigationModule} from "./navigation/navigation.module";
     BrowserAnimationsModule,
     UserModule,
     MaterialModule,
-    NavigationModule
+    NavigationModule,
+    FontAwesomeModule
   ],
   providers: [],
   bootstrap: [AppComponent]

@@ -5,11 +5,11 @@
   <div class="action-buttons" *ngIf="user">
     <img class="img-circle" [src]="getGravatarURL()">
     <button id="logout" mat-button class="toolbar-button" (click)="logout()" aria-label="Logout">
-      <i class="fa fa-sign-out fa-2x" aria-hidden="true"></i>
+      <fa-icon [icon]="logoutIcon" [size]="iconSize"></fa-icon>
     </button>
   </div>
   <button id="login" mat-button class="toolbar-button" *ngIf="!user" routerLink="/login" aria-label="Login">
-    <i class="fa fa-sign-in fa-2x" aria-hidden="true"></i>
+    <fa-icon [icon]="loginIcon" [size]="iconSize"></fa-icon>
   </button>
 </mat-toolbar>
 <mat-sidenav-container>

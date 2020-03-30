@@ -7,6 +7,8 @@ import {AuthService, Privileges} from "./user/authentication.service";
 import {Router} from "@angular/router";
 import {MatSidenav} from "@angular/material/sidenav";
 import {MD5} from "crypto-js";
+import {faSignInAlt, faSignOutAlt} from '@fortawesome/free-solid-svg-icons';
+import {SizeProp} from '@fortawesome/fontawesome-svg-core';
 
 @Component({
   selector: "app-root",
@@ -15,6 +17,9 @@ import {MD5} from "crypto-js";
   encapsulation: ViewEncapsulation.None
 })
 export class AppComponent implements OnInit, OnDestroy {
+  public readonly iconSize: SizeProp = "lg";
+  public readonly loginIcon = faSignInAlt;
+  public readonly logoutIcon = faSignOutAlt;
   public gravatarURL: string;
   // We need this in order to access the Privileges enum from the template
   public Privileges = Privileges;
