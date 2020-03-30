@@ -4,6 +4,9 @@ exports[`AppComponent should create the app 1`] = `
 <app-root
   Privileges={[Function Object]}
   authService={[Function AuthService]}
+  iconSize={[Function String]}
+  loginIcon={[Function Object]}
+  logoutIcon={[Function Object]}
   router={[Function Router]}
 >
   <mat-toolbar

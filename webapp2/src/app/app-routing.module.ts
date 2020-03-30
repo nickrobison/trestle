@@ -8,6 +8,7 @@ import {LoginComponent} from "./navigation/login/login.component";
 const routes: Routes = [
   {path: "", canActivate: [DefaultRouteGuard], component: NavigationComponent},
   {path: "login", component: LoginComponent},
+  {path: "admin", loadChildren: () => import("./admin/admin.module").then(m => m.AdminModule)}
 ];
 
 @NgModule({

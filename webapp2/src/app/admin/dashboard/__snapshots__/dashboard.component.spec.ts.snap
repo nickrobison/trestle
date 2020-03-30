@@ -1,0 +1,82 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`DashboardComponent should create 1`] = `
+<admin-dashboard>
+  <mat-card
+    class="mat-card mat-focus-indicator"
+  >
+    <mat-card-content
+      class="mat-card-content"
+    >
+       An example card 
+    </mat-card-content>
+  </mat-card><mat-grid-list
+    class="mat-grid-list"
+    cols="4"
+    rowheight="400px"
+  >
+    <div>
+      <mat-grid-tile
+        class="mat-grid-tile"
+        colspan="2"
+        rowspan="1"
+        style="left: 0px; top: 0px;"
+      >
+        <figure
+          class="mat-figure"
+        >
+          <mat-card
+            class="dashboard-card mat-card mat-focus-indicator"
+          >
+            <mat-card-content
+              class="mat-card-content"
+            >
+               Another example card 
+            </mat-card-content>
+          </mat-card>
+        </figure>
+      </mat-grid-tile>
+      <mat-grid-tile
+        class="mat-grid-tile"
+        colspan="1"
+        rowspan="2"
+        style="top: 0px;"
+      >
+        <figure
+          class="mat-figure"
+        >
+          <mat-card
+            class="dashboard-card mat-card mat-focus-indicator"
+          >
+            <mat-card-content
+              class="mat-card-content"
+            >
+               A third example card 
+            </mat-card-content>
+          </mat-card>
+        </figure>
+      </mat-grid-tile>
+      <mat-grid-tile
+        class="mat-grid-tile"
+        colspan="1"
+        rowspan="1"
+        style="top: 0px;"
+      >
+        <figure
+          class="mat-figure"
+        >
+          <mat-card
+            class="dashboard-card mat-card mat-focus-indicator"
+          >
+            <mat-card-content
+              class="mat-card-content"
+            >
+               Final example card 
+            </mat-card-content>
+          </mat-card>
+        </figure>
+      </mat-grid-tile>
+    </div>
+  </mat-grid-list>
+</admin-dashboard>
+`;

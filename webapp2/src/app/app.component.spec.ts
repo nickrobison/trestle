@@ -5,6 +5,7 @@ import {MaterialModule} from "./material/material.module";
 import {AuthService} from "./user/authentication.service";
 import {HttpClientTestingModule} from "@angular/common/http/testing";
 import {NoopAnimationsModule} from "@angular/platform-browser/animations";
+import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
 
 describe('AppComponent', () => {
   beforeEach(async(() => {
@@ -13,7 +14,8 @@ describe('AppComponent', () => {
         RouterTestingModule,
         HttpClientTestingModule,
         NoopAnimationsModule,
-        MaterialModule
+        MaterialModule,
+        FontAwesomeModule
       ],
       providers: [AuthService],
       declarations: [
