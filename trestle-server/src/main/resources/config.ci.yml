@@ -2,7 +2,7 @@ reasoner:
   connectionString: "http://graphdb:7200"
   username: ""
   password: ""
-  ontology: "gaul_hadoop_world_bank"
+  ontology: "e2e_tests"
   prefix: "http://nickrobison.com/gaul/"
   location: "file:///opt/trestle/trestle.owl"
 

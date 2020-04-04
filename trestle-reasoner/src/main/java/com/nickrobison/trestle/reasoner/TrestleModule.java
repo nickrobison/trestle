@@ -106,9 +106,9 @@ public class TrestleModule extends AbstractModule {
 
     @Provides
     ConnectionProperties provideConnectionProperties(Config config) {
-        return new ConnectionProperties(this.builder.connectionString.orElse(config.getString("ontology.connectionString")),
-                this.builder.username.orElse(config.getString("ontology.username")),
-                this.builder.password.orElse(config.getString("ontology.password")));
+        return new ConnectionProperties(this.builder.connectionString.orElseGet(() -> config.getString("ontology.connectionString")),
+                this.builder.username.orElseGet(() -> config.getString("ontology.username")),
+                this.builder.password.orElseGet(() -> config.getString("ontology.password")));
     }
 
     /**
