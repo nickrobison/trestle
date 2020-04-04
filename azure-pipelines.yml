@@ -164,49 +164,50 @@ stages:
           - script: yarn --cwd trestle-server/ run test:ci
             displayName: Compile Prod build
 
-  - stage: Deploy
-    displayName: Deploy resources
-    dependsOn: Test
-    pool:
-      vmImage: "ubuntu-latest"
-    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
-    jobs:
-      - job: Deploy
-        displayName: Deploy Artifacts
-        steps:
-          - checkout: self
-            submodules: true
-          - download: current
-            artifact: java
-          - download: current
-            artifact: ui
-          - task: CopyFiles@2
-            inputs:
-              sourceFolder: $(Pipeline.Workspace)/java
-              targetFolder: $(Build.SourcesDirectory)
-          - task: CopyFiles@2
-            inputs:
-              sourceFolder: $(Pipeline.Workspace)/ui
-              targetFolder: $(Build.SourcesDirectory)/trestle-server/src/main/resources/build
-          - task: MavenAuthenticate@0
-            inputs:
-              mavenServiceConnections: 'jCenter maven'
-          - task: Cache@2
-            displayName: Cache Maven local repo
-            inputs:
-              key: 'maven | "$(Agent.OS)" | **/pom.xml'
-              restoreKeys: |
-                maven | "$(Agent.OS)"
-                maven
-              path: $(MAVEN_CACHE_FOLDER)
-          - task: Maven@3
-            displayName: Deploy resources
-            inputs:
-              mavenPomFile: 'pom.xml'
-              mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
-              javaHomeOption: 'JDKVersion'
-              jdkVersionOption: '1.11'
-              jdkArchitectureOption: 'x64'
-              mavenAuthenticateFeed: true
-              goals: 'deploy -DskipTests' # Not sure why the skip has to be here
-              publishJUnitResults: false
+#  - stage: Deploy
+#    displayName: Deploy resources
+#    dependsOn: Test
+#    pool:
+#      vmImage: "ubuntu-latest"
+##    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
+#    condition: never()
+#    jobs:
+#      - job: Deploy
+#        displayName: Deploy Artifacts
+#        steps:
+#          - checkout: self
+#            submodules: true
+#          - download: current
+#            artifact: java
+#          - download: current
+#            artifact: ui
+#          - task: CopyFiles@2
+#            inputs:
+#              sourceFolder: $(Pipeline.Workspace)/java
+#              targetFolder: $(Build.SourcesDirectory)
+#          - task: CopyFiles@2
+#            inputs:
+#              sourceFolder: $(Pipeline.Workspace)/ui
+#              targetFolder: $(Build.SourcesDirectory)/trestle-server/src/main/resources/build
+#          - task: MavenAuthenticate@0
+#            inputs:
+#              mavenServiceConnections: 'jCenter maven'
+#          - task: Cache@2
+#            displayName: Cache Maven local repo
+#            inputs:
+#              key: 'maven | "$(Agent.OS)" | **/pom.xml'
+#              restoreKeys: |
+#                maven | "$(Agent.OS)"
+#                maven
+#              path: $(MAVEN_CACHE_FOLDER)
+#          - task: Maven@3
+#            displayName: Deploy resources
+#            inputs:
+#              mavenPomFile: 'pom.xml'
+#              mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+#              javaHomeOption: 'JDKVersion'
+#              jdkVersionOption: '1.11'
+#              jdkArchitectureOption: 'x64'
+#              mavenAuthenticateFeed: true
+#              goals: 'deploy -DskipTests' # Not sure why the skip has to be here
+#              publishJUnitResults: false

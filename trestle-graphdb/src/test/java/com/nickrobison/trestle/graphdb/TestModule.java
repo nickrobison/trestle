@@ -2,6 +2,7 @@ package com.nickrobison.trestle.graphdb;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import com.nickrobison.trestle.ontology.ConnectionProperties;
 import com.nickrobison.trestle.ontology.annotations.OntologyName;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -18,6 +19,8 @@ import static com.nickrobison.trestle.ontology.OntologyBuilder.createDefaultPref
 import static com.nickrobison.trestle.ontology.OntologyBuilder.loadOntology;
 
 public class TestModule extends AbstractModule {
+
+    public static final String CONFIG_PATH = "ontology.graphdb";
     @Override
     protected void configure() {
         install(new GraphDBOntologyModule());
@@ -38,6 +41,12 @@ public class TestModule extends AbstractModule {
     OWLOntology provideOntology(Config config) {
         final InputStream is = provideInputStream(config);
         return loadOntology(Optional.empty(), Optional.of(is));
+    }
+
+    @Provides
+    ConnectionProperties properties(Config config) {
+        final Config path = config.getConfig(CONFIG_PATH);
+        return new ConnectionProperties(path.getString("connectionString"), path.getString("username"), path.getString("password"));
     }
 
     @Provides

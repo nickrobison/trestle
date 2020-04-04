@@ -2,11 +2,13 @@ package com.nickrobison.trestle.reasoner;
 
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
 import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * Created by nrobison on 8/25/16.
@@ -17,9 +19,9 @@ public class TrestleBuilder {
     private static final Logger logger = LoggerFactory.getLogger(TrestleBuilder.class);
 
     Optional<String> connectionString = Optional.empty();
-    String username;
-    String password;
-    final Set<Class> inputClasses;
+    Optional<String> username = Optional.empty();
+    Optional<String> password = Optional.empty();
+    final Set<Class<?>> inputClasses;
     Optional<String> ontologyName = Optional.empty();
     Optional<TrestleCache> sharedCache = Optional.empty();
     Optional<IRI> ontologyIRI = Optional.empty();
@@ -34,8 +36,6 @@ public class TrestleBuilder {
      * Builder pattern for Trestle Reasoner
      */
     public TrestleBuilder() {
-        this.username = "";
-        this.password = "";
         this.inputClasses = new HashSet<>();
         pm = new TrestlePrefixManager();
     }
@@ -46,8 +46,6 @@ public class TrestleBuilder {
      * @param reasonerPrefix - String of reasoner prefix
      */
     public TrestleBuilder(String reasonerPrefix) {
-        this.username = "";
-        this.password = "";
         this.inputClasses = new HashSet<>();
         pm = new TrestlePrefixManager(reasonerPrefix);
         this.reasonerPrefix = Optional.of(reasonerPrefix);
@@ -65,8 +63,8 @@ public class TrestleBuilder {
      */
     public TrestleBuilder withDBConnection(String connectionString, String username, String password) {
         this.connectionString = Optional.of(connectionString);
-        this.username = username;
-        this.password = password;
+        this.username = Optional.of(username);
+        this.password = Optional.of(password);
         return this;
     }
 
@@ -125,7 +123,7 @@ public class TrestleBuilder {
      * @param inputClass - Vararg list of classes to load and verify
      * @return - {@link TrestleBuilder}
      */
-    public TrestleBuilder withInputClasses(Class... inputClass) {
+    public TrestleBuilder withInputClasses(Class<?>... inputClass) {
         this.inputClasses.addAll(Arrays.asList(inputClass));
         return this;
     }

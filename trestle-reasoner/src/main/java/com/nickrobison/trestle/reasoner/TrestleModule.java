@@ -7,6 +7,7 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.nickrobison.metrician.MetricianModule;
 import com.nickrobison.trestle.graphdb.GraphDBOntology;
 import com.nickrobison.trestle.graphdb.GraphDBOntologyModule;
+import com.nickrobison.trestle.ontology.ConnectionProperties;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.ReasonerPrefix;
 import com.nickrobison.trestle.ontology.TrestleOntologyModule;
@@ -101,6 +102,13 @@ public class TrestleModule extends AbstractModule {
         final Config trestleConfig = ConfigFactory.load().getConfig("trestle");
         ValidateConfig(trestleConfig);
         return trestleConfig;
+    }
+
+    @Provides
+    ConnectionProperties provideConnectionProperties(Config config) {
+        return new ConnectionProperties(this.builder.connectionString.orElseGet(() -> config.getString("ontology.connectionString")),
+                this.builder.username.orElseGet(() -> config.getString("ontology.username")),
+                this.builder.password.orElseGet(() -> config.getString("ontology.password")));
     }
 
     /**
