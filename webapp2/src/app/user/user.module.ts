@@ -1,6 +1,5 @@
 import {NgModule} from '@angular/core';
 import {CommonModule} from '@angular/common';
-import {HttpClientModule} from '@angular/common/http';
 import {AuthService} from './authentication.service';
 import {LoggedInGuard} from './LoggedInGuard';
 import {PermissionsGuard} from './PermissionsGuard';
@@ -10,7 +9,6 @@ import {UserService} from './users.service';
 @NgModule({
   declarations: [],
   imports: [
-    HttpClientModule,
     CommonModule
   ],
   providers: [

@@ -82,7 +82,7 @@ export class AuthService {
    * @param {string} password
    * @returns {Observable<void>}
    */
-  public login(username:  string, password: string) {
+  public login(username: string, password: string) {
     return this.http.post(this.baseUrl + '/auth/login', {username, password: password}, {
       responseType: 'text'
     })
@@ -165,8 +165,12 @@ export class AuthService {
     return user.hasRequiredPrivileges(roles);
   }
 
+  public getEncodedToken(): string | null {
+    return localStorage.getItem(_key);
+  }
+
   private getToken(): TrestleToken | null {
-    const jwtToken = localStorage.getItem(_key);
+    const jwtToken = this.getEncodedToken();
     if (jwtToken) {
       return new TrestleToken(this.jwtHelper.decodeToken(jwtToken));
     }

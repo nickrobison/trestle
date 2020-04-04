@@ -9,9 +9,23 @@ import {UserModule} from './user/user.module';
 import {MaterialModule} from './material/material.module';
 import {NavigationModule} from './navigation/navigation.module';
 import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
-import {JwtModule} from '@auth0/angular-jwt';
+import {JWT_OPTIONS, JwtModule} from '@auth0/angular-jwt';
+import {environment} from '../environments/environment';
+import {AuthService} from './user/authentication.service';
 
-const _key: string = 'access_token';
+export function jwtOptionsFactory(service: AuthService) {
+  // noinspection JSUnusedGlobalSymbols
+  return {
+    tokenGetter: () => {
+      return service.getEncodedToken();
+    },
+    whitelistedDomains: [environment.domain],
+    blacklistedRoutes: ['http://localhost:8080/auth/login'],
+    throwNoTokenError: true,
+    authScheme: ''
+  };
+}
+
 
 @NgModule({
   declarations: [
@@ -28,17 +42,14 @@ const _key: string = 'access_token';
     NavigationModule,
     FontAwesomeModule,
     JwtModule.forRoot({
-      config: {
-        tokenGetter: tokenGetter
+      jwtOptionsProvider: {
+        provide: JWT_OPTIONS,
+        useFactory: jwtOptionsFactory,
+        deps: [AuthService]
       }
     })
   ],
-  providers: [],
   bootstrap: [AppComponent]
 })
 export class AppModule {
-}
-
-export function tokenGetter() {
-  return localStorage.getItem(_key);
 }

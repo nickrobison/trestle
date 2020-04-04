@@ -3,7 +3,6 @@ import {CommonModule} from '@angular/common';
 import {ViewerComponent} from './viewer/viewer.component';
 import {UserModule} from '../user/user.module';
 import {NavigationModule} from '../navigation/navigation.module';
-import {HttpClientModule} from '@angular/common/http';
 import {UiModule} from '../ui/ui.module';
 import {ExporterComponent} from './exporter/exporter.component';
 import {RouterModule} from '@angular/router';
@@ -24,7 +23,6 @@ import {SharedModule} from '../shared/shared.module';
     CommonModule,
     UserModule,
     NavigationModule,
-    HttpClientModule,
     SharedModule,
     UiModule,
     RouterModule.forChild(ExploreRoutes)
