@@ -577,9 +577,12 @@
   version "2.53.43"
   resolved "https://registry.yarnpkg.com/@types/selenium-webdriver/-/selenium-webdriver-2.53.43.tgz#2de3d718819bc20165754c4a59afb7e9833f6707"
 
-"@types/stacktrace-js@^0.0.32":
-  version "0.0.32"
-  resolved "https://registry.yarnpkg.com/@types/stacktrace-js/-/stacktrace-js-0.0.32.tgz#d23e4a36a5073d39487fbea8234cc6186862d389"
+"@types/stacktrace-js@^2.0.3":
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/@types/stacktrace-js/-/stacktrace-js-2.0.3.tgz#e1f05814826acf248af92a2b9a4b0f28a6bd66d1"
+  integrity sha512-B6JnMic4NAZ4mLWmRi4RvayCN2HZQvpcVF0MkoqubtuZx1AQB0/kRlrngGiocEPyO7R+TFocTEoLKQ0HzmEOPw==
+  dependencies:
+    stacktrace-js "*"
 
 "@types/tern@*":
   version "0.23.3"
@@ -3439,11 +3442,12 @@ error-ex@^1.2.0:
   dependencies:
     is-arrayish "^0.2.1"
 
-error-stack-parser@^2.0.1:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/error-stack-parser/-/error-stack-parser-2.0.1.tgz#a3202b8fb03114aa9b40a0e3669e48b2b65a010a"
+error-stack-parser@^2.0.6:
+  version "2.0.6"
+  resolved "https://registry.yarnpkg.com/error-stack-parser/-/error-stack-parser-2.0.6.tgz#5a99a707bd7a4c58a797902d48d82803ede6aad8"
+  integrity sha512-d51brTeqC+BHlwF0BhPtcYgF5nlzf9ZZ0ZIUQNZpc9ZB9qw5IJ2diTrBY9jlCJkTLITYPjmiX6OWCwH+fuyNgQ==
   dependencies:
-    stackframe "^1.0.3"
+    stackframe "^1.1.1"
 
 es-abstract@^1.7.0:
   version "1.9.0"
@@ -8851,30 +8855,34 @@ stack-chain@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/stack-chain/-/stack-chain-2.0.0.tgz#d73d1172af89565f07438b5bcc086831b6689b2d"
 
-stack-generator@^2.0.1:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/stack-generator/-/stack-generator-2.0.1.tgz#b37d8b0d9a2a6e52c06cc8e185f98f199fb63804"
+stack-generator@^2.0.5:
+  version "2.0.5"
+  resolved "https://registry.yarnpkg.com/stack-generator/-/stack-generator-2.0.5.tgz#fb00e5b4ee97de603e0773ea78ce944d81596c36"
+  integrity sha512-/t1ebrbHkrLrDuNMdeAcsvynWgoH/i4o8EGGfX7dEYDoTXOYVAkEpFdtshlvabzc6JlJ8Kf9YdFEoz7JkzGN9Q==
   dependencies:
-    stackframe "^1.0.3"
+    stackframe "^1.1.1"
 
-stackframe@^1.0.3:
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/stackframe/-/stackframe-1.0.3.tgz#fe64ab20b170e4ce49044b126c119dfa0e5dc7cc"
+stackframe@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/stackframe/-/stackframe-1.1.1.tgz#ffef0a3318b1b60c3b58564989aca5660729ec71"
+  integrity sha512-0PlYhdKh6AfFxRyK/v+6/k+/mMfyiEBbTM5L94D0ZytQnJ166wuwoTYLHFWGbs2dpA8Rgq763KGWmN1EQEYHRQ==
 
-stacktrace-gps@^3.0.1:
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/stacktrace-gps/-/stacktrace-gps-3.0.1.tgz#1e6f4997841d2b5bdabab9e6117e965ebbe64286"
+stacktrace-gps@^3.0.4:
+  version "3.0.4"
+  resolved "https://registry.yarnpkg.com/stacktrace-gps/-/stacktrace-gps-3.0.4.tgz#7688dc2fc09ffb3a13165ebe0dbcaf41bcf0c69a"
+  integrity sha512-qIr8x41yZVSldqdqe6jciXEaSCKw1U8XTXpjDuy0ki/apyTn/r3w9hDAAQOhZdxvsC93H+WwwEu5cq5VemzYeg==
   dependencies:
     source-map "0.5.6"
-    stackframe "^1.0.3"
+    stackframe "^1.1.1"
 
-stacktrace-js@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/stacktrace-js/-/stacktrace-js-2.0.0.tgz#776ca646a95bc6c6b2b90776536a7fc72c6ddb58"
+stacktrace-js@*, stacktrace-js@^2.0.0:
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/stacktrace-js/-/stacktrace-js-2.0.2.tgz#4ca93ea9f494752d55709a081d400fdaebee897b"
+  integrity sha512-Je5vBeY4S1r/RnLydLl0TBTi3F2qdfWmYsGvtfZgEI+SCprPppaIhQf5nGcal4gI4cGpCV/duLcAzT1np6sQqg==
   dependencies:
-    error-stack-parser "^2.0.1"
-    stack-generator "^2.0.1"
-    stacktrace-gps "^3.0.1"
+    error-stack-parser "^2.0.6"
+    stack-generator "^2.0.5"
+    stacktrace-gps "^3.0.4"
 
 stat-mode@^0.2.0:
   version "0.2.2"
