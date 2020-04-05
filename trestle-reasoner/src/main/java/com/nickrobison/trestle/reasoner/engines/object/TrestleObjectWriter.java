@@ -208,14 +208,13 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
             this.eventEngine.addSplitMergeEvent(type, subjectIndividual, objectIndividuals, eventTemporal);
 //            Write the strength
             this.ontology.writeIndividualDataProperty(eventIndividual, df.getOWLDataProperty(relationStrengthIRI), df.getOWLLiteral(strength));
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
         } catch (TrestleClassException | MissingOntologyEntity e) {
             logger.error("Unable to add individuals", e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
         } catch (TrestleEventException e) {
             logger.error("Unable add Event", e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
-        } finally {
-            this.ontology.returnAndCommitTransaction(trestleTransaction);
         }
     }
 
@@ -266,22 +265,25 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
 //        Write the overlap
         final OWLClassAssertionAxiom overlapClassAssertion = df.getOWLClassAssertionAxiom(df.getOWLClass(trestleOverlapIRI), overlapIndividual);
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
-        this.ontology.createIndividual(overlapClassAssertion);
-//        Write the overlap intersection
-        final OWLDataPropertyAssertionAxiom sOverlapAssertion = df.getOWLDataPropertyAssertionAxiom(df.getOWLDataProperty(tOverlapIRI), overlapIndividual, df.getOWLLiteral(temporalOverlap));
         try {
-            this.ontology.writeIndividualDataProperty(sOverlapAssertion);
-        } catch (MissingOntologyEntity missingOntologyEntity) {
-            logger.error("Missing individual {}", missingOntologyEntity.getIndividual(), missingOntologyEntity);
-        }
+            this.ontology.createIndividual(overlapClassAssertion);
 
-//        Write the subject relation
-        final OWLObjectProperty overlapProperty = df.getOWLObjectProperty(overlapOfIRI);
-        this.writeIndirectObjectProperty(overlapIndividual, subject, overlapProperty);
+            //        Write the overlap intersection
+            final OWLDataPropertyAssertionAxiom sOverlapAssertion = df.getOWLDataPropertyAssertionAxiom(df.getOWLDataProperty(tOverlapIRI), overlapIndividual, df.getOWLLiteral(temporalOverlap));
+            this.ontology.writeIndividualDataProperty(sOverlapAssertion);
+            //        Write the subject relation
+            final OWLObjectProperty overlapProperty = df.getOWLObjectProperty(overlapOfIRI);
+            this.writeIndirectObjectProperty(overlapIndividual, subject, overlapProperty);
 
 //        Write the object relation
-        this.writeIndirectObjectProperty(overlapIndividual, object, overlapProperty);
-        this.ontology.returnAndCommitTransaction(trestleTransaction);
+            this.writeIndirectObjectProperty(overlapIndividual, object, overlapProperty);
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
+        } catch (MissingOntologyEntity missingOntologyEntity) {
+            logger.error("Missing individual {}", missingOntologyEntity.getIndividual(), missingOntologyEntity);
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
+        } catch (Exception e) {
+            logger.error("Unable to write overlap", e);
+        }
     }
 
     /**
@@ -319,10 +321,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
         if (this.mergeEngine.mergeOnLoad() && this.engineUtils.checkExists(owlNamedIndividual.getIRI())) {
             final Timer.Context mergeTimer = this.metrician.registerTimer("trestle-merge-timer").time();
             final Optional<List<OWLDataPropertyAssertionAxiom>> individualFactsOptional = this.classParser.getFacts(inputObject);
-//            Open transaction
-//            final TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(true);
             try {
-
 //            Get all the currently valid facts
                 if (individualFactsOptional.isPresent()) {
                     final List<OWLDataPropertyAssertionAxiom> individualFacts = individualFactsOptional.get();
@@ -374,13 +373,10 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
                 logger.error("Error while writing object {}", owlNamedIndividual, e);
 //                recoverExceptionType(e, TrestleMergeConflict.class, TrestleMergeException.class);
                 ExceptionUtils.rethrow(e.getCause());
-                mergeTimer.stop();
             } finally {
                 mergeTimer.stop();
             }
-        } else {
-//        If the object doesn't exist, continue with the simple write
-
+        } else { //        If the object doesn't exist, continue with the simple write
 //        Write the class
             final OWLClass owlClass = this.classParser.getObjectClass(inputObject);
             try {
