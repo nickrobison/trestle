@@ -32,8 +32,6 @@ import com.nickrobison.trestle.types.events.TrestleEventType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -52,8 +50,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.IRIUtils.parseStringToIRI;
@@ -112,14 +108,19 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
         this.relationTracker = relationTracker;
         this.reasonerPrefix = reasonerPrefix;
 
-        final Config config = ConfigFactory.load().getConfig("trestle");
-
         this.objectWriterThreadPool = factory.create("object-writer-pool");
     }
 
     @Override
     public void writeTrestleObject(Object inputObject) throws TrestleClassException, MissingOntologyEntity {
-        writeTrestleObjectImpl(inputObject, null);
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
+        try {
+            writeTrestleObjectImpl(inputObject, null);
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
+        } catch (RuntimeException e) {
+            logger.error("Unable to write object.", e);
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
+        }
     }
 
     @Override
@@ -131,17 +132,38 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
         } else {
             databaseTemporal = TemporalObjectBuilder.database().from(startTemporal).to(endTemporal).build();
         }
-        writeTrestleObjectImpl(inputObject, databaseTemporal);
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
+        try {
+            writeTrestleObjectImpl(inputObject, databaseTemporal);
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
+        } catch (RuntimeException e) {
+            logger.error("Unable to write object.", e);
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
+        }
     }
 
     @Override
     public void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validAt, @Nullable Temporal databaseFrom) {
-        addFactToTrestleObjectImpl(clazz, individual, factName, value, validAt, null, null, databaseFrom);
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
+        try {
+            addFactToTrestleObjectImpl(clazz, individual, factName, value, validAt, null, null, databaseFrom);
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
+        } catch (RuntimeException e) {
+            logger.error("Unable to write object.", e);
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
+        }
     }
 
     @Override
     public void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validFrom, @Nullable Temporal validTo, @Nullable Temporal databaseFrom) {
-        addFactToTrestleObjectImpl(clazz, individual, factName, value, null, validFrom, validTo, databaseFrom);
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
+        try {
+            addFactToTrestleObjectImpl(clazz, individual, factName, value, null, validFrom, validTo, databaseFrom);
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
+        } catch (RuntimeException e) {
+            logger.error("Unable to write object.", e);
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
+        }
     }
 
     @Override
@@ -298,7 +320,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
             final Timer.Context mergeTimer = this.metrician.registerTimer("trestle-merge-timer").time();
             final Optional<List<OWLDataPropertyAssertionAxiom>> individualFactsOptional = this.classParser.getFacts(inputObject);
 //            Open transaction
-            final TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(true);
+//            final TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(true);
             try {
 
 //            Get all the currently valid facts
@@ -310,69 +332,50 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
                             .map(fact -> fact.getProperty().asOWLDataProperty())
                             .collect(Collectors.toList());
 
-                    final CompletableFuture<TrestleResultSet> factsFuture = CompletableFuture.supplyAsync(() -> {
-                        final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-                        try {
-                            final String individualFactquery = this.qb.buildObjectFactRetrievalQuery(parseTemporalToOntologyDateTime(factTemporal.getIdTemporal(), ZoneOffset.UTC), parseTemporalToOntologyDateTime(dTemporal.getIdTemporal(), ZoneOffset.UTC), true, filteredFactProperties, owlNamedIndividual);
-                            return this.ontology.executeSPARQLResults(individualFactquery);
-                        } finally {
-                            this.ontology.returnAndCommitTransaction(tt);
-                        }
-                    }, this.objectWriterThreadPool);
+                    // get the facts
+                    final String individualFactquery = this.qb.buildObjectFactRetrievalQuery(parseTemporalToOntologyDateTime(factTemporal.getIdTemporal(), ZoneOffset.UTC), parseTemporalToOntologyDateTime(dTemporal.getIdTemporal(), ZoneOffset.UTC), true, filteredFactProperties, owlNamedIndividual);
+                    final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(individualFactquery);
 
 //                    Get object existence information
-                    @SuppressWarnings("Duplicates") final CompletableFuture<Optional<TemporalObject>> existsFuture = readObjectExistence(owlNamedIndividual, trestleTransaction, this.objectWriterThreadPool, !this.mergeEngine.existenceEnabled());
+                    final Optional<TemporalObject> existsTemporal = readObjectExistence(owlNamedIndividual, !this.mergeEngine.existenceEnabled());
 
-
-                    final CompletableFuture<Void> mergeFuture = factsFuture.thenAcceptBothAsync(existsFuture, (resultSet, existsTemporal) -> {
-
-                        final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-
-                        try {
 //                Get all the currently valid facts, compare them with the ones present on the object, and update the different ones.
-                            final Timer.Context compareTimer = this.metrician.registerTimer("trestle-merge-comparison-timer").time();
-                            final List<TrestleResult> currentFacts = resultSet.getResults();
-                            final MergeScript mergeScript = this.mergeEngine.mergeFacts(owlNamedIndividual, factTemporal, individualFacts, currentFacts, factTemporal.getIdTemporal(), dTemporal.getIdTemporal(), existsTemporal);
-                            compareTimer.stop();
+                    final Timer.Context compareTimer = this.metrician.registerTimer("trestle-merge-comparison-timer").time();
+                    final List<TrestleResult> currentFacts = resultSet.getResults();
+                    final MergeScript mergeScript = this.mergeEngine.mergeFacts(owlNamedIndividual, factTemporal, individualFacts, currentFacts, factTemporal.getIdTemporal(), dTemporal.getIdTemporal(), existsTemporal);
+                    compareTimer.stop();
 
 //                Update all the unbounded DB temporals for the diverging facts
-                            logger.trace("Setting DBTo: {} for {}", dTemporal.getIdTemporal(), mergeScript.getFactsToVersion());
-                            final String temporalUpdateQuery = this.qb.buildUpdateUnboundedTemporal(TemporalParser.parseTemporalToOntologyDateTime(dTemporal.getIdTemporal(), ZoneOffset.UTC), mergeScript.getFactsToVersionAsArray());
-                            final Timer.Context temporalTimer = this.metrician.registerTimer("trestle-merge-temporal-timer").time();
-                            this.ontology.executeUpdateSPARQL(temporalUpdateQuery);
-                            temporalTimer.stop();
+                    logger.trace("Setting DBTo: {} for {}", dTemporal.getIdTemporal(), mergeScript.getFactsToVersion());
+                    final String temporalUpdateQuery = this.qb.buildUpdateUnboundedTemporal(TemporalParser.parseTemporalToOntologyDateTime(dTemporal.getIdTemporal(), ZoneOffset.UTC), mergeScript.getFactsToVersionAsArray());
+                    final Timer.Context temporalTimer = this.metrician.registerTimer("trestle-merge-temporal-timer").time();
+                    this.ontology.executeUpdateSPARQL(temporalUpdateQuery);
+                    temporalTimer.stop();
 //                Write new versions of all the previously valid facts
-                            mergeScript
-                                    .getNewFactVersions()
-                                    .forEach(fact -> writeObjectFacts(aClass, owlNamedIndividual, Collections.singletonList(fact.getAxiom()), fact.getValidTemporal(), dTemporal));
+                    mergeScript
+                            .getNewFactVersions()
+                            .forEach(fact -> writeObjectFacts(aClass, owlNamedIndividual, Collections.singletonList(fact.getAxiom()), fact.getValidTemporal(), dTemporal));
 //                Write the new valid facts
-                            final Timer.Context factsTimer = this.metrician.registerTimer("trestle-merge-facts-timer").time();
-                            writeObjectFacts(aClass, owlNamedIndividual, mergeScript.getNewFacts(), factTemporal, dTemporal);
-                            factsTimer.stop();
+                    final Timer.Context factsTimer = this.metrician.registerTimer("trestle-merge-facts-timer").time();
+                    writeObjectFacts(aClass, owlNamedIndividual, mergeScript.getNewFacts(), factTemporal, dTemporal);
+                    factsTimer.stop();
 
 //                    Write new individual existence axioms, if they exist
-                            if (!mergeScript.getIndividualExistenceAxioms().isEmpty()) {
-                                final String updateExistenceQuery = this.qb.updateObjectProperties(mergeScript.getIndividualExistenceAxioms(), trestleObjectIRI);
-                                this.ontology.executeUpdateSPARQL(updateExistenceQuery);
+                    if (!mergeScript.getIndividualExistenceAxioms().isEmpty()) {
+                        final String updateExistenceQuery = this.qb.updateObjectProperties(mergeScript.getIndividualExistenceAxioms(), trestleObjectIRI);
+                        this.ontology.executeUpdateSPARQL(updateExistenceQuery);
 
 //                                Update object events
-                                this.eventEngine.adjustObjectEvents(mergeScript.getIndividualExistenceAxioms());
-                            }
-                        } finally {
-                            this.ontology.returnAndCommitTransaction(tt);
-                        }
-                    }, this.objectWriterThreadPool);
-                    mergeFuture.join();
+                        this.eventEngine.adjustObjectEvents(mergeScript.getIndividualExistenceAxioms());
+                    }
 
                 }
             } catch (RuntimeException e) {
-                ontology.returnAndAbortTransaction(trestleTransaction);
                 logger.error("Error while writing object {}", owlNamedIndividual, e);
 //                recoverExceptionType(e, TrestleMergeConflict.class, TrestleMergeException.class);
                 ExceptionUtils.rethrow(e.getCause());
                 mergeTimer.stop();
             } finally {
-                ontology.returnAndCommitTransaction(trestleTransaction);
                 mergeTimer.stop();
             }
         } else {
@@ -380,8 +383,6 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
 
 //        Write the class
             final OWLClass owlClass = this.classParser.getObjectClass(inputObject);
-//        Open the transaction
-            final TrestleTransaction trestleTransaction = ontology.createandOpenNewTransaction(true);
             try {
                 ontology.associateOWLClass(owlClass, DATASET_CLASS);
 //        Write the individual
@@ -402,10 +403,8 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
                     }
                 }
             } catch (RuntimeException e) {
-                ontology.returnAndAbortTransaction(trestleTransaction);
                 logger.error("Error while writing object {}", owlNamedIndividual, e);
-            } finally {
-                ontology.returnAndCommitTransaction(trestleTransaction);
+                ExceptionUtils.rethrow(e.getCause());
             }
         }
 
@@ -496,59 +495,44 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
 
 //        Find existing facts
 //        final String validFactQuery = this.qb.buildCurrentlyValidFactQuery(owlNamedIndividual, owlDataProperty, parseTemporalToOntologyDateTime(validTemporal.getIdTemporal(), ZoneOffset.UTC), parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC));
-        final String validFactQuery = this.qb.buildObjectFactRetrievalQuery(parseTemporalToOntologyDateTime(validTemporal.getIdTemporal(), ZoneOffset.UTC), parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC), true, Collections.singletonList(owlDataProperty), owlNamedIndividual);
-        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
+
         try {
-
-            final CompletableFuture<TrestleResultSet> factsFuture = CompletableFuture.supplyAsync(() -> {
-                final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-                try {
-                    return this.ontology.executeSPARQLResults(validFactQuery);
-                } finally {
-                    this.ontology.returnAndCommitTransaction(tt);
-                }
-            }, this.objectWriterThreadPool);
-
+            final String validFactQuery = this.qb.buildObjectFactRetrievalQuery(parseTemporalToOntologyDateTime(validTemporal.getIdTemporal(), ZoneOffset.UTC), parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC), true, Collections.singletonList(owlDataProperty), owlNamedIndividual);
+            final TrestleResultSet validFactResultSet = this.ontology.executeSPARQLResults(validFactQuery);
 
 //                    Get object existence information
-            @SuppressWarnings("Duplicates") final CompletableFuture<Optional<TemporalObject>> existsFuture = readObjectExistence(owlNamedIndividual,
-                    trestleTransaction,
-                    this.objectWriterThreadPool,
+            Optional<TemporalObject> existsTemporal = readObjectExistence(owlNamedIndividual,
                     !this.mergeEngine.existenceEnabled());
 
-            final CompletableFuture<Void> mergeFuture = factsFuture.thenAcceptBothAsync(existsFuture, (validFactResultSet, existsTemporal) -> {
+//            final CompletableFuture<Void> mergeFuture = factsFuture.thenAcceptBothAsync(existsTemporal, (validFactResultSet, existsTemporal) -> {
 
-                final MergeScript newFactMergeScript = this.mergeEngine.mergeFacts(owlNamedIndividual, validTemporal, Collections.singletonList(newFactAxiom), validFactResultSet.getResults(), validTemporal.getIdTemporal(), databaseTemporal.getIdTemporal(), existsTemporal);
-                final String update = this.qb.buildUpdateUnboundedTemporal(parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC), newFactMergeScript.getFactsToVersionAsArray());
-                this.ontology.executeUpdateSPARQL(update);
+            final MergeScript newFactMergeScript = this.mergeEngine.mergeFacts(owlNamedIndividual, validTemporal, Collections.singletonList(newFactAxiom), validFactResultSet.getResults(), validTemporal.getIdTemporal(), databaseTemporal.getIdTemporal(), existsTemporal);
+            final String update = this.qb.buildUpdateUnboundedTemporal(parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC), newFactMergeScript.getFactsToVersionAsArray());
+            this.ontology.executeUpdateSPARQL(update);
 
 //        Write the new versions
-                newFactMergeScript
-                        .getNewFactVersions()
-                        .forEach(fact -> writeObjectFacts(clazz, owlNamedIndividual, Collections.singletonList(fact.getAxiom()), fact.getValidTemporal(), fact.getDbTemporal()));
+            newFactMergeScript
+                    .getNewFactVersions()
+                    .forEach(fact -> writeObjectFacts(clazz, owlNamedIndividual, Collections.singletonList(fact.getAxiom()), fact.getValidTemporal(), fact.getDbTemporal()));
 
 //        Write the new fact versions
-                writeObjectFacts(clazz, owlNamedIndividual, newFactMergeScript.getNewFacts(), validTemporal, databaseTemporal);
+            writeObjectFacts(clazz, owlNamedIndividual, newFactMergeScript.getNewFacts(), validTemporal, databaseTemporal);
 
 //                Write the new existence axioms, if they exist
-                final List<OWLDataPropertyAssertionAxiom> individualExistenceAxioms = newFactMergeScript.getIndividualExistenceAxioms();
-                if (!individualExistenceAxioms.isEmpty()) {
-                    final String updateExistenceQuery = this.qb.updateObjectProperties(individualExistenceAxioms, trestleObjectIRI);
-                    this.ontology.executeUpdateSPARQL(updateExistenceQuery);
+            final List<OWLDataPropertyAssertionAxiom> individualExistenceAxioms = newFactMergeScript.getIndividualExistenceAxioms();
+            if (!individualExistenceAxioms.isEmpty()) {
+                final String updateExistenceQuery = this.qb.updateObjectProperties(individualExistenceAxioms, trestleObjectIRI);
+                this.ontology.executeUpdateSPARQL(updateExistenceQuery);
 
 //                    Update events
-                    this.eventEngine.adjustObjectEvents(individualExistenceAxioms);
-                }
+                this.eventEngine.adjustObjectEvents(individualExistenceAxioms);
+            }
 
-            }, this.objectWriterThreadPool);
-            mergeFuture.join();
         } catch (RuntimeException e) {
-            this.ontology.returnAndAbortTransaction(trestleTransaction);
+//            this.ontology.returnAndAbortTransaction(trestleTransaction);
             logger.error("Unable to add fact {} to object {}", factName, owlNamedIndividual, e);
-//            recoverExceptionType(e, TrestleMergeConflict.class, TrestleMergeException.class);
             ExceptionUtils.rethrow(e.getCause());
-        } finally {
-            this.ontology.returnAndCommitTransaction(trestleTransaction);
+            ExceptionUtils.rethrow(e.getCause());
         }
 
 
@@ -693,25 +677,23 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
     /**
      * Read object existence {@link TemporalObject} for the given {@link OWLNamedIndividual}, unless we bypass it, then just return an empty optional
      *
-     * @param individual  - {@link OWLNamedIndividual} to read
-     * @param transaction - Execute as part of provided {@link TrestleTransaction}
-     * @param executor    - Execute within provided {@link ExecutorService}
-     * @param bypass      - {@code true} bypass execution and return {@link Optional#empty()}
+     * @param individual - {@link OWLNamedIndividual} to read
+     * @param bypass     - {@code true} bypass execution and return {@link Optional#empty()}
      * @return - {@link Optional} of {@link TemporalObject} provided existence interval of the individual
      */
-    private CompletableFuture<Optional<TemporalObject>> readObjectExistence(OWLNamedIndividual individual, @Nullable TrestleTransaction transaction, ExecutorService executor, boolean bypass) {
+    private Optional<TemporalObject> readObjectExistence(OWLNamedIndividual individual, boolean bypass) {
         if (!bypass) {
-            return CompletableFuture.supplyAsync(() -> {
-                final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(transaction);
-                try {
-                    final Set<OWLDataPropertyAssertionAxiom> individualExistenceProperties = this.ontology.getAllDataPropertiesForIndividual(individual);
-                    return TemporalObjectBuilder.buildTemporalFromProperties(individualExistenceProperties, OffsetDateTime.class, null, null);
-                } finally {
-                    this.ontology.returnAndCommitTransaction(tt);
-                }
-            }, executor);
+//            return CompletableFuture.supplyAsync(() -> {
+//                final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(transaction);
+//                try {
+            final Set<OWLDataPropertyAssertionAxiom> individualExistenceProperties = this.ontology.getAllDataPropertiesForIndividual(individual);
+            return TemporalObjectBuilder.buildTemporalFromProperties(individualExistenceProperties, OffsetDateTime.class, null, null);
+//                } finally {
+//                    this.ontology.returnAndCommitTransaction(tt);
+//                }
+//            }, executor);
         }
-        return CompletableFuture.completedFuture(Optional.empty());
+        return Optional.empty();
     }
 
     /**
