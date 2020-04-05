@@ -52,7 +52,7 @@
     "@ngtools/webpack": "^1.10.2",
     "@types/chai": "^4.1.2",
     "@types/chai-as-promised": "^7.1.0",
-    "@types/codemirror": "^0.0.55",
+    "@types/codemirror": "^0.0.90",
     "@types/crypto-js": "^3.1.38",
     "@types/cucumber": "^4.0.1",
     "@types/d3": "^4.11.0",
