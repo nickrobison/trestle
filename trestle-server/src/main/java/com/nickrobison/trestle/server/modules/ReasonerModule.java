@@ -48,7 +48,7 @@ public class ReasonerModule implements Managed {
                 .withPrefix(configuration.getPrefix())
                 .withOntology(configuration.getLocation())
                 .withInputClasses(GAULObject.class, TigerCountyObject.class, CensusState.class, CensusCounty.class)
-                .withoutMetrics()
+//                .withoutMetrics()
                 .build();
 
         logger.info("Reasoner started");
