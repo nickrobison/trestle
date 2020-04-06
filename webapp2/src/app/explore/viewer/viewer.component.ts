@@ -4,7 +4,7 @@
 import {Component, OnInit, ViewChild} from '@angular/core';
 import {MapService} from './map.service';
 import {animate, style, transition, trigger} from '@angular/animations';
-import * as moment from 'moment';
+import moment from "moment";
 import {TrestleIndividual} from '../../shared/individual/TrestleIndividual/trestle-individual';
 import {Subject} from 'rxjs';
 import {LngLatBounds} from 'mapbox-gl';

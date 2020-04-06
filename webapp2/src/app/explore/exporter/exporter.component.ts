@@ -3,6 +3,7 @@ import {ExporterService} from './exporter.service';
 import {forkJoin} from 'rxjs';
 import {finalize} from 'rxjs/operators';
 import {saveAs} from "file-saver";
+import {MatSelectChange} from '@angular/material/select';
 
 export interface IDataExport {
   dataset: string;
@@ -32,6 +33,10 @@ export class ExporterComponent {
     ];
     this.selectedValue = this.options[0].value;
     this.loading = false;
+  }
+
+  public handleChange(change: MatSelectChange): void {
+    this.selectedValue = change.value;
   }
 
   /**

@@ -15,6 +15,7 @@ import {TrestleIndividual} from '../shared/individual/TrestleIndividual/trestle-
 import {INDIVIDUAL_CACHE_DI_CONFIG} from './explore.config';
 import {CACHE_SERVICE_CONFIG} from '../shared/cache/cache.service.config';
 import {SharedModule} from '../shared/shared.module';
+import {MaterialModule} from '../material/material.module';
 
 
 @NgModule({
@@ -22,6 +23,7 @@ import {SharedModule} from '../shared/shared.module';
   imports: [
     CommonModule,
     UserModule,
+    MaterialModule,
     NavigationModule,
     SharedModule,
     UiModule,

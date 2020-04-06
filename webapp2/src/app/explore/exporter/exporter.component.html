@@ -2,7 +2,7 @@
     <h6 *ngIf="label">Export:</h6>
     <form>
         <mat-form-field>
-            <mat-select placeholder="Format" [(ngModel)]="selectedValue" name="type">
+            <mat-select placeholder="Format" (selectionChange)="handleChange($event)" name="type">
                 <mat-option *ngFor="let option of options" [value]="option.value">
                     {{option.viewValue}}
                 </mat-option>

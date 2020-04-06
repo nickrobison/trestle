@@ -20,5 +20,8 @@ module.exports = {
   ...jestPreset,
   globals: { ...globalOverrides },
   preset: 'jest-preset-angular',
+  setupFiles: [
+    '<rootDir>/jest/jest.stubs.ts'
+  ]
   // setupFilesAfterEnv: ['<rootDir>/src/setupJest.ts']
 };

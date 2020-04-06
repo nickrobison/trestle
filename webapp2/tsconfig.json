@@ -16,7 +16,8 @@
       "dom"
     ],
     "types": ["jest", "types"],
-    "strictPropertyInitialization": false
+    "strictPropertyInitialization": false,
+    "allowSyntheticDefaultImports": true
   },
   "angularCompilerOptions": {
     "fullTemplateTypeCheck": true,

@@ -1,5 +1,5 @@
 import { IInterfacable } from "../../interfacable";
-import * as moment from "moment";
+import moment from "moment";
 
 export interface ITrestleEvent {
     individual: string;
