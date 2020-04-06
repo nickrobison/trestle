@@ -1,0 +1,18 @@
+<div class="disabled_text light_gray_text" *ngIf="!stats">
+    Caching is disabled
+</div>
+<div *ngIf="stats">
+    <h4>Valid Index</h4>
+    <tree-graph #valid_graph
+                [data]="{maxValue: stats.maxValue, offsetValue: stats.offsetValue, leafs: stats.validLeafStats}"
+                (hovered)="updateSelected($event, validHover)"></tree-graph>
+    <button mat-raised-button color="accent" (click)="openDialog('Rebuild', 'Valid Index')">REBUILD INDEX</button>
+    <index-table #valid_table [data]="stats.validLeafStats"></index-table>
+    <h3>DB Index</h3>
+    <tree-graph #db_graph
+                [data]="{maxValue: stats.maxValue, offsetValue: stats.offsetValue, leafs: stats.dbLeafStats}"
+                (hovered)="updateSelected($event, dbHover)"></tree-graph>
+    <button mat-raised-button color="accent" (click)="openDialog('Rebuild', 'DB Index')">REBUILD INDEX</button>
+    <index-table #db_table [data]="stats.dbLeafStats"></index-table>
+    <button mat-raised-button color="warn" (click)="openDialog('Purge', 'Object Cache')">PURGE CACHE</button>
+</div>

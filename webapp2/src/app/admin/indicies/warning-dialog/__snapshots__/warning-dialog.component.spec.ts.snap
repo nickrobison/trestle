@@ -1,0 +1,10 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`WarningDialogComponent should create 1`] = `
+WarningDialogComponent {
+  "action": undefined,
+  "closeValue": "Ok",
+  "data": "",
+  "object": undefined,
+}
+`;

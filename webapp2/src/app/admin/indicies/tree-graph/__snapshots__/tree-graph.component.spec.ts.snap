@@ -1,0 +1,127 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`TreeGraphComponent should create 1`] = `
+TreeGraphComponent {
+  "colorScale": [Function],
+  "dataSubject": BehaviorSubject {
+    "_isScalar": false,
+    "_value": undefined,
+    "closed": false,
+    "hasError": false,
+    "isStopped": false,
+    "observers": Array [
+      Subscriber {
+        "_parentOrParents": null,
+        "_subscriptions": Array [
+          SubjectSubscription {
+            "_parentOrParents": [Circular],
+            "_subscriptions": null,
+            "closed": false,
+            "subject": [Circular],
+            "subscriber": [Circular],
+          },
+        ],
+        "closed": false,
+        "destination": SafeSubscriber {
+          "_complete": undefined,
+          "_context": [Circular],
+          "_error": undefined,
+          "_next": [Function],
+          "_parentOrParents": null,
+          "_parentSubscriber": [Circular],
+          "_subscriptions": null,
+          "closed": false,
+          "destination": Object {
+            "closed": true,
+            "complete": [Function],
+            "error": [Function],
+            "next": [Function],
+          },
+          "isStopped": false,
+          "syncErrorThrowable": false,
+          "syncErrorThrown": false,
+          "syncErrorValue": null,
+        },
+        "isStopped": false,
+        "syncErrorThrowable": true,
+        "syncErrorThrown": false,
+        "syncErrorValue": null,
+      },
+    ],
+    "thrownError": null,
+  },
+  "element": ElementRef {
+    "nativeElement": <div>
+      <svg
+        height="500"
+        width="0"
+      >
+        <g
+          transform="translate(150,20)"
+        />
+      </svg>
+    </div>,
+  },
+  "height": 380,
+  "host": Selection {
+    "_groups": Array [
+      Array [
+        <div>
+          <svg
+            height="500"
+            width="0"
+          >
+            <g
+              transform="translate(150,20)"
+            />
+          </svg>
+        </div>,
+      ],
+    ],
+    "_parents": Array [
+      null,
+    ],
+  },
+  "hoverHandler": [Function],
+  "hovered": EventEmitter {
+    "__isAsync": false,
+    "_isScalar": false,
+    "closed": false,
+    "hasError": false,
+    "isStopped": false,
+    "observers": Array [],
+    "thrownError": null,
+  },
+  "htmlElement": <div>
+    <svg
+      height="500"
+      width="0"
+    >
+      <g
+        transform="translate(150,20)"
+      />
+    </svg>
+  </div>,
+  "margin": Object {
+    "bottom": 100,
+    "left": 150,
+    "right": 30,
+    "top": 20,
+  },
+  "maxTime": "5000-01-01T05:00:00.000Z",
+  "rounder": RoundingPipe {},
+  "svg": Selection {
+    "_groups": Array [
+      Array [
+        <g
+          transform="translate(150,20)"
+        />,
+      ],
+    ],
+    "_parents": Array [
+      null,
+    ],
+  },
+  "width": -180,
+}
+`;

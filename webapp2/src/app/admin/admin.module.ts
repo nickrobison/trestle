@@ -14,6 +14,11 @@ import {SharedModule} from '../shared/shared.module';
 import {MetricsComponent} from './metrics/metrics.component';
 import {MetricsGraphComponent} from './metrics-graph/metrics-graph.component';
 import {MetricsService} from './metrics-graph/metrics.service';
+import {IndexTableComponent} from './indicies/index-table/index-table.component';
+import {TreeGraphComponent} from './indicies/tree-graph/tree-graph.component';
+import {WarningDialogComponent} from './indicies/warning-dialog/warning-dialog-component';
+import {IndexService} from './indicies/index.service';
+import {IndexComponent} from './indicies/index.component';
 
 
 @NgModule({
@@ -23,9 +28,13 @@ import {MetricsService} from './metrics-graph/metrics.service';
     MetricsComponent,
     MetricsGraphComponent,
     UsersComponent,
-    UserDialogComponent
+    UserDialogComponent,
+    IndexTableComponent,
+    TreeGraphComponent,
+    WarningDialogComponent,
+    IndexComponent
   ],
-  providers: [MetricsService],
+  providers: [MetricsService, IndexService],
   imports: [
     CommonModule,
     UserModule,
@@ -37,7 +46,8 @@ import {MetricsService} from './metrics-graph/metrics.service';
     RouterModule.forChild(AdminRoutes),
     SharedModule
   ],
-  entryComponents: [UserDialogComponent]
+  // This will not be needed once we enable Ivy
+  entryComponents: [UserDialogComponent, WarningDialogComponent]
 })
 export class AdminModule {
 }
