@@ -117,9 +117,10 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
         try {
             writeTrestleObjectImpl(inputObject, null);
             this.ontology.returnAndCommitTransaction(trestleTransaction);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             logger.error("Unable to write object.", e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
+            ExceptionUtils.rethrow(e);
         }
     }
 
@@ -136,9 +137,10 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
         try {
             writeTrestleObjectImpl(inputObject, databaseTemporal);
             this.ontology.returnAndCommitTransaction(trestleTransaction);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             logger.error("Unable to write object.", e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
+            ExceptionUtils.rethrow(e);
         }
     }
 
@@ -151,6 +153,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
         } catch (RuntimeException e) {
             logger.error("Unable to write object.", e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
+            ExceptionUtils.rethrow(e);
         }
     }
 
@@ -163,6 +166,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
         } catch (RuntimeException e) {
             logger.error("Unable to write object.", e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
+            ExceptionUtils.rethrow(e);
         }
     }
 
@@ -369,10 +373,6 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
                     }
 
                 }
-            } catch (RuntimeException e) {
-                logger.error("Error while writing object {}", owlNamedIndividual, e);
-//                recoverExceptionType(e, TrestleMergeConflict.class, TrestleMergeException.class);
-                ExceptionUtils.rethrow(e.getCause());
             } finally {
                 mergeTimer.stop();
             }
@@ -500,8 +500,6 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
             Optional<TemporalObject> existsTemporal = readObjectExistence(owlNamedIndividual,
                     !this.mergeEngine.existenceEnabled());
 
-//            final CompletableFuture<Void> mergeFuture = factsFuture.thenAcceptBothAsync(existsTemporal, (validFactResultSet, existsTemporal) -> {
-
             final MergeScript newFactMergeScript = this.mergeEngine.mergeFacts(owlNamedIndividual, validTemporal, Collections.singletonList(newFactAxiom), validFactResultSet.getResults(), validTemporal.getIdTemporal(), databaseTemporal.getIdTemporal(), existsTemporal);
             final String update = this.qb.buildUpdateUnboundedTemporal(parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC), newFactMergeScript.getFactsToVersionAsArray());
             this.ontology.executeUpdateSPARQL(update);
@@ -527,8 +525,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
         } catch (RuntimeException e) {
 //            this.ontology.returnAndAbortTransaction(trestleTransaction);
             logger.error("Unable to add fact {} to object {}", factName, owlNamedIndividual, e);
-            ExceptionUtils.rethrow(e.getCause());
-            ExceptionUtils.rethrow(e.getCause());
+            throw e;
         }
 
 
@@ -679,15 +676,8 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
      */
     private Optional<TemporalObject> readObjectExistence(OWLNamedIndividual individual, boolean bypass) {
         if (!bypass) {
-//            return CompletableFuture.supplyAsync(() -> {
-//                final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(transaction);
-//                try {
             final Set<OWLDataPropertyAssertionAxiom> individualExistenceProperties = this.ontology.getAllDataPropertiesForIndividual(individual);
             return TemporalObjectBuilder.buildTemporalFromProperties(individualExistenceProperties, OffsetDateTime.class, null, null);
-//                } finally {
-//                    this.ontology.returnAndCommitTransaction(tt);
-//                }
-//            }, executor);
         }
         return Optional.empty();
     }
