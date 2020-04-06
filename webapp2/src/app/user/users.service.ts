@@ -1,15 +1,20 @@
 /**
  * Created by nrobison on 1/19/17.
  */
-import {Injectable} from "@angular/core";
-import {Observable} from "rxjs";
-import {ITrestleUser} from "./authentication.service";
-import {HttpClient} from "@angular/common/http";
-import {map} from "rxjs/operators";
+import {Injectable} from '@angular/core';
+import {Observable} from 'rxjs';
+import {ITrestleUser} from './authentication.service';
+import {HttpClient} from '@angular/common/http';
+import {map} from 'rxjs/operators';
+import {environment} from '../../environments/environment';
 
 @Injectable()
 export class UserService {
+
+  private readonly baseUrl: string;
+
   constructor(private trestleHttp: HttpClient) {
+    this.baseUrl = environment.baseUrl;
   }
 
   /**
@@ -19,7 +24,7 @@ export class UserService {
    * @returns {Observable<R>}
    */
   public getUsers(): Observable<ITrestleUser[]> {
-    return this.trestleHttp.get<ITrestleUser[]>("/users");
+    return this.trestleHttp.get<ITrestleUser[]>(this.baseUrl + '/users');
   }
 
   /**
@@ -29,8 +34,10 @@ export class UserService {
    * @param user - User to create/modify
    * @returns {Observable<R>}
    */
-  public modifyUser(user: ITrestleUser): Observable<any> {
-    return this.trestleHttp.post("/users", user);
+  public modifyUser(user: ITrestleUser): Observable<string> {
+    return this.trestleHttp.post(this.baseUrl + '/users', user, {
+      responseType: 'text'
+    });
   }
 
   /**
@@ -39,7 +46,7 @@ export class UserService {
    * @returns {Observable<R>}
    */
   public deleteUser(id: number): Observable<any> {
-    return this.trestleHttp.delete("/users/" + id);
+    return this.trestleHttp.delete(this.baseUrl + '/users/' + id);
   }
 
   /**
@@ -49,8 +56,8 @@ export class UserService {
    * @returns {Observable<boolean>}
    */
   public userExists(username: string): Observable<boolean> {
-    console.debug("Checking username:", username);
-    return this.trestleHttp.get<string>("/users/exists/" + username)
-      .pipe(map(res => res === "true"));
+    console.debug('Checking username:', username);
+    return this.trestleHttp.get<string>(this.baseUrl + '/users/exists/' + username)
+      .pipe(map(res => res === 'true'));
   }
 }

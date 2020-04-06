@@ -1,15 +1,15 @@
-import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {NgModule} from '@angular/core';
+import {CommonModule} from '@angular/common';
 import {IndividualService} from './individual/individual.service';
 import {DATASET_CACHE, DatasetService} from './dataset/dataset.service';
 import {CacheService} from './cache/cache.service';
-import {ArraySortPipePipe} from './pipes/array-sort.pipe';
+import {ArraySortPipe} from './pipes/array-sort.pipe';
 import {DATASET_CACHE_DI_CONFIG} from './shared.config';
-
+import {MapValuesPipe} from './pipes/map-values.pipe';
 
 
 @NgModule({
-  declarations: [ArraySortPipePipe],
+  declarations: [ArraySortPipe, MapValuesPipe],
   providers: [
     IndividualService,
     DatasetService,
@@ -19,6 +19,11 @@ import {DATASET_CACHE_DI_CONFIG} from './shared.config';
     }],
   imports: [
     CommonModule
+  ],
+  exports: [
+    MapValuesPipe,
+    ArraySortPipe
   ]
 })
-export class SharedModule { }
+export class SharedModule {
+}

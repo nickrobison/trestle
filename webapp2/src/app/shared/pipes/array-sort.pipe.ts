@@ -1,7 +1,7 @@
 import { Pipe, PipeTransform } from "@angular/core";
 
-@Pipe({name: "ArraySortPipe"})
-export class ArraySortPipePipe implements PipeTransform {
+@Pipe({name: "ArraySort"})
+export class ArraySortPipe implements PipeTransform {
 
     /**
      * Sorts a given input array either based on the element value, or an optional field

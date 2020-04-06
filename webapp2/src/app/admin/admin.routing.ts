@@ -6,6 +6,7 @@ import {LoggedInGuard} from '../user/LoggedInGuard';
 import {PermissionsGuard} from '../user/PermissionsGuard';
 import {Privileges} from '../user/authentication.service';
 import {ITrestleRoute} from '../navigation/navigation.module';
+import {UsersComponent} from './users/users.component';
 
 export const AdminRoutes: ITrestleRoute[] = [
     {path: "", redirectTo: "dashboard", pathMatch: "full"},
@@ -14,13 +15,13 @@ export const AdminRoutes: ITrestleRoute[] = [
         component: DashboardComponent,
         canActivate: [LoggedInGuard, PermissionsGuard],
         data: {roles: [Privileges.ADMIN]}
-    }
-    // {
-    //     path: "users",
-    //     component: UsersComponent,
-    //     canActivate: [LoggedInGuard, PermissionsGuard],
-    //     data: {roles: [Privileges.ADMIN]}
-    // },
+    },
+    {
+        path: "users",
+        component: UsersComponent,
+        canActivate: [LoggedInGuard, PermissionsGuard],
+        data: {roles: [Privileges.ADMIN]}
+    },
     // {
     //     path: "metrics",
     //     component: MetricsComponent,
