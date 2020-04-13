@@ -71,7 +71,7 @@
     "chai": "^4.1.2",
     "chai-as-promised": "^7.1.1",
     "codelyzer": "^4.0.2",
-    "compression-webpack-plugin": "^1.1.12",
+    "compression-webpack-plugin": "^1.1.6",
     "csp-webpack-plugin": "^1.0.2",
     "css-loader": "^0.28.7",
     "cucumber": "^4.0.0",
