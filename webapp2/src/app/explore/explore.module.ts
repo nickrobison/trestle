@@ -16,10 +16,14 @@ import {INDIVIDUAL_CACHE_DI_CONFIG} from './explore.config';
 import {CACHE_SERVICE_CONFIG} from '../shared/cache/cache.service.config';
 import {SharedModule} from '../shared/shared.module';
 import {MaterialModule} from '../material/material.module';
+import { QueryComponent } from './query/query.component';
+import {CodeMirrorComponent} from './query/codemirror/codemirror.component';
+import {QueryService} from './query/query.service';
+import { QueryViewerComponent } from './query/query-viewer/query-viewer.component';
 
 
 @NgModule({
-  declarations: [ViewerComponent, ExporterComponent],
+  declarations: [ViewerComponent, ExporterComponent, QueryComponent, CodeMirrorComponent, QueryViewerComponent],
   imports: [
     CommonModule,
     UserModule,
@@ -33,6 +37,7 @@ import {MaterialModule} from '../material/material.module';
     ExporterService,
     IndividualService,
     MapService,
+    QueryService,
     // {
     //   provide: COLOR_SERVICE_CONFIG, useValue: COLOR_DI_CONFIG
     // },

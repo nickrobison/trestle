@@ -4,6 +4,7 @@
 import {ViewerComponent} from './viewer/viewer.component';
 import {LoggedInGuard} from '../user/LoggedInGuard';
 import {ITrestleRoute} from '../navigation/navigation.module';
+import {QueryComponent} from './query/query.component';
 
 export const ExploreRoutes: ITrestleRoute[] = [
   {path: '', redirectTo: 'viewer', pathMatch: 'full'},
@@ -14,7 +15,7 @@ export const ExploreRoutes: ITrestleRoute[] = [
   //
   //     ]
   // },
-  // {path: "query", component: QueryComponent, canActivate: [LoggedInGuard]}
+  {path: "query", component: QueryComponent, canActivate: [LoggedInGuard]},
   {path: 'viewer', component: ViewerComponent, canActivate: [LoggedInGuard]}
   // {path: "compare", component: CompareComponent, canActivate: [LoggedInGuard]},
   // {path: "aggregate", component: AggregateComponent, canActivate: [LoggedInGuard]}

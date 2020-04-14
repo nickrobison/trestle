@@ -6,6 +6,25 @@ if (typeof window.URL.createObjectURL === 'undefined') {
   };
 }
 
+if (window.document) {
+  window.document.createRange = () => ({
+    setStart: () => {
+    },
+    setEnd: () => {
+    },
+    // @ts-ignore
+    commonAncestorContainer: {
+      nodeName: 'BODY',
+      ownerDocument: document,
+    },
+    // @ts-ignore
+    getBoundingClientRect: () => {
+
+    }
+  });
+}
+
+
 // @ts-ignore
 class Worker {
 
