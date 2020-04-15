@@ -47,6 +47,11 @@
             <groupId>net.sourceforge.owlapi</groupId>
             <artifactId>owlapi-apibinding</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.github.jsonld-java.jsonld-java</groupId>
+            <artifactId>jsonld-java</artifactId>
+            <version>0.13.0</version>
+        </dependency>
         <!--Jena dependencies-->
         <dependency>
             <groupId>org.apache.jena</groupId>
