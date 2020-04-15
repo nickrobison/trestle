@@ -19,6 +19,6 @@ describe('CodeMirrorComponent', () => {
   });
 
   it('should create', () => {
-    expect(component).toMatchSnapshot();
+    expect(component).toBeTruthy();
   });
 });

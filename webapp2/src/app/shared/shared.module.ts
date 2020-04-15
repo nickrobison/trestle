@@ -7,6 +7,7 @@ import {ArraySortPipe} from './pipes/array-sort.pipe';
 import {DATASET_CACHE_DI_CONFIG} from './shared.config';
 import {MapValuesPipe} from './pipes/map-values.pipe';
 import {RoundingPipe} from './pipes/rounding-pipe.pipe';
+import {ColorService} from './color/color.service';
 
 
 @NgModule({
@@ -15,6 +16,7 @@ import {RoundingPipe} from './pipes/rounding-pipe.pipe';
     IndividualService,
     DatasetService,
     CacheService,
+    ColorService,
     {
       provide: DATASET_CACHE, useFactory: () => (new CacheService<string, string[]>(DATASET_CACHE_DI_CONFIG))
     }],
@@ -23,7 +25,8 @@ import {RoundingPipe} from './pipes/rounding-pipe.pipe';
   ],
   exports: [
     MapValuesPipe,
-    ArraySortPipe
+    ArraySortPipe,
+    RoundingPipe
   ]
 })
 export class SharedModule {

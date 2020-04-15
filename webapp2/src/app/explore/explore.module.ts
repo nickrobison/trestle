@@ -12,7 +12,7 @@ import {INDIVIDUAL_CACHE, IndividualService} from '../shared/individual/individu
 import {ExporterService} from './exporter/exporter.service';
 import {CacheService} from '../shared/cache/cache.service';
 import {TrestleIndividual} from '../shared/individual/TrestleIndividual/trestle-individual';
-import {INDIVIDUAL_CACHE_DI_CONFIG} from './explore.config';
+import {COLOR_DI_CONFIG, INDIVIDUAL_CACHE_DI_CONFIG} from './explore.config';
 import {CACHE_SERVICE_CONFIG} from '../shared/cache/cache.service.config';
 import {SharedModule} from '../shared/shared.module';
 import {MaterialModule} from '../material/material.module';
@@ -24,6 +24,8 @@ import {VisualizeComponent} from './visualize/visualize.component';
 import {IndividualGraphComponent} from './visualize/individual-graph/individual-graph.component';
 import {VisualizeDetailsComponent} from './visualize/visualize-details/visualize-details.component';
 import {IndividualValueDialog} from './visualize/individual-value.dialog';
+import { CompareComponent } from './compare/compare.component';
+import {COLOR_SERVICE_CONFIG} from '../shared/color/color-service.config';
 
 
 @NgModule({
@@ -35,7 +37,8 @@ import {IndividualValueDialog} from './visualize/individual-value.dialog';
     VisualizeComponent,
     IndividualGraphComponent,
     VisualizeDetailsComponent,
-    IndividualValueDialog],
+    IndividualValueDialog,
+    CompareComponent],
   imports: [
     CommonModule,
     UserModule,
@@ -50,9 +53,9 @@ import {IndividualValueDialog} from './visualize/individual-value.dialog';
     IndividualService,
     MapService,
     QueryService,
-    // {
-    //   provide: COLOR_SERVICE_CONFIG, useValue: COLOR_DI_CONFIG
-    // },
+    {
+      provide: COLOR_SERVICE_CONFIG, useValue: COLOR_DI_CONFIG
+    },
     {
       provide: CACHE_SERVICE_CONFIG, useValue: INDIVIDUAL_CACHE_DI_CONFIG
     },

@@ -1,15 +1,23 @@
-import { Component, OnInit } from '@angular/core';
+/**
+ * Created by nrobison on 3/7/17.
+ */
+import { Component, ViewEncapsulation } from "@angular/core";
+import { Router } from "@angular/router";
 
 @Component({
-  selector: 'app-visualize',
-  templateUrl: './visualize.component.html',
-  styleUrls: ['./visualize.component.scss']
+    selector: "visualize",
+    templateUrl: "./visualize.component.html",
+    styleUrls: ["./visualize.component.scss"],
+    encapsulation: ViewEncapsulation.None
 })
-export class VisualizeComponent implements OnInit {
 
-  constructor() { }
+export class VisualizeComponent {
 
-  ngOnInit(): void {
-  }
+    constructor(private router: Router) {
+    }
 
+    public selectedOption(value: string) {
+        // Using a static method from TrestleIndividual will cause Angular to explode, so don't do it, even though it seems to make perfect sense
+        this.router.navigate(["/explore/visualize", value]);
+    }
 }

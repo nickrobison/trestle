@@ -1,0 +1,135 @@
+<div class="section">
+    <h4>Spatial Compare</h4>
+    <div class="row">
+        <div #loadable class="col s11 map-container">
+            <trestle-map [single]="false"
+                         [multiSelect]="false"
+                         [zoomOnLoad]="zoomMap"
+                         [config]="mapConfig"
+                         [dataChanges]="dataChanges"
+                         [attributeChanges]="layerChanges"></trestle-map>
+        </div>
+        <div class="col s01 map-container">
+            <h6 class="light_gray_text">Explode</h6>
+            <mat-slider
+                    [vertical]="true"
+                    [min]="0"
+                    [max]="500"
+                    [(ngModel)]="currentSliderValue"
+                    (input)="sliderUpdate($event)"></mat-slider>
+        </div>
+    </div>
+</div>
+<div class="section">
+    <div *ngIf="!baseIndividual">
+        <h5>Add base individual</h5>
+        <search (selected)="addBaseIndividual($event)"></search>
+    </div>
+    <div *ngIf="baseIndividual">
+        <div class="row">
+            <div class="row results-row">
+                <h5>Comparing: {{baseIndividual.individual.getFilteredID()}}</h5>
+                <a [routerLink]="['/explore', 'visualize', baseIndividual.individual.withoutHostname()]"
+                   [queryParams]="{root: baseIndividual.individual.getHostname()}">
+                    <mat-icon>link</mat-icon>
+                </a>
+            </div>
+            <button mat-raised-button color="primary" (click)="intersectBaseIndividual()">INTERSECT</button>
+            <button mat-raised-button color="warn" (click)="reset()">RESET</button>
+            <mat-button-toggle mat-raised-button (click)="toggleVisibility(baseIndividual)">HIDE</mat-button-toggle>
+            <!--Need this because the hidden attribute doesn't work on progress bars. That would be too easy-->
+            <div class="progress" [style.visibility]="loading.visible ? 'visible' : 'hidden'">
+                <mat-progress-bar [color]="loading.color"
+                                  [mode]="loading.type"
+                                  [value]="100"></mat-progress-bar>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col s12 l5 ui-row">
+                Add additional individuals
+                <search (selected)="selectedHandler($event)"></search>
+                <div class="row">
+                    <button mat-raised-button>ADD</button>
+                    <button mat-raised-button
+                            color="primary"
+                            (click)="compareIndividuals()"
+                            [disabled]="selectedIndividuals.size === 0">COMPARE
+                    </button>
+                    <mat-slide-toggle
+                            [color]="'accent'"
+                            [checked]="true"
+                            (change)="filterChanged($event)"
+                    >Filter non-overlapping results?
+                    </mat-slide-toggle>
+                </div>
+                <div class="row">
+                    <data-exporter [dataExport]="exportValues"></data-exporter>
+                </div>
+            </div>
+            <div class="col s12 l6 ui-row">
+                Comparing against:
+                <mat-accordion [multi]="true">
+                    <mat-expansion-panel *ngFor="let selection of getSelectedIndividuals()">
+                        <mat-expansion-panel-header>
+                            <mat-panel-title>
+                                <div class="legend" [style.background]="selection.color"></div>
+                                {{selection.individual.getFilteredID()}}
+                                <a
+                                        matTooltip="Visualize individual"
+                                        [routerLink]="['/explore',
+                                'visualize',
+                                selection.individual.withoutHostname()]"
+                                        [queryParams]="{root: selection.individual.getHostname()}">
+                                    <mat-icon>link</mat-icon>
+                                </a>
+                                <mat-icon matTooltip="Use as comparison" (click)="reset(selection.individual.getID())">compare</mat-icon>
+
+                            </mat-panel-title>
+                            <mat-panel-description>
+                            </mat-panel-description>
+                        </mat-expansion-panel-header>
+                        <div *ngIf="selection.report === undefined">
+                            <p class="comparison-placeholder">No comparison report</p>
+                        </div>
+                        <div *ngIf="selection.report">
+                            Accounts for {{selection.report.spatialOverlapPercentage * 100 | rounding: 2}}% of the
+                            individual
+                            <div *ngIf="selection.report.spatialOverlap">
+                                <mat-icon *ngIf="selection.report !== loadedOverlap"
+                                          matTooltip="Add overlap to map"
+                                          (click)="toggleOverlap(selection.report)">layers
+                                </mat-icon>
+                                <mat-icon *ngIf="selection.report === loadedOverlap"
+                                          matTooltip="Remove overlap from map"
+                                          (click)="toggleOverlap(selection.report)">layers_clear
+                                </mat-icon>
+                            </div>
+                            <!--Relations-->
+                            <h6>Relations:</h6>
+                            <ul>
+                                <li *ngFor="let relation of selection.report.relations">{{relation}}</li>
+                            </ul>
+
+                        </div>
+                        <mat-action-row>
+                            <mat-slider class="wide-slider"
+                                        [min]="0"
+                                        [max]="100"
+                                        [value]="selection.sliderValue"
+                                        (input)="sliderUpdate($event,
+                            selection)"></mat-slider>
+                            <button mat-button *ngIf="!selection.focused" (click)="toggleFocus(selection)">Focus</button>
+                            <button mat-button *ngIf="selection.focused" (click)="toggleFocus(selection)">Unfocus</button>
+                            <button mat-button *ngIf="selection.visible" (click)="toggleVisibility(selection)">Hide
+                            </button>
+                            <button mat-button *ngIf="!selection.visible" (click)="toggleVisibility(selection)">Show
+                            </button>
+                            <button mat-button color="warn" (click)="removeIndividual(selection)">Remove</button>
+                        </mat-action-row>
+                    </mat-expansion-panel>
+                </mat-accordion>
+            </div>
+        </div>
+    </div>
+</div>
