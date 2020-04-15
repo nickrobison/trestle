@@ -341,9 +341,10 @@
   version "3.1.38"
   resolved "https://registry.yarnpkg.com/@types/crypto-js/-/crypto-js-3.1.38.tgz#e1367f773edde2986ba9aebee3bf1cdf3e818a5d"
 
-"@types/cucumber@^4.0.1":
-  version "4.0.1"
-  resolved "https://registry.yarnpkg.com/@types/cucumber/-/cucumber-4.0.1.tgz#3e588a3fa510af7ad3dbe753f1c9ea818e984f85"
+"@types/cucumber@^6.0.1":
+  version "6.0.1"
+  resolved "https://registry.yarnpkg.com/@types/cucumber/-/cucumber-6.0.1.tgz#0fe9673d34568d35ff21957af049883635472fcd"
+  integrity sha512-+GZV6xfN0MeN9shDCdny8GbC8N0+U6uca8cjyaJndcwmrUhwS6qOU2vmYn0d71EOwJF568/v3SxJ8VKxuZNYRw==
 
 "@types/d3-array@*":
   version "1.1.0"
