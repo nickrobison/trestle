@@ -82,4 +82,15 @@ trestle-server/.cache-loader
 # Data directory
 data/
 
+
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore Gradle build output directory
+build
+
+# VSCode ignores
+.vscode
+**/.project
+**/.settings/
 *.db
