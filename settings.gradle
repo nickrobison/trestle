@@ -9,4 +9,16 @@
 
 rootProject.name = 'trestle'
 
-include("trestle-common")
+include(
+    "trestle-annotations", 
+    "trestle-common",
+    "trestle-datasets",
+    "trestle-exporter",
+    "trestle-graphdb",
+    "trestle-iri",
+    "trestle-metrics",
+    "trestle-ontology",
+    "trestle-ontology-testing",
+    "trestle-querybuilder",
+    "trestle-reasoner"
+    )

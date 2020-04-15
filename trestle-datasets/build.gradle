@@ -1,0 +1,7 @@
+dependencies {
+    implementation group: 'org.apache.commons', name: 'commons-lang3', version: commonsLangVersion
+    implementation group: 'org.locationtech.jts', name: 'jts-core', version: jtsVersion
+    implementation group: 'com.esri.geometry', name: 'esri-geometry-api', version: '2.2.3'
+    implementation project(":trestle-annotations")
+    implementation project(":trestle-common")
+}

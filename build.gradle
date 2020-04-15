@@ -5,15 +5,26 @@
  * Learn how to create Gradle builds at https://guides.gradle.org/creating-new-gradle-builds
  */
 plugins {
-    id "java"
+    id "java-library"
 }
 
 ext {
+    h2Version = "1.4.200"
     owlVersion = "5.1.13"
     junitJupiterVersion = "5.6.2"
     jenaVersion = "3.14.0"
     slf4jVersion = "1.7.30"
+    caffeineVersion = "2.8.1"
     checkerVersion = "3.3.0"
+    commonsIOVersion = "2.6"
+    commonsLangVersion = "3.10"
+    jtsVersion = "1.16.1"
+    geotoolsVersion = "22.2"
+    jacksonVersion = "2.10.3"
+    guavaVersion = "29.0-jre"
+    guiceVersion = "4.2.3"
+    rdf4jVersion = "3.1.3"
+    metricsVersion = "4.1.5"
 }
 
 allprojects {
@@ -21,13 +32,21 @@ allprojects {
     version = "0.9.2-SNAPSHOT"
     // val isRelease = !version.toString().endsWith("SNAPSHOT")
 
-    apply plugin: 'java'
+    apply plugin: 'java-library'
 
     repositories {
+        // This needs to go first, in order to get the jai core jars, which jcenter doesn't have.
+        maven {url "https://repo.osgeo.org/repository/release/"}
         jcenter()
         maven { url "https://clojars.org/repo" }
-        maven {url "https://download.osgeo.org/webdav/geotools/"}
         maven {url "https://jitpack.io"}
+    }
+
+    java {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+        withJavadocJar()
+        withSourcesJar()
     }
 
     test {
@@ -36,10 +55,14 @@ allprojects {
 
     // Dependencies
     dependencies {
-        compile group: 'net.sourceforge.owlapi', name: 'owlapi-api', version: owlVersion
-        compile group: 'org.checkerframework', name: 'checker', version: checkerVersion
+        compileOnly group: 'org.checkerframework', name: 'checker', version: checkerVersion
+        implementation group: 'net.sourceforge.owlapi', name: 'owlapi-api', version: owlVersion
         implementation group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
+        implementation group: "com.typesafe", name: "config", version: "1.4.0"
+        implementation(platform("com.fasterxml.jackson:jackson-bom:${jacksonVersion}"))
+        implementation(platform("org.eclipse.rdf4j:rdf4j-bom:${rdf4jVersion}"))
         testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: junitJupiterVersion
+        testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-params', version: junitJupiterVersion
         testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: junitJupiterVersion
     }
     

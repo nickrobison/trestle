@@ -1,0 +1,17 @@
+ext {
+    byteBuddyVersion = "1.10.9"
+}
+
+dependencies {
+    api group: 'io.dropwizard.metrics', name: 'metrics-annotation', version: metricsVersion
+    implementation project(":trestle-annotations")
+    implementation group: 'io.dropwizard.metrics', name: 'metrics-core', version: metricsVersion
+    implementation group: 'io.dropwizard.metrics', name: 'metrics-jvm', version: metricsVersion
+    implementation group: 'com.zaxxer', name: 'HikariCP', version: '3.4.1'
+    implementation group: 'com.h2database', name: 'h2', version: h2Version
+    implementation group: 'com.google.inject', name: 'guice', version: guiceVersion
+    implementation group: 'net.bytebuddy', name: 'byte-buddy', version: byteBuddyVersion
+    implementation group: 'net.bytebuddy', name: 'byte-buddy-agent', version: "1.10.8"
+    compileOnly group: 'org.postgresql', name: 'postgresql', version: '42.2.12'
+
+}

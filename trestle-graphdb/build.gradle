@@ -1,0 +1,9 @@
+dependencies {
+    implementation project(":trestle-ontology")
+    testImplementation project(":trestle-ontology-testing")
+    implementation group: 'commons-codec', name: 'commons-codec', version: '1.14'
+    implementation group: "org.eclipse.rdf4j", name: "rdf4j-queryalgebra-geosparql"
+    implementation group: "com.ontotext.graphdb", name: "graphdb-free-runtime", version: "9.1.1"
+    implementation group: 'net.sf.trove4j', name: 'trove4j', version: '3.0.3'
+
+}

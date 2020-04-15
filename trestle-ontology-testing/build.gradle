@@ -1,0 +1,5 @@
+dependencies {
+    implementation project(":trestle-common")
+    implementation project(":trestle-ontology")
+    implementation group: "org.junit.jupiter", name: "junit-jupiter-api", version: junitJupiterVersion
+}
