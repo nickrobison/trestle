@@ -1,0 +1,8 @@
+<div *ngIf="individual">
+    <event-graph [graphHeight]="300"
+                 [minDate]="minDate"
+                 [maxDate]="maxDate"
+                 [data]="eventData"
+                 [filterLabel]="filterLabel"
+                 [selectedIndividual]="individual.getFilteredID()"></event-graph>
+</div>

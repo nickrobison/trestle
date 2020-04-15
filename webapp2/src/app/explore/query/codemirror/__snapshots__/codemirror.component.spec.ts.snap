@@ -2,8 +2,6 @@
 
 exports[`CodeMirrorComponent should create 1`] = `
 CodeMirrorComponent {
-  "_value": "function myScript(){return 100;}
-",
   "host": ElementRef {
     "nativeElement": <textarea
       style="display: none;"
@@ -123,7 +121,7 @@ CodeMirrorComponent {
                 "lastOrigin": null,
                 "lastSelOp": NaN,
                 "lastSelOrigin": undefined,
-                "lastSelTime": 1586890461879,
+                "lastSelTime": 1586911548718,
                 "maxGeneration": 1,
                 "undoDepth": 200,
                 "undone": Array [],
@@ -377,7 +375,7 @@ CodeMirrorComponent {
               "lastOrigin": null,
               "lastSelOp": NaN,
               "lastSelOrigin": undefined,
-              "lastSelTime": 1586890461879,
+              "lastSelTime": 1586911548718,
               "maxGeneration": 1,
               "undoDepth": 200,
               "undone": Array [],
@@ -834,7 +832,7 @@ CodeMirrorComponent {
         "lastOrigin": null,
         "lastSelOp": NaN,
         "lastSelOrigin": undefined,
-        "lastSelTime": 1586890461879,
+        "lastSelTime": 1586911548718,
         "maxGeneration": 1,
         "undoDepth": 200,
         "undone": Array [],

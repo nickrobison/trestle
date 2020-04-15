@@ -16,14 +16,26 @@ import {INDIVIDUAL_CACHE_DI_CONFIG} from './explore.config';
 import {CACHE_SERVICE_CONFIG} from '../shared/cache/cache.service.config';
 import {SharedModule} from '../shared/shared.module';
 import {MaterialModule} from '../material/material.module';
-import { QueryComponent } from './query/query.component';
+import {QueryComponent} from './query/query.component';
 import {CodeMirrorComponent} from './query/codemirror/codemirror.component';
 import {QueryService} from './query/query.service';
-import { QueryViewerComponent } from './query/query-viewer/query-viewer.component';
+import {QueryViewerComponent} from './query/query-viewer/query-viewer.component';
+import {VisualizeComponent} from './visualize/visualize.component';
+import {IndividualGraphComponent} from './visualize/individual-graph/individual-graph.component';
+import {VisualizeDetailsComponent} from './visualize/visualize-details/visualize-details.component';
+import {IndividualValueDialog} from './visualize/individual-value.dialog';
 
 
 @NgModule({
-  declarations: [ViewerComponent, ExporterComponent, QueryComponent, CodeMirrorComponent, QueryViewerComponent],
+  declarations: [ViewerComponent,
+    ExporterComponent,
+    QueryComponent,
+    CodeMirrorComponent,
+    QueryViewerComponent,
+    VisualizeComponent,
+    IndividualGraphComponent,
+    VisualizeDetailsComponent,
+    IndividualValueDialog],
   imports: [
     CommonModule,
     UserModule,

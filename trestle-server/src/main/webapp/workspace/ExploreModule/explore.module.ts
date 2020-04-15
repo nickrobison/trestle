@@ -74,6 +74,9 @@ import { TrestleIndividual } from "../SharedModule/individual/TrestleIndividual/
         {
             provide: INDIVIDUAL_CACHE, useFactory: () => (new CacheService<string, TrestleIndividual>(INDIVIDUAL_CACHE_DI_CONFIG))
         }],
+    exports: [
+        SpatialUnionComponent
+    ],
     entryComponents: [IndividualValueDialog]
 })
 export class ExploreModule {
