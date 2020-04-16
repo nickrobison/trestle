@@ -43,7 +43,7 @@
     "transitory": "^2.1.1",
     "web-animations-js": "^2.3.1",
     "wellknown": "^0.5.0",
-    "zone.js": "0.8.20"
+    "zone.js": "0.8.29"
   },
   "devDependencies": {
     "@angular/cli": "^9.1.0",
