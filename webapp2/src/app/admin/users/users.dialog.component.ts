@@ -66,7 +66,7 @@ export class UserDialogComponent implements OnInit {
       password: [mergedUser.password, this.validatePasswordLength],
       email: [mergedUser.email, Validators.email]
     });
-    if (this.user.id === undefined) {
+    if (this.user == undefined || this.user.id === undefined) {
       this.updateMode = false;
       console.debug('Passed null user, creating blank instance');
       this.user = {

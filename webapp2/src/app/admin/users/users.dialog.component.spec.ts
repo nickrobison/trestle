@@ -6,8 +6,9 @@ import {ReactiveFormsModule} from '@angular/forms';
 import {SharedModule} from '../../shared/shared.module';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
-import {MatDialog, MatDialogRef} from '@angular/material/dialog';
+import {MatDialogRef} from '@angular/material/dialog';
 import {of} from 'rxjs';
+import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 
 class MatDialogMock {
   open() {
@@ -15,7 +16,7 @@ class MatDialogMock {
       afterClosed: () => of()
     };
   }
-};
+}
 
 describe('UsersDialogComponent', () => {
   let component: UserDialogComponent;
@@ -23,7 +24,7 @@ describe('UsersDialogComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      imports: [MaterialModule, UserModule, ReactiveFormsModule, SharedModule, HttpClientTestingModule],
+      imports: [MaterialModule, UserModule, ReactiveFormsModule, SharedModule, HttpClientTestingModule, NoopAnimationsModule],
       providers: [{
         provide: MatDialogRef, useClass: MatDialogMock
       }],

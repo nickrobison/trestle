@@ -24,6 +24,13 @@ if (window.document) {
   });
 }
 
+// @ts-ignore
+window.getComputedStyle = () => ({
+  getPropertyValue: () => {
+    return "";
+  }
+});
+
 
 // @ts-ignore
 class Worker {
