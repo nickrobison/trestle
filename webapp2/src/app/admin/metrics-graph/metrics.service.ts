@@ -54,7 +54,10 @@ export class MetricsService {
     params.append('start', start.toString());
     params.append('end', end.toString());
     return this.authHttp.get(this.baseUrl + '/metrics/metric/' + metricID, {
-      headers: params
+      params: {
+        start: start.toString(),
+        end: end.toString()
+      }
     })
       .pipe(
         tap(json => console.debug('Metric values:', json)),

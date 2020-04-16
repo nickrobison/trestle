@@ -24,11 +24,10 @@ import {VisualizeComponent} from './visualize/visualize.component';
 import {IndividualGraphComponent} from './visualize/individual-graph/individual-graph.component';
 import {VisualizeDetailsComponent} from './visualize/visualize-details/visualize-details.component';
 import {IndividualValueDialog} from './visualize/individual-value.dialog';
-import { CompareComponent } from './compare/compare.component';
+import {CompareComponent} from './compare/compare.component';
 import {COLOR_SERVICE_CONFIG} from '../shared/color/color-service.config';
-import { AggregateComponent } from './aggregate/aggregate.component';
+import {AggregateComponent} from './aggregate/aggregate.component';
 import {AggregationService} from './aggregate/aggregation.service';
-import {ReactiveFormsModule} from '@angular/forms';
 import {FlexModule} from '@angular/flex-layout';
 
 
@@ -52,7 +51,6 @@ import {FlexModule} from '@angular/flex-layout';
     SharedModule,
     UiModule,
     RouterModule.forChild(ExploreRoutes),
-    ReactiveFormsModule,
     FlexModule
   ],
   providers: [

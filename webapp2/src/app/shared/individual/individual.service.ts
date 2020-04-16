@@ -4,7 +4,7 @@
 import {Inject, Injectable, InjectionToken} from '@angular/core';
 import {ITrestleIndividual, TrestleIndividual} from './TrestleIndividual/trestle-individual';
 import {CacheService} from '../cache/cache.service';
-import {HttpClient, HttpParams} from '@angular/common/http';
+import {HttpClient} from '@angular/common/http';
 import {Observable} from 'rxjs';
 import {environment} from '../../../environments/environment';
 import {map, tap} from 'rxjs/operators';
@@ -29,12 +29,12 @@ export class IndividualService {
    * @returns {Observable<string[]>}
    */
   public searchForIndividual(name: string, dataset = '', limit = 10): Observable<string[]> {
-    const params = new HttpParams();
-    params.set('name', name);
-    params.set('dataset', dataset);
-    params.set('limit', limit.toString());
     return this.trestleHttp.get<string[]>(this.baseURL + '/visualize/search', {
-      params
+      params: {
+        name: name,
+        dataset: dataset,
+        limit: limit.toString()
+      }
     })
       .pipe(tap(res => console.debug('Search response:', res)));
     // .catch((error: Error) => Observable.throw(error || "Server Error"));
@@ -51,15 +51,15 @@ export class IndividualService {
   }
 
   private getIndividualAPI(name: string): Observable<TrestleIndividual> {
-    const params = new HttpParams();
-    params.set('name', name);
     return this.trestleHttp.get<ITrestleIndividual>(this.baseURL + '/individual/retrieve', {
-      params
+      params: {
+        name
+      }
     })
       .pipe(map(response => {
         console.debug('Has response, building object', response);
         return new TrestleIndividual(response);
-      }))
+      }));
     // .catch((error: Error) => Observable.throw(error || "Server Error"));
   }
 }

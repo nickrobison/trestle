@@ -16,6 +16,8 @@ import { scaleBand, scaleOrdinal, ScaleTime, scaleTime } from "d3-scale";
 import { axisBottom, axisLeft } from "d3-axis";
 import {schemeCategory10} from "d3";
 import {ID3Margin} from '../common';
+import moment from 'moment';
+import Base = moment.unitOfTime.Base;
 
 export interface ITemporalEntity {
     label: string;
@@ -125,7 +127,7 @@ export class HistoryGraphComponent implements AfterViewInit, OnChanges {
             .call(axisBottom(this.x));
 
         //    Add the data
-        const mainItems = this.svg.selectAll(".fact")
+        const mainItems = this.svg.selectAll<SVGRectElement, Base>(".fact")
             .data(this.data.entities, (entity: ITemporalEntity) => entity.label);
 
         mainItems
@@ -145,17 +147,17 @@ export class HistoryGraphComponent implements AfterViewInit, OnChanges {
             .attr("height", (d) => y.bandwidth())
             // .style("fill", (d: TrestleFact) => z(d.getName()))
             .style("fill", (d) => z(d.label))
-            .style("fill-opacity", 0.7);
-            // .merge(mainItems);
+            .style("fill-opacity", 0.7)
+            .merge(mainItems);
 
         // Labels
-        const mainLabels = this.svg.selectAll(".mainLabels")
+        const mainLabels = this.svg.selectAll<SVGTextElement, BaseType>(".mainLabels")
             .data(this.data.entities, (d: ITemporalEntity) => d.label);
 
         mainLabels
             .enter()
             .append("text")
-            .text((d) => this.parseValue(d.value))
+            .text((d) => HistoryGraphComponent.parseValue(d.value))
             .attr("class", "mainLabels")
             .attr("x", (d) => {
                 const end = d.end;
@@ -165,8 +167,8 @@ export class HistoryGraphComponent implements AfterViewInit, OnChanges {
             })
             .attr("y", (d) => (y(d.label) || 0) + y.bandwidth() - 5)
             .attr("text-anchor", "middle")
-            .attr("dy", ".1ex");
-            // .merge(mainLabels);
+            .attr("dy", ".1ex")
+            .merge(mainLabels);
 
         mainItems.exit().remove();
         mainLabels.exit().remove();
@@ -185,7 +187,7 @@ export class HistoryGraphComponent implements AfterViewInit, OnChanges {
         return new Date(date);
     }
 
-    private parseValue(value: string | number): string {
+    private static parseValue(value: string | number): string {
         if (typeof value === "number") {
             return value.toString();
         }

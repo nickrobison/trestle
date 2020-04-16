@@ -35,7 +35,6 @@ export class TreeGraphComponent implements AfterViewInit, OnChanges {
     private height: number;
     private margin: ID3Margin;
     private maxTime: Moment;
-    private offsetValue: number;
     private x: ScaleLinear<number, number>;
     private y: ScaleLinear<number, number>;
     private colorScale: (value: number) => string;
@@ -128,7 +127,7 @@ export class TreeGraphComponent implements AfterViewInit, OnChanges {
 
         //    For each, leaf, draw the triangle
         const leafData = this.svg
-            .selectAll(".leaf")
+            .selectAll<SVGPolygonElement, BaseType>(".leaf")
             // This index function needs to be a string, for some reason
             .data(data.leafs, (d: IIndexLeafStatistics) => d.binaryID);
 
@@ -146,8 +145,8 @@ export class TreeGraphComponent implements AfterViewInit, OnChanges {
             .attr("fill", "blue")
             .style("fill-opacity", 0.7)
             // Hover handlers
-            .on("mouseover", this.hoverHandler);
-            // .merge(leafData);
+            .on("mouseover", this.hoverHandler)
+            .merge(leafData);
 
     }
 
