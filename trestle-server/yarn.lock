@@ -1112,24 +1112,6 @@ babel-code-frame@^6.11.0, babel-code-frame@^6.22.0:
     esutils "^2.0.2"
     js-tokens "^3.0.0"
 
-babel-polyfill@~6.5.0:
-  version "6.5.0"
-  resolved "https://registry.yarnpkg.com/babel-polyfill/-/babel-polyfill-6.5.0.tgz#868f8f02ad02081e087a965d2e0d3f4ef8c57cc3"
-  dependencies:
-    babel-regenerator-runtime "^6.3.13"
-    babel-runtime "^5.0.0"
-    core-js "^1.0.1"
-
-babel-regenerator-runtime@^6.3.13:
-  version "6.5.0"
-  resolved "https://registry.yarnpkg.com/babel-regenerator-runtime/-/babel-regenerator-runtime-6.5.0.tgz#0e41cd1c9f80442466f015c749fff8ba98f8e110"
-
-babel-runtime@^5.0.0:
-  version "5.8.38"
-  resolved "https://registry.yarnpkg.com/babel-runtime/-/babel-runtime-5.8.38.tgz#1c0b02eb63312f5f087ff20450827b425c9d4c19"
-  dependencies:
-    core-js "^1.0.0"
-
 babel-runtime@^6.11.6:
   version "6.26.0"
   resolved "https://registry.yarnpkg.com/babel-runtime/-/babel-runtime-6.26.0.tgz#965c7058668e82b55d7bfe04ff2337bc8b5647fe"
@@ -1603,7 +1585,7 @@ cacheable-request@^2.1.1:
     normalize-url "2.0.1"
     responselike "1.0.2"
 
-callsite@1.0.0, callsite@~1.0.0:
+callsite@1.0.0, callsite@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/callsite/-/callsite-1.0.0.tgz#280398e5d664bd74038b6f0905153e6e8af1bc20"
 
@@ -2189,10 +2171,6 @@ core-js-pure@^3.0.0:
   resolved "https://registry.yarnpkg.com/core-js-pure/-/core-js-pure-3.6.4.tgz#4bf1ba866e25814f149d4e9aaa08c36173506e3a"
   integrity sha512-epIhRLkXdgv32xIUFaaAry2wdxZYBi6bgM7cB136dzzXXa+dFyRLTZeLUJxnd8ShrmyVXBub63n2NHo2JAt8Cw==
 
-core-js@^1.0.0, core-js@^1.0.1:
-  version "1.2.7"
-  resolved "https://registry.yarnpkg.com/core-js/-/core-js-1.2.7.tgz#652294c14651db28fa93bd2d5ff2983a4f08c636"
-
 core-js@^2.2.0:
   version "2.4.1"
   resolved "https://registry.yarnpkg.com/core-js/-/core-js-2.4.1.tgz#4de911e667b0eae9124e34254b53aea6fc618d3e"
@@ -2464,13 +2442,13 @@ cucumber-tag-expressions@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/cucumber-tag-expressions/-/cucumber-tag-expressions-1.1.1.tgz#7f5c7b70009bc2b666591bfe64854578bedee85a"
 
-cucumber-tsflow@^2.2.0:
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/cucumber-tsflow/-/cucumber-tsflow-2.2.0.tgz#b65257345874ea4bca08bba232e0fa779d17dc0b"
+cucumber-tsflow@^3.2.0:
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/cucumber-tsflow/-/cucumber-tsflow-3.2.0.tgz#dd2a532eeaf2d00cd8cb7d9743b8440c02b25581"
+  integrity sha512-ftVzqCAmeBavSKMTxGn+8do2/bX1k+IRxYawmC7mmfLvyYb6NpzAi2a4kngGz035OmbRfitqE9ZkBux+XiqedA==
   dependencies:
-    babel-polyfill "~6.5.0"
-    callsite "~1.0.0"
-    underscore "~1.8.3"
+    callsite "^1.0.0"
+    underscore "^1.8.3"
 
 cucumber@^4.0.0:
   version "4.0.0"
@@ -9398,9 +9376,10 @@ unbzip2-stream@^1.0.9:
     buffer "^5.2.1"
     through "^2.3.8"
 
-underscore@~1.8.3:
-  version "1.8.3"
-  resolved "https://registry.yarnpkg.com/underscore/-/underscore-1.8.3.tgz#4f3fb53b106e6097fcf9cb4109f2a5e9bdfa5022"
+underscore@^1.8.3:
+  version "1.10.2"
+  resolved "https://registry.yarnpkg.com/underscore/-/underscore-1.10.2.tgz#73d6aa3668f3188e4adb0f1943bd12cfd7efaaaf"
+  integrity sha512-N4P+Q/BuyuEKFJ43B9gYuOj4TQUHXX+j2FqguVOpjkssLUUrnJofCcBccJSCoeturDoZU6GorDTHSvUDlSQbTg==
 
 unicode-canonical-property-names-ecmascript@^1.0.4:
   version "1.0.4"
