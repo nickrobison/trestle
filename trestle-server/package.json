@@ -101,7 +101,7 @@
     "webpack": "^3.8.1",
     "webpack-bundle-analyzer": "^3.7.0",
     "webpack-merge": "^4.2.2",
-    "worker-loader": "^1.1.1"
+    "worker-loader": "^2.0.0"
   },
   "scripts": {
     "watch": "webpack --colors --progress --watch --config config/webpack.dev.js",
