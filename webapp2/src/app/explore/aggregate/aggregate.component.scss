@@ -1,0 +1,17 @@
+.map-container {
+  height: 700px;
+}
+
+.aggregate-container {
+  margin-bottom: 50px;
+  margin-right: 20px;
+  margin-left: 5px;
+}
+
+::ng-deep .mat-input-underline {
+  display: none;
+}
+::ng-deep .mat-form-field-underline {
+  display: none;
+}
+

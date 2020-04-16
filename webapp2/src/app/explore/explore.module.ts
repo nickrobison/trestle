@@ -26,6 +26,10 @@ import {VisualizeDetailsComponent} from './visualize/visualize-details/visualize
 import {IndividualValueDialog} from './visualize/individual-value.dialog';
 import { CompareComponent } from './compare/compare.component';
 import {COLOR_SERVICE_CONFIG} from '../shared/color/color-service.config';
+import { AggregateComponent } from './aggregate/aggregate.component';
+import {AggregationService} from './aggregate/aggregation.service';
+import {ReactiveFormsModule} from '@angular/forms';
+import {FlexModule} from '@angular/flex-layout';
 
 
 @NgModule({
@@ -38,7 +42,8 @@ import {COLOR_SERVICE_CONFIG} from '../shared/color/color-service.config';
     IndividualGraphComponent,
     VisualizeDetailsComponent,
     IndividualValueDialog,
-    CompareComponent],
+    CompareComponent,
+    AggregateComponent],
   imports: [
     CommonModule,
     UserModule,
@@ -46,9 +51,12 @@ import {COLOR_SERVICE_CONFIG} from '../shared/color/color-service.config';
     NavigationModule,
     SharedModule,
     UiModule,
-    RouterModule.forChild(ExploreRoutes)
+    RouterModule.forChild(ExploreRoutes),
+    ReactiveFormsModule,
+    FlexModule
   ],
   providers: [
+    AggregationService,
     ExporterService,
     IndividualService,
     MapService,
