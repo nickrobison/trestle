@@ -1993,13 +1993,14 @@ component-inherit@0.0.3:
   version "0.0.3"
   resolved "https://registry.yarnpkg.com/component-inherit/-/component-inherit-0.0.3.tgz#645fc4adf58b72b649d5cae65135619db26ff143"
 
-compression-webpack-plugin@^1.1.6:
-  version "1.1.6"
-  resolved "https://registry.yarnpkg.com/compression-webpack-plugin/-/compression-webpack-plugin-1.1.6.tgz#450808fe143b4c5216a14f0c315c47bec3d83cec"
+compression-webpack-plugin@^1.1.12:
+  version "1.1.12"
+  resolved "https://registry.yarnpkg.com/compression-webpack-plugin/-/compression-webpack-plugin-1.1.12.tgz#becd2aec620ace96bb3fe9a42a55cf48acc8b4d4"
+  integrity sha512-UpBXSHbrCSdSZieAffqXlAQpLO2fikVVRYibrWlbHYzKpOw1Y4jwkVZ/+S91GzWuJvXSbc8SBy/e8fQJh8uEMQ==
   dependencies:
-    async "^2.4.1"
     cacache "^10.0.1"
     find-cache-dir "^1.0.0"
+    neo-async "^2.5.0"
     serialize-javascript "^1.4.0"
     webpack-sources "^1.0.1"
 
