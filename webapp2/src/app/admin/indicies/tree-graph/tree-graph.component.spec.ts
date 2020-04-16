@@ -21,6 +21,6 @@ describe('TreeGraphComponent', () => {
   });
 
   it('should create', () => {
-    expect(component).toMatchSnapshot();
+    expect(component).toBeTruthy();
   });
 });
