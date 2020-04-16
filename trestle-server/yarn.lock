@@ -826,9 +826,10 @@ angular2-materialize@^15.1:
   version "15.1.10"
   resolved "https://registry.yarnpkg.com/angular2-materialize/-/angular2-materialize-15.1.10.tgz#775ecb4a0b39b5789e3a400e60c67bc48c8534df"
 
-angular2-template-loader@^0.6.0:
-  version "0.6.0"
-  resolved "https://registry.yarnpkg.com/angular2-template-loader/-/angular2-template-loader-0.6.0.tgz#8a7fae4cf5a2494968da512aa43152a82a0c99b6"
+angular2-template-loader@^0.6.2:
+  version "0.6.2"
+  resolved "https://registry.yarnpkg.com/angular2-template-loader/-/angular2-template-loader-0.6.2.tgz#c0d44e90fff0fac95e8b23f043acda7fd1c51d7c"
+  integrity sha1-wNROkP/w+sleiyPwQ6zaf9HFHXw=
   dependencies:
     loader-utils "^0.2.15"
 
