@@ -95,9 +95,10 @@
   dependencies:
     tslib "^1.7.1"
 
-"@angular/flex-layout@^5.0.0-beta.13":
-  version "5.0.0-beta.13"
-  resolved "https://registry.yarnpkg.com/@angular/flex-layout/-/flex-layout-5.0.0-beta.13.tgz#81ad6ad461003946e7c522920821a56ba7292a85"
+"@angular/flex-layout@^5.0.0-beta.15":
+  version "5.0.0-beta.15"
+  resolved "https://registry.yarnpkg.com/@angular/flex-layout/-/flex-layout-5.0.0-beta.15.tgz#ae1aeac30d0370190ec6af0ac1fa5633c6547409"
+  integrity sha512-rGvvjDu0PMrsfTsNX+qcNc4EloKGXTxW8FT1tKcdIxOUMRQkvflkwAnKW2kRWNfEgDtBNt+VNP98u2w+athvZQ==
   dependencies:
     tslib "^1.7.1"
 
