@@ -109,8 +109,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     private final TrestleCache trestleCache;
     private final Metrician metrician;
     private final ExecutorService trestleThreadPool;
-    private final TrestleExecutorService objectThreadPool;
-    private final ExecutorService searchThreadPool;
     private final TrestleExecutorService comparisonThreadPool;
 
     @SuppressWarnings("dereference.of.nullable")
@@ -132,8 +130,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
 //        Create our own thread pools to help isolate processes
         trestleThreadPool = factory.create(builder.ontologyName.orElse("default"));
-        objectThreadPool = factory.create("object-pool");
-        searchThreadPool = factory.create("search-pool");
         comparisonThreadPool = factory.create("comparison-pool");
 
         ontology = injector.getInstance(ITrestleOntology.class);
@@ -202,6 +198,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             logger.info("Shutting down reasoner");
         }
         this.trestleThreadPool.shutdown();
+        this.comparisonThreadPool.shutdown();
         logger.debug("Waiting 10 Seconds for thread-pool to terminate");
         try {
             final boolean awaitTermination = this.trestleThreadPool.awaitTermination(10, TimeUnit.SECONDS);
@@ -582,7 +579,9 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      * @param inputObject - Individual to remove
      * @param <T>         - Type of individual to remove
      */
-    public <T extends @NonNull Object> void removeIndividual(T... inputObject) {
+    @SafeVarargs
+    public final <T extends @NonNull Object> void removeIndividual(T... inputObject) {
+        // TODO(nickrobison): TRESTLE-733: Make better with RxJava
         final List<CompletableFuture<Void>> completableFutures = Arrays.stream(inputObject)
                 .map(object -> CompletableFuture.supplyAsync(() -> trestleParser.classParser.getIndividual(object), trestleThreadPool))
                 .map(idFuture -> idFuture.thenApply(ontology::getAllObjectPropertiesForIndividual))
@@ -607,6 +606,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      * @return - OWLNamedIndividual representing the subject of the object assertions
      */
     private CompletableFuture<OWLNamedIndividual> removeRelatedObjects(Set<OWLObjectPropertyAssertionAxiom> objectProperties) {
+        // TODO(nickrobison): TRESTLE-733: Make better with rxJava
         return CompletableFuture.supplyAsync(() -> {
 
 //            Remove the facts
@@ -684,25 +684,18 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         try {
             final List<OWLNamedIndividual> equivalentIndividuals = this.spatialEngine.getEquivalentIndividuals(clazz, individualSubjects, queryTemporal);
-            final List<CompletableFuture<T>> individualsFutureList = equivalentIndividuals
+            final List<T> individualList = equivalentIndividuals
                     .stream()
-                    .map(individual -> CompletableFuture.supplyAsync(() -> {
-                        final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-                        try {
-                            return this.objectReader.readTrestleObject(clazz, individual.getIRI(), false, queryTemporal, null);
-                        } finally {
-                            this.ontology.returnAndCommitTransaction(tt);
-                        }
-                    }, this.objectThreadPool))
+                    .map(individual -> {
+                        return this.objectReader.readTrestleObject(clazz, individual.getIRI(), false, queryTemporal, null);
+                    })
                     .collect(Collectors.toList());
-            final CompletableFuture<List<T>> individualsFuture = sequenceCompletableFutures(individualsFutureList);
-            return Optional.of(individualsFuture.join());
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
+            return Optional.of(individualList);
         } catch (Exception e) {
             this.ontology.returnAndAbortTransaction(trestleTransaction);
             logger.error("Unable to get equivalent objects for {} at {}", individuals, queryTemporal, e);
             return Optional.empty();
-        } finally {
-            this.ontology.returnAndCommitTransaction(trestleTransaction);
         }
     }
 
@@ -714,7 +707,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         final T trestleObject = this.objectReader.readTrestleObject(clazz, individual, validAt, null);
 //        Intersect it
         final Optional<List<T>> intersectedObjects = this.spatialEngine.spatialIntersectObject(trestleObject, 1, validAt, null);
-//        Now, compute the relationships
+//        Now, compute the relationships (I'm fine doing this on an alternate thread, but it should return a completable future, rather than blocking the thread
+        // TODO(nickrobison): TRESTLE-733 - Make this better with RxJava
         if (intersectedObjects.isPresent()) {
             final List<CompletableFuture<@Nullable TrestlePair<T, TrestlePair<SpatialComparisonReport, TemporalComparisonReport>>>> comparisonFutures = intersectedObjects.get()
                     .stream()
@@ -805,31 +799,20 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             owlClass = null;
         }
 
-        final CompletableFuture<List<String>> searchFuture = CompletableFuture.supplyAsync(() -> {
-            final String query = qb.buildIndividualSearchQuery(individualIRI, owlClass, limit);
-            final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-            try {
-                final TrestleResultSet resultSet = ontology.executeSPARQLResults(query);
-                return resultSet.getResults()
-                        .stream()
-                        .map(result -> result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID())
-                        .collect(Collectors.toList());
-            } catch (Exception e) {
-                this.ontology.returnAndAbortWithForce(trestleTransaction);
-                return ExceptionUtils.rethrow(e);
-            } finally {
-                this.ontology.returnAndCommitTransaction(trestleTransaction);
-            }
-        }, this.searchThreadPool);
+        final String query = qb.buildIndividualSearchQuery(individualIRI, owlClass, limit);
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
 
         try {
-            return searchFuture.get();
-        } catch (InterruptedException e) {
-            logger.error("Search interrupted");
-            Thread.currentThread().interrupt();
-            return ExceptionUtils.rethrow(e);
-        } catch (ExecutionException e) {
+            final List<String> results = ontology.executeSPARQLResults(query)
+                    .getResults()
+                    .stream()
+                    .map(result -> result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID())
+                    .collect(Collectors.toList());
+            this.ontology.returnAndCommitTransaction(trestleTransaction);
+            return results;
+        } catch (Exception e) {
             logger.error("Problem searching for {}", individualIRI, e);
+            this.ontology.returnAndAbortTransaction(trestleTransaction);
             return ExceptionUtils.rethrow(e);
         }
     }
