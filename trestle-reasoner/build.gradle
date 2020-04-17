@@ -1,4 +1,7 @@
+apply plugin: "dev.clojurephant.clojure"
+
 dependencies {
+    implementation project(":trestle-annotations")
     implementation project(":trestle-exporter")
     implementation project(":trestle-graphdb")
     implementation project(":trestle-common")
@@ -12,6 +15,8 @@ dependencies {
     implementation group: 'com.esri.geometry', name: 'esri-geometry-api', version: '2.2.3'
     implementation group: "org.geotools", name: "gt-main", version: geotoolsVersion
     implementation group: "org.geotools", name: "gt-epsg-hsql", version: geotoolsVersion
+    implementation group: 'com.google.inject', name: 'guice', version: guiceVersion
+    implementation group: 'com.google.inject.extensions', name: 'guice-assistedinject', version: guiceVersion
     implementation group: 'com.google.guava', name: 'guava', version: guavaVersion
     implementation group: 'joda-time', name: 'joda-time', version: '2.10.5'
     implementation group: 'com.github.ben-manes.caffeine', name: 'caffeine', version: caffeineVersion

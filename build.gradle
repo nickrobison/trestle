@@ -6,6 +6,7 @@
  */
 plugins {
     id "java-library"
+    id "dev.clojurephant.clojure" version "0.5.0"
 }
 
 ext {
@@ -27,12 +28,16 @@ ext {
     metricsVersion = "4.1.5"
 }
 
-allprojects {
+subprojects {
     group = "com.nickrobison.trestle"
     version = "0.9.2-SNAPSHOT"
     // val isRelease = !version.toString().endsWith("SNAPSHOT")
 
     apply plugin: 'java-library'
+
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << '-parameters'
+    }
 
     repositories {
         // This needs to go first, in order to get the jai core jars, which jcenter doesn't have.
