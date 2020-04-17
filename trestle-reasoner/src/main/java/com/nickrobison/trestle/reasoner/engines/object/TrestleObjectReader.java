@@ -34,8 +34,6 @@ import javax.inject.Inject;
 import java.time.*;
 import java.time.temporal.Temporal;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.IRIUtils.parseStringToIRI;
@@ -333,7 +331,7 @@ public class TrestleObjectReader implements ITrestleObjectReader {
                 constructedObject = this.classBuilder.constructObject(clazz, objectState.getArguments());
             } catch (MissingConstructorException e) {
                 logger.error("Cannot find matching constructor.", e);
-                throw new NoValidStateException(individualIRI,  validTemporal.getIdTemporal(), databaseTemporal.getIdTemporal());
+                throw new NoValidStateException(individualIRI, validTemporal.getIdTemporal(), databaseTemporal.getIdTemporal());
             }
             return Optional.of(new TrestleObjectResult<>(individualIRI, constructedObject, objectState.getMinValidFrom(), objectState.getMinValidTo(), objectState.getMinDatabaseFrom(), objectState.getMinDatabaseTo()));
         } else {
@@ -407,14 +405,22 @@ public class TrestleObjectReader implements ITrestleObjectReader {
             db = null;
         }
 
-        final String historyQuery = this.qb.buildFactHistoryQuery(individual, factName, start, end, db);
-        final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(historyQuery);
-//        Optional::isPresent works fine, Checker is wrong
-        return resultSet.getResults()
-                .stream()
-                .map(result -> result.unwrapLiteral("value"))
-                .map(literal -> this.handleLiteral(clazz, datatype, literal))
-                .collect(Collectors.toList());
+        final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(false);
+        try {
+            final String historyQuery = this.qb.buildFactHistoryQuery(individual, factName, start, end, db);
+            final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(historyQuery);
+            final List<Object> results = resultSet.getResults()
+                    .stream()
+                    .map(result -> result.unwrapLiteral("value"))
+                    .map(literal -> this.handleLiteral(clazz, datatype, literal))
+                    .collect(Collectors.toList());
+            this.ontology.returnAndCommitTransaction(tt);
+            return results;
+        } catch (Exception e) {
+            logger.error("Cannot get values for fact {} with datatype {}", factName, datatype, e);
+            this.ontology.returnAndAbortTransaction(tt);
+            return ExceptionUtils.rethrow(e.getCause());
+        }
     }
 
     @Override
@@ -433,29 +439,20 @@ public class TrestleObjectReader implements ITrestleObjectReader {
                 .orElseThrow(() -> new IllegalArgumentException(String.format(MISSING_FACT_ERROR, factName, datasetClass)));
 
         final String factValueQuery = this.qb.buildDatasetFactValueQuery(datasetClass, factName, sampleLimit);
-        final CompletableFuture<List<Object>> factValuesFuture = CompletableFuture.supplyAsync(() -> {
-            final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(false);
-            try {
-                return this.ontology.executeSPARQLResults(factValueQuery);
-            } finally {
-                this.ontology.returnAndCommitTransaction(tt);
-            }
-        }, this.objectReaderThreadPool)
-                .thenApply(results -> results
-                        .getResults()
-                        .stream()
-                        .map(result -> result.unwrapLiteral("o"))
-                        .map(literal -> this.handleLiteral(clazz, datatype, literal))
-                        .collect(Collectors.toList()));
 
+        final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(false);
         try {
-            return factValuesFuture.get();
-        } catch (InterruptedException e) {
-            logger.error("Interrupted while getting values for fact {} on dataset {}", factName, datasetClass, e);
-            Thread.currentThread().interrupt();
-            return ExceptionUtils.rethrow(e.getCause());
-        } catch (ExecutionException e) {
+            final List<Object> results = this.ontology.executeSPARQLResults(factValueQuery)
+                    .getResults()
+                    .stream()
+                    .map(result -> result.unwrapLiteral("o"))
+                    .map(literal -> this.handleLiteral(clazz, datatype, literal))
+                    .collect(Collectors.toList());
+            this.ontology.returnAndCommitTransaction(tt);
+            return results;
+        } catch (Exception e) {
             logger.error("Cannot get values for fact {} on dataset {}", factName, datasetClass, e);
+            this.ontology.returnAndAbortTransaction(tt);
             return ExceptionUtils.rethrow(e.getCause());
         }
     }
@@ -464,47 +461,36 @@ public class TrestleObjectReader implements ITrestleObjectReader {
     public <T> List<T> getRelatedObjects(Class<T> clazz, String identifier, ObjectRelation relation, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
         final IRI individualIRI = parseStringToIRI(this.reasonerPrefix, identifier);
 
-        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-
-//        Be careful, there's an inference issue here. Java things the List is of type ?, not T.
-//        So we have to do the manual type assertion
-        final CompletableFuture<List<T>> relatedFuture = CompletableFuture.supplyAsync(() -> {
-            final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-            try {
-                final Optional<List<OWLObjectPropertyAssertionAxiom>> objectProperties = this.ontology.getIndividualObjectProperty(individualIRI, relation.getIRI());
-                if (objectProperties.isPresent()) {
-                    return objectProperties
-                            .get()
-                            .stream()
-                            .map(objectRelation -> {
-                                final OWLNamedIndividual objectIndividual = objectRelation.getObject().asOWLNamedIndividual();
-                                try {
-                                    return this.readTrestleObject(clazz, objectIndividual.getIRI(), false, validAt, dbAt);
-                                } catch (NoValidStateException e) {
-                                    logger.debug("Cannot read {} at {} and {}", objectIndividual, validAt, dbAt);
-                                    return null;
-                                }
-                            })
-                            .filter(Objects::nonNull)
-                            .collect(Collectors.toList());
-                } else {
-                    return Collections.emptyList();
-                }
-            } finally {
-                this.ontology.returnAndCommitTransaction(tt);
-            }
-        }, this.objectReaderThreadPool);
+        final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(false);
 
         try {
-            return relatedFuture.get();
-        } catch (InterruptedException e) {
-            logger.error("Interrupted while get related objects for {}", individualIRI, e);
-            Thread.currentThread().interrupt();
-            return ExceptionUtils.rethrow(e.getCause());
 
-        } catch (ExecutionException e) {
-            final Throwable rootCause = ExceptionUtils.getRootCause(e);
-            logger.error("Error when getting related objects for {}", individualIRI, rootCause);
+            final Optional<List<OWLObjectPropertyAssertionAxiom>> objectProperties = this.ontology.getIndividualObjectProperty(individualIRI, relation.getIRI());
+            if (objectProperties.isPresent()) {
+                final List<T> properties = objectProperties
+                        .get()
+                        .stream()
+                        .map(objectRelation -> {
+                            final OWLNamedIndividual objectIndividual = objectRelation.getObject().asOWLNamedIndividual();
+                            try {
+                                return this.readTrestleObject(clazz, objectIndividual.getIRI(), false, validAt, dbAt);
+                            } catch (NoValidStateException e) {
+                                logger.debug("Cannot read {} at {} and {}", objectIndividual, validAt, dbAt);
+                                return null;
+                            }
+                        })
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+
+                this.ontology.returnAndCommitTransaction(tt);
+                return properties;
+            } else {
+                this.ontology.returnAndCommitTransaction(tt);
+                return Collections.emptyList();
+            }
+        } catch (Exception e) {
+            logger.error("Error when getting related objects for {}", individualIRI, e);
+            this.ontology.returnAndAbortTransaction(tt);
             return ExceptionUtils.rethrow(e.getCause());
         }
     }
