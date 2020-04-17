@@ -7,6 +7,8 @@ exports[`AppComponent should create the app 1`] = `
   iconSize={[Function String]}
   loginIcon={[Function Object]}
   logoutIcon={[Function Object]}
+  mobileQuery={[Function Object]}
+  mobileQueryListener={[Function Function]}
   router={[Function Router]}
 >
   <mat-toolbar
@@ -27,8 +29,7 @@ exports[`AppComponent should create the app 1`] = `
     
     <mat-sidenav
       class="z-depth-3 mat-drawer mat-sidenav ng-tns-c3-0 ng-trigger ng-trigger-transform"
-      color="'accent'"
-      mode="side"
+      fixedtopgap="56"
       tabindex="-1"
     >
       <div
@@ -42,7 +43,8 @@ exports[`AppComponent should create the app 1`] = `
             id="user-actions"
           >
             <h5
-              mat-list-subheader=""
+              class="mat-subheader"
+              matsubheader=""
             >
               Explore
             </h5>
