@@ -3,7 +3,7 @@
   <span class="toolbar-spacer"></span>
   <!--User login specific functions-->
   <div class="action-buttons" *ngIf="user">
-    <img class="img-circle" [src]="getGravatarURL()">
+    <img class="img-circle" [src]="getGravatarURL()" alt="User profile picture">
     <button id="logout" mat-button class="toolbar-button" (click)="logout()" aria-label="Logout">
       <fa-icon [icon]="logoutIcon" [size]="iconSize"></fa-icon>
     </button>
@@ -13,10 +13,10 @@
   </button>
 </mat-toolbar>
 <mat-sidenav-container>
-  <mat-sidenav #sidenav class="z-depth-3" mode="side" color="'accent'">
+  <mat-sidenav #sidenav class="z-depth-3" [mode]="mobileQuery.matches ? 'over' : 'side'" [fixedInViewport]="mobileQuery.matches" fixedTopGap="56" [opened]="!mobileQuery.matches">
     <mat-nav-list>
       <div id="user-actions">
-        <h5 mat-list-subheader>Explore</h5>
+        <h5 matSubheader>Explore</h5>
         <mat-divider></mat-divider>
         <a id="viewer" mat-list-item [routerLink]="['explore/viewer']" aria-label="dataset viewer link">
           <mat-icon>map</mat-icon>VIEWER</a>
@@ -31,7 +31,7 @@
       </div>
       <div id="admin-actions" *ngIf="userHasRequiredPermissions([Privileges.ADMIN])">
         <mat-divider></mat-divider>
-        <h5 mat-list-subheader>Admin</h5>
+        <h5 matSubheader>Admin</h5>
         <mat-divider></mat-divider>
         <a id="dashboard" mat-list-item [routerLink]="['admin/dashboard']" aria-label="dashboard link">
           <mat-icon>dashboard</mat-icon>DASHBOARD</a>

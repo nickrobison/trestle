@@ -1,23 +1,23 @@
 /**
  * Created by nrobison on 1/19/17.
  */
-import {Component, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation} from "@angular/core";
-import {TrestleUser} from "./user/trestle-user";
-import {AuthService, Privileges} from "./user/authentication.service";
-import {Router} from "@angular/router";
-import {MatSidenav} from "@angular/material/sidenav";
-import {MD5} from "crypto-js";
+import {ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation} from '@angular/core';
+import {TrestleUser} from './user/trestle-user';
+import {AuthService, Privileges} from './user/authentication.service';
+import {Router} from '@angular/router';
+import {MD5} from 'crypto-js';
 import {faSignInAlt, faSignOutAlt} from '@fortawesome/free-solid-svg-icons';
 import {SizeProp} from '@fortawesome/fontawesome-svg-core';
+import {MediaMatcher} from '@angular/cdk/layout';
 
 @Component({
-  selector: "app-root",
-  templateUrl: "./app.component.html",
-  styleUrls: ["./app.component.scss"],
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
 export class AppComponent implements OnInit, OnDestroy {
-  public readonly iconSize: SizeProp = "lg";
+  public readonly iconSize: SizeProp = 'lg';
   public readonly loginIcon = faSignInAlt;
   public readonly logoutIcon = faSignOutAlt;
   public gravatarURL: string;
@@ -25,20 +25,24 @@ export class AppComponent implements OnInit, OnDestroy {
   public Privileges = Privileges;
   public user: TrestleUser | null;
 
-  @ViewChild("sidenav")
-  public sideNav: MatSidenav | null;
+  public mobileQuery: MediaQueryList;
+  private readonly mobileQueryListener: () => void;
 
   constructor(private authService: AuthService,
-              private router: Router
-              // private eventBus: EventBus
+              private router: Router,
+              // private eventBus: EventBus,
+              changeDetectorRef: ChangeDetectorRef,
+              media: MediaMatcher
   ) {
+    this.mobileQuery = media.matchMedia('(max-width: 800px)');
+    this.mobileQueryListener = () => changeDetectorRef.detectChanges();
+    this.mobileQuery.addEventListener('change', this.mobileQueryListener);
   }
 
 
   public ngOnInit(): void {
     // Get the current user, if it exists
     this.user = this.authService.getUser();
-    this.checkMenu();
     // this.loginSubscription = this.eventBus.subscribe(UserLoginEvent).subscribe((event) => {
     //     console.debug("User event, is logged in?", event.isLoggedIn());
     //     if (event.isLoggedIn()) {
@@ -50,6 +54,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   public ngOnDestroy(): void {
+    this.mobileQuery.removeEventListener('change', this.mobileQueryListener);
     // this.loginSubscription.unsubscribe();
   }
 
@@ -58,7 +63,7 @@ export class AppComponent implements OnInit, OnDestroy {
    */
   public login(): void {
     if (this.user == null) {
-      this.router.navigate(["/login"]);
+      this.router.navigate(['/login']);
     }
   }
 
@@ -83,7 +88,7 @@ export class AppComponent implements OnInit, OnDestroy {
       const user = this.authService.getUser();
       if (user !== null) {
         const hash = MD5(user.email.trim().toLowerCase()).toString();
-        this.gravatarURL = "https://www.gravatar.com/avatar/" + hash + "?d=identicon" + "&s=36";
+        this.gravatarURL = 'https://www.gravatar.com/avatar/' + hash + '?d=identicon' + '&s=36';
         return this.gravatarURL;
       }
     }
@@ -96,19 +101,5 @@ export class AppComponent implements OnInit, OnDestroy {
   public logout(): void {
     this.authService.logout();
     this.user = null;
-  }
-
-//    Resize function for sidenav
-  @HostListener("window:resize", ["$event"])
-  public onResize(_event: any): void {
-    this.checkMenu();
-  }
-
-  private checkMenu() {
-    if (window.innerWidth <= 800) {
-      this.sideNav?.close();
-    } else {
-      this.sideNav?.open();
-    }
   }
 }
