@@ -1,5 +1,5 @@
 ext {
-    byteBuddyVersion = "1.10.9"
+    byteBuddyVersion = '1.10.9'
 }
 
 dependencies {
@@ -12,6 +12,6 @@ dependencies {
     implementation group: 'com.google.inject', name: 'guice', version: guiceVersion
     implementation group: 'net.bytebuddy', name: 'byte-buddy', version: byteBuddyVersion
     implementation group: 'net.bytebuddy', name: 'byte-buddy-agent', version: "1.10.8"
-    compileOnly group: 'org.postgresql', name: 'postgresql', version: '42.2.12'
+    compileOnly group: 'org.postgresql', name: 'postgresql', version: postgresVersion
 
 }

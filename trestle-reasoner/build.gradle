@@ -1,19 +1,19 @@
 apply plugin: "dev.clojurephant.clojure"
 
 dependencies {
-    implementation project(":trestle-annotations")
-    implementation project(":trestle-exporter")
+    api project(":trestle-annotations")
+    api project(":trestle-common")
+    api project(":trestle-exporter")
+    api project(":trestle-iri")
+    api group: "org.geotools", name: "gt-main", version: geotoolsVersion
+    api group: 'com.esri.geometry', name: 'esri-geometry-api', version: esriVersion
+    api group: 'org.locationtech.jts', name: 'jts-core', version: jtsVersion
     implementation project(":trestle-graphdb")
-    implementation project(":trestle-common")
     implementation project(":trestle-querybuilder")
-    implementation project(":trestle-iri")
     implementation project(":trestle-metrics")
     implementation group: 'net.sourceforge.owlapi', name: 'owlapi-parsers', version: owlVersion
     implementation group: 'org.apache.commons', name: 'commons-lang3', version: commonsLangVersion
     implementation group: 'commons-io', name: 'commons-io', version: commonsIOVersion
-    implementation group: 'org.locationtech.jts', name: 'jts-core', version: jtsVersion
-    implementation group: 'com.esri.geometry', name: 'esri-geometry-api', version: '2.2.3'
-    implementation group: "org.geotools", name: "gt-main", version: geotoolsVersion
     implementation group: "org.geotools", name: "gt-epsg-hsql", version: geotoolsVersion
     implementation group: 'com.google.inject', name: 'guice', version: guiceVersion
     implementation group: 'com.google.inject.extensions', name: 'guice-assistedinject', version: guiceVersion
