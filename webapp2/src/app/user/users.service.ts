@@ -5,7 +5,6 @@ import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs';
 import {ITrestleUser} from './authentication.service';
 import {HttpClient} from '@angular/common/http';
-import {map} from 'rxjs/operators';
 import {environment} from '../../environments/environment';
 
 @Injectable()
@@ -21,7 +20,7 @@ export class UserService {
    * Get a list of all registered users
    * Requires ADMIN permissions
    *
-   * @returns {Observable<R>}
+   * @returns {Observable<ITrestleUser[]>}
    */
   public getUsers(): Observable<ITrestleUser[]> {
     return this.trestleHttp.get<ITrestleUser[]>(this.baseUrl + '/users');
@@ -32,7 +31,7 @@ export class UserService {
    * Either creates the new user or modifies an existing one
    *
    * @param user - User to create/modify
-   * @returns {Observable<R>}
+   * @returns {Observable<string>}
    */
   public modifyUser(user: ITrestleUser): Observable<string> {
     return this.trestleHttp.post(this.baseUrl + '/users', user, {
@@ -43,7 +42,7 @@ export class UserService {
   /**
    * Delete user from database
    * @param id - ID of user to delete
-   * @returns {Observable<R>}
+   * @returns {Observable<any>}
    */
   public deleteUser(id: number): Observable<any> {
     return this.trestleHttp.delete(this.baseUrl + '/users/' + id);
@@ -57,7 +56,6 @@ export class UserService {
    */
   public userExists(username: string): Observable<boolean> {
     console.debug('Checking username:', username);
-    return this.trestleHttp.get<string>(this.baseUrl + '/users/exists/' + username)
-      .pipe(map(res => res === 'true'));
+    return this.trestleHttp.get<boolean>(this.baseUrl + '/users/exists/' + username);
   }
 }

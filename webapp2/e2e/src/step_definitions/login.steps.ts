@@ -14,12 +14,16 @@ chai.use(chaiAsPromised);
 const dashboard = new DashboardPageObject();
 const login = new LoginPageObject();
 
-Given(/^I login with (.*) and (.*)$/, async (username, password) => {
-  return login.loginUser(username, password);
+Given(/^I login with (.*) and (.*)$/, async (username: string | null, password: string | null) => {
+  const u = username === null ? "" : username;
+  const p = password === null ? "" : password;
+  return login.loginUser(u, p);
 });
 
-When(/^I login and submit with "([^"]*)" and "([^"]*)"$/, async (username, password) => {
-  return login.loginUser(username, password, true);
+When(/^I login and submit with "([^"]*)" and "([^"]*)"$/, async (username: string | null, password: string | null) => {
+  const u = username === null ? "" : username;
+  const p = password === null ? "" : password;
+  return login.loginUser(u, p, true);
 });
 
 Then(/^The login form is validated (.*)$/, async (valid) => {
@@ -29,47 +33,10 @@ Then(/^The login form is validated (.*)$/, async (valid) => {
 });
 
 Then(/^The error message should be "([^"]*)"$/, async (message) => {
-      return expect(login.getElementText(by.css("mat-card-footer")))
+      return expect(login.getElementText(by.id("mat-card-footer")))
         .to.become(message);
 });
 
 Then(/^I logout$/, async () => {
-  dashboard.clickButton("logout");
+  return dashboard.clickButton("logout");
 });
-
-// private loginUser(username: string, password: string) {
-//     return this.login.loginUser(username, password);
-// }
-//
-// @when(/^I login and submit with "([^"]*)" and "([^"]*)"$/)
-// private loginSubmit(username: string, password: string) {
-//     return this.login.loginUser(username, password, true);
-// }
-//
-// @then(/^The login form is validated (.*)$/)
-// private formIsValid(valid: string) {
-//     const isValid = valid === "true";
-//     return expect(this.login.formValidState(isValid))
-//         .to.become(true);
-// }
-//
-// @then(/^The error message should be "([^"]*)"$/)
-// private validateErrorMessage(message: string) {
-//     return expect(this.login.getElementText(by.css("mat-card-footer")))
-//         .to.become(message);
-// }
-//
-// @then(/^I logout$/)
-// public logout() {
-//     return this.dashboard.clickButton("logout");
-// }
-
-// @binding()
-// export class LoginSteps {
-
-
-
-
-
-
-// }

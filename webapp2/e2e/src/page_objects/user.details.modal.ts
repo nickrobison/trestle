@@ -137,7 +137,7 @@ export class UserDetailsModal {
      */
     private static async selectUserPermission(permission: string) {
         // We need to use contains, because the Text can have trailing whitespace
-        const xpathString = "//mat-button-toggle[./label/div[contains(text(), '" + permission.toUpperCase() + "')]]";
+        const xpathString = "//mat-button-toggle[.//div[contains(text(), '" + permission.toUpperCase() + "')]]";
         return element(by.xpath(xpathString)).click();
     }
 }

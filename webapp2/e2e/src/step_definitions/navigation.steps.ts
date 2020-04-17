@@ -24,35 +24,3 @@ Then(/^The "([^"]*)" page appears$/, async (page) => {
   return expect(browser.getCurrentUrl())
     .to.become(expectedUrl);
 });
-
-
-// @binding()
-// export class NavigationSteps {
-//
-//
-//
-//     public constructor() {
-//         this.dashboard = new DashboardPageObject();
-//     }
-//
-//     @given(/^I am viewing the dashboard$/)
-//     private viewDashboard() {
-//         return browser.get(browser.baseUrl);
-//         // return this.dashboard.navigateToPage(page);
-//     }
-//
-//     @given(/^I am viewing the "([^"]*)" page$/)
-//     private viewPage(page: string) {
-//         return this.dashboard.navigateToPage(page);
-//     }
-//
-//     @when(/^I click the "([^"]*)" button$/)
-//     private clickButton(button: string) {
-//         return this.dashboard.clickButton(button);
-//     }
-//
-//     @then(/^The "([^"]*)" page appears$/)
-//     private async validatePageAppears(page: string) {
-
-//     }
-// }

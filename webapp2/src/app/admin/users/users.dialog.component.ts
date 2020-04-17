@@ -119,7 +119,7 @@ export class UserDialogComponent implements OnInit {
     if (this.user.id !== undefined) {
       this.userService
         .deleteUser(this.user.id)
-        .subscribe((data: any) => this.dialogRef.close({
+        .subscribe(() => this.dialogRef.close({
             type: UserDialogResponseType.DELETE,
             user: this.user
           }),
@@ -212,6 +212,7 @@ export class UserDialogComponent implements OnInit {
           return this.userService.userExists(c.value)
             .pipe(
               map((exists) => {
+                console.debug('User exists?', exists);
                 return exists ? ({
                   userExists: {
                     value: c.value
