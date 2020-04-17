@@ -13,9 +13,10 @@ import java.util.List;
 @Path("/workspace/{seg: .*}")
 @Produces(MediaType.TEXT_HTML)
 public class WorkspaceSPAResource {
-    private static final String ASSETS_INDEX_HTML = "build/workspace.index.html";
+    private static final String ASSETS_INDEX_HTML = "build/index.html";
 
     public WorkspaceSPAResource() {
+      // Not used
     }
 
     @GET
