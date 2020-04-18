@@ -32,7 +32,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.NotThreadSafe;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -46,9 +48,9 @@ import static com.nickrobison.trestle.ontology.utils.SharedOntologyFunctions.get
 // We have to suppress these warnings because Checker is garbage and won't allow us to mark a method has ensuring non-null. Because why would it?
 // FIXME(nrobison): This has to go away!
 @SuppressWarnings({"argument.type.incompatible"})
-public abstract class SesameOntology extends TransactingOntology {
+public abstract class RDF4JOntology extends TransactingOntology {
 
-    private static final Logger logger = LoggerFactory.getLogger(SesameOntology.class);
+    private static final Logger logger = LoggerFactory.getLogger(RDF4JOntology.class);
     protected static final SimpleValueFactory vf = SimpleValueFactory.getInstance();
     protected final String ontologyName;
     protected final RepositoryConnection adminConnection;
@@ -61,7 +63,7 @@ public abstract class SesameOntology extends TransactingOntology {
     protected ThreadLocal<@Nullable RepositoryConnection> tc = ThreadLocal.withInitial(() -> null);
 
 
-    protected SesameOntology(String ontologyName, Repository repository, OWLOntology ontology, DefaultPrefixManager pm) {
+    protected RDF4JOntology(String ontologyName, Repository repository, OWLOntology ontology, DefaultPrefixManager pm) {
         super();
         this.ontologyName = ontologyName;
         this.repository = repository;
@@ -579,7 +581,7 @@ public abstract class SesameOntology extends TransactingOntology {
 
     /**
      * This is mostly here so that Checker will be quiet.
-     * If we call {@link SesameOntology#setOntologyConnection()}, then the thread connection can never be null.
+     * If we call {@link RDF4JOntology#setOntologyConnection()}, then the thread connection can never be null.
      * However, Checker can't seem to see through the call stack to notice that we've called that function, so we use this instead.
      *
      * @return - {@link RepositoryConnection} associated with the given transaction

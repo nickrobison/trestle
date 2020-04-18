@@ -1,6 +1,6 @@
 package com.nickrobison.trestle.graphdb;
 
-import com.nickrobison.trestle.ontology.SesameOntology;
+import com.nickrobison.trestle.ontology.RDF4JOntology;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.ontology.utils.SharedOntologyFunctions;
 import com.ontotext.trree.config.OWLIMSailSchema;
@@ -46,7 +46,7 @@ import java.util.MissingResourceException;
  */
 
 @SuppressWarnings({"initialization.fields.uninitialized"})
-public class GraphDBOntology extends SesameOntology {
+public class GraphDBOntology extends RDF4JOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(GraphDBOntology.class);
     private static final String DATA_DIRECTORY = "target/data";
@@ -109,14 +109,14 @@ public class GraphDBOntology extends SesameOntology {
         }
 
         final Resource repositoryNode = Models.subject(graph.filter(null, RDF.TYPE, RepositoryConfigSchema.REPOSITORY)).orElse(null);
-        graph.add(repositoryNode, RepositoryConfigSchema.REPOSITORYID, SesameOntology.vf.createLiteral(ontologyName));
-        graph.add(repositoryNode, RDFS.LABEL, SesameOntology.vf.createLiteral(String.format("Trestle Ontology: %s", ontologyName)));
+        graph.add(repositoryNode, RepositoryConfigSchema.REPOSITORYID, RDF4JOntology.vf.createLiteral(ontologyName));
+        graph.add(repositoryNode, RDFS.LABEL, RDF4JOntology.vf.createLiteral(String.format("Trestle Ontology: %s", ontologyName)));
 
 //        Manually set some parameters
         final Resource configNode = (Resource) Models.object(graph.filter(null, SailRepositorySchema.SAILIMPL, null)).orElse(null);
 //        Set reasoner profile
-        final org.eclipse.rdf4j.model.IRI reasonerKey = SesameOntology.vf.createIRI(OWLIMSailSchema.NAMESPACE, "ruleset");
-        final Literal reasonerValue = SesameOntology.vf.createLiteral(config.getString("ruleset"));
+        final org.eclipse.rdf4j.model.IRI reasonerKey = RDF4JOntology.vf.createIRI(OWLIMSailSchema.NAMESPACE, "ruleset");
+        final Literal reasonerValue = RDF4JOntology.vf.createLiteral(config.getString("ruleset"));
         graph.remove(configNode, reasonerKey, null);
         graph.add(configNode, reasonerKey, reasonerValue);
 
