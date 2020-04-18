@@ -1,10 +1,11 @@
 package com.nickrobison.trestle.ontology;
 
 import com.codahale.metrics.annotation.Gauge;
+import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
-import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
+import io.reactivex.rxjava3.core.Flowable;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
@@ -59,7 +60,7 @@ public interface ITrestleOntology {
      * @param property   - OWLObjectProperty to retrieve
      * @return - Optional list of all asserted property values
      */
-    Optional<List<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, OWLObjectProperty property);
+    Flowable<OWLObjectPropertyAssertionAxiom> getIndividualObjectProperty(OWLNamedIndividual individual, OWLObjectProperty property);
 
     /**
      * Store an OWLNamedIndividual in the ontology from a given classAxiom
@@ -301,7 +302,7 @@ public interface ITrestleOntology {
      * @param individual - OWLNamedIndividual to get properties for
      * @return - Set of OWLDataPropertyAssertionAxioms
      */
-    Set<OWLDataPropertyAssertionAxiom> getAllDataPropertiesForIndividual(OWLNamedIndividual individual);
+    Flowable<OWLDataPropertyAssertionAxiom> getAllDataPropertiesForIndividual(OWLNamedIndividual individual);
 
     /**
      * Get all object properties for a given individual IRI
