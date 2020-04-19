@@ -53,7 +53,7 @@
     "@types/chai": "^4.2.11",
     "@types/chai-as-promised": "^7.1.2",
     "@types/codemirror": "^0.0.90",
-    "@types/crypto-js": "^3.1.38",
+    "@types/crypto-js": "^3.1.44",
     "@types/cucumber": "^6.0.1",
     "@types/d3": "^5.7.2",
     "@types/d3-scale-chromatic": "^1.2.0",
