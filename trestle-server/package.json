@@ -91,7 +91,7 @@
     "sass-loader": "^6.0.6",
     "source-map-loader": "^0.2.4",
     "thread-loader": "^1.1.5",
-    "to-string-loader": "^1.1.5",
+    "to-string-loader": "^1.1.6",
     "ts-loader": "^7.0.0",
     "ts-node": "^5.0.0",
     "tslint": "^5.8.0",
