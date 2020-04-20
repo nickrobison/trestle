@@ -36,6 +36,7 @@ export class UsersPage {
   }
 
   public async getFieldMessage(field: string) {
+    await browser.sleep(500);
     const xpathString = '//form//mat-form-field[.//input[@formcontrolname=\'' + field + '\']]//mat-error';
     const matField = element(by.xpath(xpathString));
     return matField.getText();
