@@ -61,7 +61,7 @@
     "@types/geojson": "^7946.0.7",
     "@types/hammerjs": "^2.0.36",
     "@types/mapbox-gl": "^1.9.0",
-    "@types/node": "^13.11.1",
+    "@types/node": "^13.13.0",
     "@types/protractor": "^4.0.0",
     "@types/stacktrace-js": "^2.0.3",
     "angular-router-loader": "^0.6.0",
