@@ -24,7 +24,7 @@
     "clientjs": "^0.1.11",
     "codemirror": "^5.52.2",
     "core-js": "^2.5.3",
-    "crypto-js": "^3.1.9-1",
+    "crypto-js": "^4.0.0",
     "d3": "^5.15.1",
     "d3-scale-chromatic": "^1.5.0",
     "es6-shim": "^0.35.2",
