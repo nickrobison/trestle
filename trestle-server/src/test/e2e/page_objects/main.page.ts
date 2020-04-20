@@ -19,11 +19,15 @@ export class DashboardPageObject {
     }
 
     public async clickButton(button: string) {
-        return element(by.id(button)).click();
+        await element(by.id(button)).click();
+        if (button == "logout") {
+          // TODO(nickrobison): Remove with TRESTLE-736
+          return browser.refresh();
+        }
+        return;
     }
 
     public async getPageActions(optionType: PageActionType): Promise<number> {
-        const adminDiv = await element(by.id(optionType + "-actions"));
-        return adminDiv.all(by.tagName("a")).count();
+        return element(by.id(optionType + "-actions")).all(by.tagName("a")).count();
     }
 }

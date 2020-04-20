@@ -1,1 +1,1 @@
-xexports.config = require("./config/protractor.local.conf").config;
+exports.config = require("./config/protractor.local.conf").config;
