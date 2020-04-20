@@ -6,7 +6,6 @@ import {Router} from '@angular/router';
 import {TrestleUser} from './trestle-user';
 import {HttpClient} from '@angular/common/http';
 import {JwtHelperService} from '@auth0/angular-jwt';
-import {Observable} from 'rxjs';
 import {tap} from 'rxjs/operators';
 import {environment} from '../../environments/environment';
 
@@ -80,7 +79,6 @@ export class AuthService {
    * Attempt to login the given use
    * @param {string} username
    * @param {string} password
-   * @returns {Observable<void>}
    */
   public login(username: string, password: string) {
     return this.http.post(this.baseUrl + '/auth/login', {username, password: password}, {

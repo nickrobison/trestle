@@ -56,7 +56,6 @@ export class LoginComponent implements OnInit {
      * @param {IUserLogin} user
      */
     public login(user: IUserLogin) {
-        console.debug("Logging in with", user.username, "and", user.password);
         this.authService.login(user.username, user.password).subscribe(() => {
             // this.eventBus.publish(new UserLoginEvent(true));
             this.router.navigate([this.returnUrl]);

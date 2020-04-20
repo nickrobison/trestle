@@ -3,8 +3,6 @@ import { browser } from "protractor";
 const {
     setDefaultTimeout, // jshint ignore:line
     Before, // jshint ignore:line
-    BeforeAll, // jshint ignore:line
-    After, // jshint ignore:line
 } = require('cucumber');
 
 let firstLoad = true;

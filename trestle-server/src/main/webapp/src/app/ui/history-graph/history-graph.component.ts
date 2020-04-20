@@ -93,8 +93,7 @@ export class HistoryGraphComponent implements AfterViewInit, OnChanges {
       .domain(entityNames);
 
     // Build the lane lines
-    const laneLines = this.svg.selectAll('.laneLine')
-      // .data(this.data.getFacts().map((fact) => fact.getName()))
+    this.svg.selectAll('.laneLine')
       .data(this.data.entities.map((entity) => entity.label))
       .enter().append('line')
       .attr('class', 'laneLine')
@@ -137,7 +136,7 @@ export class HistoryGraphComponent implements AfterViewInit, OnChanges {
             this.x(d.start));
           return end - start;
         })
-      .attr('height', (d) => y.bandwidth())
+      .attr('height', () => y.bandwidth())
       // .style("fill", (d: TrestleFact) => z(d.getName()))
       .style('fill', (d) => z(d.label))
       .style('fill-opacity', 0.7)
