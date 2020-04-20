@@ -6,6 +6,10 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { FormBuilder, FormGroup, Validators } from "@angular/forms";
 import { state, style, transition, trigger, animate } from "@angular/animations";
 import {AuthService} from "../../user/authentication.service";
+import {State} from '../../reducers';
+import {select, Store} from '@ngrx/store';
+import {Observable} from 'rxjs';
+import {login} from '../../actions/auth.actions';
 
 interface IUserLogin {
     username: string;
@@ -35,8 +39,10 @@ export class LoginComponent implements OnInit {
     public errorMessage: string;
     public errorState: string;
     private returnUrl: string;
+    private loginError: Observable<Error>;
 
-    constructor(private fb: FormBuilder, private authService: AuthService, private route: ActivatedRoute, private router: Router) {
+    constructor(private fb: FormBuilder, private authService: AuthService, private route: ActivatedRoute, private router: Router, private store: Store<State>) {
+      this.loginError = this.store.pipe(select('user'), select('userError'));
     }
 
     public ngOnInit(): void {
@@ -56,6 +62,7 @@ export class LoginComponent implements OnInit {
      * @param {IUserLogin} user
      */
     public login(user: IUserLogin) {
+      this.store.dispatch(login({username: user.username, password: user.password}))
         this.authService.login(user.username, user.password).subscribe(() => {
             // this.eventBus.publish(new UserLoginEvent(true));
             this.router.navigate([this.returnUrl]);

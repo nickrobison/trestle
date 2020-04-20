@@ -12,6 +12,9 @@ import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
 import {JWT_OPTIONS, JwtModule} from '@auth0/angular-jwt';
 import {environment} from '../environments/environment';
 import {AuthService} from './user/authentication.service';
+import { StoreModule } from '@ngrx/store';
+import { reducers, metaReducers } from './reducers';
+import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 
 export function jwtOptionsFactory(service: AuthService) {
   // noinspection JSUnusedGlobalSymbols
@@ -47,7 +50,15 @@ export function jwtOptionsFactory(service: AuthService) {
         useFactory: jwtOptionsFactory,
         deps: [AuthService]
       }
-    })
+    }),
+    StoreModule.forRoot(reducers, {
+      metaReducers, 
+      runtimeChecks: {
+        strictStateImmutability: true,
+        strictActionImmutability: true,
+      }
+    }),
+    !environment.production ? StoreDevtoolsModule.instrument() : []
   ],
   bootstrap: [AppComponent]
 })
