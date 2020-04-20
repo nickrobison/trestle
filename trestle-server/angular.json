@@ -7,33 +7,33 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "webapp2": {
+    "webapp": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
           "style": "scss"
         }
       },
-      "root": "src/main/webapp2",
-      "sourceRoot": "src/main/webapp2/src",
+      "root": "src/main/webapp",
+      "sourceRoot": "src/main/webapp/src",
       "prefix": "app",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
             "outputPath": "src/main/resources/build",
-            "index": "src/main/webapp2/src/index.html",
-            "main": "src/main/webapp2/src/main.ts",
-            "polyfills": "src/main/webapp2/src/polyfills.ts",
+            "index": "src/main/webapp/src/index.html",
+            "main": "src/main/webapp/src/main.ts",
+            "polyfills": "src/main/webapp/src/polyfills.ts",
             "tsConfig": "tsconfig.app.json",
             "aot": true,
             "assets": [
-              "src/main/webapp2/src/favicon.ico",
-              "src/main/webapp2/src/assets"
+              "src/main/webapp/src/favicon.ico",
+              "src/main/webapp/src/assets"
             ],
             "styles": [
               "./node_modules/@angular/material/prebuilt-themes/deeppurple-amber.css",
-              "src/main/webapp2/src/styles.scss"
+              "src/main/webapp/src/styles.scss"
             ],
             "scripts": [],
             "webWorkerTsConfig": "tsconfig.worker.json"
@@ -42,8 +42,8 @@
             "production": {
               "fileReplacements": [
                 {
-                  "replace": "src/main/webapp2/src/environments/environment.ts",
-                  "with": "src/main/webapp2/src/environments/environment.prod.ts"
+                  "replace": "src/main/webapp/src/environments/environment.ts",
+                  "with": "src/main/webapp/src/environments/environment.prod.ts"
                 }
               ],
               "optimization": true,
@@ -72,33 +72,33 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "webapp2:build"
+            "browserTarget": "webapp:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "webapp2:build:production"
+              "browserTarget": "webapp:build:production"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "webapp2:build"
+            "browserTarget": "webapp:build"
           }
         },
         "test": {
           "builder": "@angular-builders/jest:run",
           "options": {
             "main": "src/test.ts",
-            "polyfills": "src/main/webapp2/src/polyfills.ts",
+            "polyfills": "src/main/webapp/src/polyfills.ts",
             "tsConfig": "tsconfig.spec.json",
             "assets": [
-              "src/main/webapp2/src/favicon.ico",
-              "src/main/webapp2/src/assets"
+              "src/main/webapp/src/favicon.ico",
+              "src/main/webapp/src/assets"
             ],
             "styles": [
               "./node_modules/@angular/material/prebuilt-themes/deeppurple-amber.css",
-              "src/main/webapp2/src/styles.scss"
+              "src/main/webapp/src/styles.scss"
             ],
             "scripts": []
           }
@@ -121,16 +121,16 @@
           "builder": "@angular-devkit/build-angular:protractor",
           "options": {
             "protractorConfig": "e2e/protractor.conf.js",
-            "devServerTarget": "webapp2:serve"
+            "devServerTarget": "webapp:serve"
           },
           "configurations": {
             "production": {
-              "devServerTarget": "webapp2:serve:production"
+              "devServerTarget": "webapp:serve:production"
             }
           }
         }
       }
     }
   },
-  "defaultProject": "webapp2"
+  "defaultProject": "webapp"
 }

@@ -10,10 +10,10 @@
     "esModuleInterop": true
   },
   "files": [
-    "src/main/webapp2/src/polyfills.ts"
+    "src/main/webapp/src/polyfills.ts"
   ],
   "include": [
-    "src/main/webapp2/src/**/*.spec.ts",
-    "src/main/webapp2/src/**/*.d.ts"
+    "src/main/webapp/src/**/*.spec.ts",
+    "src/main/webapp/src/**/*.d.ts"
   ]
 }
