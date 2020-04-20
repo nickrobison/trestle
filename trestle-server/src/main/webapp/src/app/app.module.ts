@@ -15,6 +15,8 @@ import {AuthService} from './user/authentication.service';
 import { StoreModule } from '@ngrx/store';
 import { reducers, metaReducers } from './reducers';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
+import { EffectsModule } from '@ngrx/effects';
+import { AuthEffects } from './effects/auth.effects';
 
 export function jwtOptionsFactory(service: AuthService) {
   // noinspection JSUnusedGlobalSymbols
@@ -58,7 +60,9 @@ export function jwtOptionsFactory(service: AuthService) {
         strictActionImmutability: true,
       }
     }),
-    !environment.production ? StoreDevtoolsModule.instrument() : []
+    !environment.production ? StoreDevtoolsModule.instrument() : [],
+    EffectsModule.forFeature([AuthEffects]),
+    EffectsModule.forRoot([])
   ],
   bootstrap: [AppComponent]
 })
