@@ -34,7 +34,7 @@ exports.config = {
     },
     onPrepare() {
         require('ts-node').register({
-            project: helper.root("src/test/tsconfig.json")
+            project: helper.root("src/test/e2e/tsconfig.json")
         });
     }
 };

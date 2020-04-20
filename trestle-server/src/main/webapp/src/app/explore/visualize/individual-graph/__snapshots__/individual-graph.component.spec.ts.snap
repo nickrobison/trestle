@@ -1,0 +1,129 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`IndividualGraphComponent should create 1`] = `
+IndividualGraphComponent {
+  "color": [Function],
+  "dataChanges": BehaviorSubject {
+    "_isScalar": false,
+    "_value": undefined,
+    "closed": false,
+    "hasError": false,
+    "isStopped": false,
+    "observers": Array [
+      Subscriber {
+        "_parentOrParents": null,
+        "_subscriptions": Array [
+          SubjectSubscription {
+            "_parentOrParents": [Circular],
+            "_subscriptions": null,
+            "closed": false,
+            "subject": [Circular],
+            "subscriber": [Circular],
+          },
+        ],
+        "closed": false,
+        "destination": SafeSubscriber {
+          "_complete": undefined,
+          "_context": [Circular],
+          "_error": undefined,
+          "_next": [Function],
+          "_parentOrParents": null,
+          "_parentSubscriber": [Circular],
+          "_subscriptions": null,
+          "closed": false,
+          "destination": Object {
+            "closed": true,
+            "complete": [Function],
+            "error": [Function],
+            "next": [Function],
+          },
+          "isStopped": false,
+          "syncErrorThrowable": false,
+          "syncErrorThrown": false,
+          "syncErrorValue": null,
+        },
+        "isStopped": false,
+        "syncErrorThrowable": true,
+        "syncErrorThrown": false,
+        "syncErrorValue": null,
+      },
+    ],
+    "thrownError": null,
+  },
+  "element": ElementRef {
+    "nativeElement": <div>
+      <svg
+        height="500"
+        width="0"
+      >
+        <g
+          transform="translate(10,10)"
+        />
+      </svg>
+    </div>,
+  },
+  "factToggleName": "fact-toggle",
+  "forceTick": [Function],
+  "graphFacts": true,
+  "graphRelations": false,
+  "height": 480,
+  "host": Selection {
+    "_groups": Array [
+      Array [
+        <div>
+          <svg
+            height="500"
+            width="0"
+          >
+            <g
+              transform="translate(10,10)"
+            />
+          </svg>
+        </div>,
+      ],
+    ],
+    "_parents": Array [
+      null,
+    ],
+  },
+  "htmlElement": <div>
+    <svg
+      height="500"
+      width="0"
+    >
+      <g
+        transform="translate(10,10)"
+      />
+    </svg>
+  </div>,
+  "layout": Object {
+    "links": Array [],
+    "nodes": Array [],
+  },
+  "margin": Object {
+    "bottom": 10,
+    "left": 10,
+    "right": 20,
+    "top": 10,
+  },
+  "nodeClick": [Function],
+  "nodeMouseOut": [Function],
+  "nodeMouseOver": [Function],
+  "nodeSize": -0.4,
+  "nodeSizeLarge": -0.6,
+  "relationToggleName": "relation-toggle",
+  "svg": Selection {
+    "_groups": Array [
+      Array [
+        <g
+          transform="translate(10,10)"
+        />,
+      ],
+    ],
+    "_parents": Array [
+      null,
+    ],
+  },
+  "width": -30,
+}
+`;

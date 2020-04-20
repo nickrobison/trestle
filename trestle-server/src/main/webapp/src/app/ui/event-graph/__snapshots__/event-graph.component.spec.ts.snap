@@ -1,0 +1,111 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`EventGraphComponent should create 1`] = `
+EventGraphComponent {
+  "applyFilter": [Function],
+  "element": ElementRef {
+    "nativeElement": <div>
+      <svg
+        height="NaN"
+        width="800"
+      >
+        <g
+          transform="translate(20,20)"
+        />
+      </svg>
+    </div>,
+  },
+  "height": NaN,
+  "host": Selection {
+    "_groups": Array [
+      Array [
+        <div>
+          <svg
+            height="NaN"
+            width="800"
+          >
+            <g
+              transform="translate(20,20)"
+            />
+          </svg>
+        </div>,
+      ],
+    ],
+    "_parents": Array [
+      null,
+    ],
+  },
+  "htmlElement": <div>
+    <svg
+      height="NaN"
+      width="800"
+    >
+      <g
+        transform="translate(20,20)"
+      />
+    </svg>
+  </div>,
+  "margin": Object {
+    "bottom": 20,
+    "left": 20,
+    "right": 30,
+    "top": 20,
+  },
+  "mouseOutHandler": [Function],
+  "mouseOverHandler": [Function],
+  "svg": Selection {
+    "_groups": Array [
+      Array [
+        <g
+          transform="translate(20,20)"
+        />,
+      ],
+    ],
+    "_parents": Array [
+      null,
+    ],
+  },
+  "tooltip": Selection {
+    "_groups": Array [
+      Array [
+        <div
+          style="z-index: 10; visibility: hidden; background: steelblue;"
+        >
+          a simple tooltip
+        </div>,
+      ],
+    ],
+    "_parents": Array [
+      <html>
+        <head />
+        <body>
+          <div
+            id="root0"
+          >
+            <div />
+            <div>
+              <svg
+                height="NaN"
+                width="800"
+              >
+                <g
+                  transform="translate(20,20)"
+                />
+              </svg>
+            </div>
+          </div>
+          <div
+            style="z-index: 10; visibility: hidden; background: steelblue;"
+          >
+            a simple tooltip
+          </div>
+        </body>
+      </html>,
+    ],
+  },
+  "tooltipEl": ElementRef {
+    "nativeElement": <div />,
+  },
+  "width": 750,
+}
+`;

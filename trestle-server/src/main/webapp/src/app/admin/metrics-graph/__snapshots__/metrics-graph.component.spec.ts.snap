@@ -1,0 +1,140 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`MetricsGraphComponent should create 1`] = `
+MetricsGraphComponent {
+  "element": ElementRef {
+    "nativeElement": <div
+      class="container"
+      style="width: 100%"
+    >
+      <svg
+        height="500"
+        width="0"
+      >
+        <g
+          transform="translate(70,20)"
+        >
+          <g
+            class="axis axis-x"
+            fill="none"
+            font-family="sans-serif"
+            font-size="10"
+            text-anchor="middle"
+            transform="translate(0,460)"
+          >
+            <path
+              class="domain"
+              d="M0.5,6V0.5H-269.5V6"
+              stroke="currentColor"
+            />
+          </g>
+        </g>
+      </svg>
+    </div>,
+  },
+  "graphData": Array [],
+  "height": 460,
+  "host": Selection {
+    "_groups": Array [
+      Array [
+        <div
+          class="container"
+          style="width: 100%"
+        >
+          <svg
+            height="500"
+            width="0"
+          >
+            <g
+              transform="translate(70,20)"
+            >
+              <g
+                class="axis axis-x"
+                fill="none"
+                font-family="sans-serif"
+                font-size="10"
+                text-anchor="middle"
+                transform="translate(0,460)"
+              >
+                <path
+                  class="domain"
+                  d="M0.5,6V0.5H-269.5V6"
+                  stroke="currentColor"
+                />
+              </g>
+            </g>
+          </svg>
+        </div>,
+      ],
+    ],
+    "_parents": Array [
+      null,
+    ],
+  },
+  "htmlElement": <div
+    class="container"
+    style="width: 100%"
+  >
+    <svg
+      height="500"
+      width="0"
+    >
+      <g
+        transform="translate(70,20)"
+      >
+        <g
+          class="axis axis-x"
+          fill="none"
+          font-family="sans-serif"
+          font-size="10"
+          text-anchor="middle"
+          transform="translate(0,460)"
+        >
+          <path
+            class="domain"
+            d="M0.5,6V0.5H-269.5V6"
+            stroke="currentColor"
+          />
+        </g>
+      </g>
+    </svg>
+  </div>,
+  "legendClickHandler": [Function],
+  "margin": Object {
+    "bottom": 20,
+    "left": 70,
+    "right": 200,
+    "top": 20,
+  },
+  "svg": Selection {
+    "_groups": Array [
+      Array [
+        <g
+          transform="translate(70,20)"
+        >
+          <g
+            class="axis axis-x"
+            fill="none"
+            font-family="sans-serif"
+            font-size="10"
+            text-anchor="middle"
+            transform="translate(0,460)"
+          >
+            <path
+              class="domain"
+              d="M0.5,6V0.5H-269.5V6"
+              stroke="currentColor"
+            />
+          </g>
+        </g>,
+      ],
+    ],
+    "_parents": Array [
+      null,
+    ],
+  },
+  "visible": Map {},
+  "width": -270,
+  "x": [Function],
+}
+`;

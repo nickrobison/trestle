@@ -1,0 +1,175 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`HistoryGraphComponent should create 1`] = `
+HistoryGraphComponent {
+  "dataChanges": BehaviorSubject {
+    "_isScalar": false,
+    "_value": undefined,
+    "closed": false,
+    "hasError": false,
+    "isStopped": false,
+    "observers": Array [
+      Subscriber {
+        "_parentOrParents": null,
+        "_subscriptions": Array [
+          SubjectSubscription {
+            "_parentOrParents": [Circular],
+            "_subscriptions": null,
+            "closed": false,
+            "subject": [Circular],
+            "subscriber": [Circular],
+          },
+        ],
+        "closed": false,
+        "destination": SafeSubscriber {
+          "_complete": undefined,
+          "_context": [Circular],
+          "_error": undefined,
+          "_next": [Function],
+          "_parentOrParents": null,
+          "_parentSubscriber": [Circular],
+          "_subscriptions": null,
+          "closed": false,
+          "destination": Object {
+            "closed": true,
+            "complete": [Function],
+            "error": [Function],
+            "next": [Function],
+          },
+          "isStopped": false,
+          "syncErrorThrowable": false,
+          "syncErrorThrown": false,
+          "syncErrorValue": null,
+        },
+        "isStopped": false,
+        "syncErrorThrowable": true,
+        "syncErrorThrown": false,
+        "syncErrorValue": null,
+      },
+    ],
+    "thrownError": null,
+  },
+  "element": ElementRef {
+    "nativeElement": <div>
+      <svg
+        height="NaN"
+        width="0"
+      >
+        <g
+          transform="translate(150,20)"
+        >
+          <g
+            class="axis x-axis"
+            fill="none"
+            font-family="sans-serif"
+            font-size="10"
+            text-anchor="middle"
+            transform="translate(0,NaN)"
+          >
+            <path
+              class="domain"
+              d="M0.5,6V0.5H-179.5V6"
+              stroke="currentColor"
+            />
+          </g>
+        </g>
+      </svg>
+    </div>,
+  },
+  "height": NaN,
+  "host": Selection {
+    "_groups": Array [
+      Array [
+        <div>
+          <svg
+            height="NaN"
+            width="0"
+          >
+            <g
+              transform="translate(150,20)"
+            >
+              <g
+                class="axis x-axis"
+                fill="none"
+                font-family="sans-serif"
+                font-size="10"
+                text-anchor="middle"
+                transform="translate(0,NaN)"
+              >
+                <path
+                  class="domain"
+                  d="M0.5,6V0.5H-179.5V6"
+                  stroke="currentColor"
+                />
+              </g>
+            </g>
+          </svg>
+        </div>,
+      ],
+    ],
+    "_parents": Array [
+      null,
+    ],
+  },
+  "htmlElement": <div>
+    <svg
+      height="NaN"
+      width="0"
+    >
+      <g
+        transform="translate(150,20)"
+      >
+        <g
+          class="axis x-axis"
+          fill="none"
+          font-family="sans-serif"
+          font-size="10"
+          text-anchor="middle"
+          transform="translate(0,NaN)"
+        >
+          <path
+            class="domain"
+            d="M0.5,6V0.5H-179.5V6"
+            stroke="currentColor"
+          />
+        </g>
+      </g>
+    </svg>
+  </div>,
+  "margin": Object {
+    "bottom": 20,
+    "left": 150,
+    "right": 30,
+    "top": 20,
+  },
+  "svg": Selection {
+    "_groups": Array [
+      Array [
+        <g
+          transform="translate(150,20)"
+        >
+          <g
+            class="axis x-axis"
+            fill="none"
+            font-family="sans-serif"
+            font-size="10"
+            text-anchor="middle"
+            transform="translate(0,NaN)"
+          >
+            <path
+              class="domain"
+              d="M0.5,6V0.5H-179.5V6"
+              stroke="currentColor"
+            />
+          </g>
+        </g>,
+      ],
+    ],
+    "_parents": Array [
+      null,
+    ],
+  },
+  "width": -180,
+  "x": [Function],
+}
+`;

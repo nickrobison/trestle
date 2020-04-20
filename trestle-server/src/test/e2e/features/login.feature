@@ -20,8 +20,9 @@ Feature: Login page feature
       |           | validpassword | false |
       | validuser | validpassword | true  |
 
-  Scenario: Check valid user login
-    Given I click the "login" button
-    Then The "login" page appears
-    When I login and submit with "dba" and "wrongPassword"
-    Then The error message should be "Incorrect Username or Password"
+  # TODO(nickrobison): Re-enable with TRESTLE-736
+#  Scenario: Check valid user login
+#    Given I click the "login" button
+#    Then The "login" page appears
+#    When I login and submit with "dba" and "wrongPassword"
+#    Then The error message should be "Incorrect Username or Password"

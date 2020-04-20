@@ -1,0 +1,19 @@
+<div class="horizontal">
+    <h6 *ngIf="label">Export:</h6>
+    <form>
+        <mat-form-field>
+            <mat-select placeholder="Format" (selectionChange)="handleChange($event)" name="type">
+                <mat-option *ngFor="let option of options" [value]="option.value">
+                    {{option.viewValue}}
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
+    </form>
+    <button mat-raised-button (click)="click()">EXPORT</button>
+</div>
+<div [hidden]="!loading">
+    <mat-progress-bar
+            [color]="'primary'"
+            [mode]="'indeterminate'">
+    </mat-progress-bar>
+</div>

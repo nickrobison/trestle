@@ -1,0 +1,29 @@
+.dataset-container {
+  height: inherit;
+  padding: 0;
+}
+.map-container {
+  height: 300px;
+}
+.map-container #map {
+  height: 400px;
+}
+
+.mat-icon {
+  vertical-align: middle;
+}
+
+.material-icons.orange600 { color: #FB8C00; }
+
+.material-icons.selected { color: green; }
+
+.loading-spinner {
+  height: 24px;
+  width: 24px;
+  vertical-align: middle;
+  display: inline-block;
+}
+
+.mat-slider-horizontal {
+  min-width: 90%;
+}

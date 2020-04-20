@@ -25,11 +25,15 @@ import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.resource.ClassLoaderResourceAccessor;
+import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.locationtech.jts.geom.Geometry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.DispatcherType;
+import javax.servlet.FilterRegistration;
 import java.sql.Connection;
+import java.util.EnumSet;
 import java.util.stream.Stream;
 
 /**
@@ -88,6 +92,7 @@ public class TrestleServer extends Application<TrestleServerConfiguration> {
 
     @Override
     public void run(TrestleServerConfiguration trestleServerConfiguration, Environment environment) throws Exception {
+        configureCors(environment);
         final JerseyEnvironment jersey = environment.jersey();
         Stream.of(
                 new AuthDynamicFeature(),
@@ -122,5 +127,20 @@ public class TrestleServer extends Application<TrestleServerConfiguration> {
     private ManagedPooledDataSource createMigrationDataSource(TrestleServerConfiguration trestleServerConfiguration, Environment environment) {
         final DataSourceFactory dataSourceFactory = trestleServerConfiguration.getDataSourceFactory();
         return (ManagedPooledDataSource) dataSourceFactory.build(environment.metrics(), "migration-ds");
+    }
+
+    private void configureCors(Environment environment) {
+        final FilterRegistration.Dynamic cors =
+                environment.servlets().addFilter("CORS", CrossOriginFilter.class);
+
+        // Configure CORS parameters
+        cors.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "*");
+        cors.setInitParameter(CrossOriginFilter.ALLOWED_HEADERS_PARAM, "X-Requested-With,Content-Type,Accept,Origin,Authorization");
+        cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "OPTIONS,GET,PUT,POST,DELETE,HEAD");
+        cors.setInitParameter(CrossOriginFilter.ALLOW_CREDENTIALS_PARAM, "true");
+
+        // Add URL mapping
+        cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
+
     }
 }

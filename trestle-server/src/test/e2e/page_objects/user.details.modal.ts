@@ -46,18 +46,18 @@ export class UserDetailsModal {
         //    Now the permissions, select everything lower
         switch (userType) {
             case "dba": {
-                await this.selectUserPermission("dba");
-                await this.selectUserPermission("admin");
-                await this.selectUserPermission("user");
+                await UserDetailsModal.selectUserPermission("dba");
+                await UserDetailsModal.selectUserPermission("admin");
+                await UserDetailsModal.selectUserPermission("user");
                 break;
             }
             case "admin": {
-                await this.selectUserPermission("admin");
-                await this.selectUserPermission("user");
+                await UserDetailsModal.selectUserPermission("admin");
+                await UserDetailsModal.selectUserPermission("user");
                 break;
             }
             case "user": {
-                await this.selectUserPermission("user");
+                await UserDetailsModal.selectUserPermission("user");
                 break;
             }
         }
@@ -135,9 +135,9 @@ export class UserDetailsModal {
      * @param {string} permission
      * @returns {Promise<any>}
      */
-    private async selectUserPermission(permission: string) {
+    private static async selectUserPermission(permission: string) {
         // We need to use contains, because the Text can have trailing whitespace
-        const xpathString = "//mat-button-toggle[./label/div[contains(text(), '" + permission.toUpperCase() + "')]]";
+        const xpathString = "//mat-button-toggle[.//div[contains(text(), '" + permission.toUpperCase() + "')]]";
         return element(by.xpath(xpathString)).click();
     }
 }

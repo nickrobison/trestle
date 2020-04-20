@@ -1,53 +1,40 @@
-import { binding, then, when } from "cucumber-tsflow";
-import { expect } from "chai";
-import { IUserTable, UserType } from "../page_objects/user.details.modal";
-import { UsersPage } from "../page_objects/users.page";
+import {expect} from 'chai';
+import {UsersPage} from '../page_objects/users.page';
+import {Then, When} from 'cucumber';
 
 export interface CucumberTable<T> {
-    hashes(): T[];
+  hashes(): T[];
 }
 
+const userPage = new UsersPage();
 
-@binding()
-export class UserSteps {
+Then(/^I create and submit a new "([^"]*)" with the following properties:$/, async (userType, userData) => {
+  await userPage.fillUserForm(userType, userData.hashes()[0]);
+  return userPage.submitModal();
+});
 
-    private userPage = new UsersPage();
+Then(/^I create a new "([^"]*)" with the following properties:$/, async (userType, userData) => {
+  return userPage.fillUserForm(userType, userData.hashes()[0]);
+});
 
-    @then(/^I create and submit a new "([^"]*)" with the following properties:$/)
-    public async createAndSubmitUser(userType: UserType, userData: CucumberTable<IUserTable>) {
-        await this.userPage.fillUserForm(userType, userData.hashes()[0]);
-        return this.userPage.submitModal();
-    }
+Then(/^I edit user "([^"]*)" properties:$/, async (user, userData) => {
+  return userPage.editUser(user, userData.hashes()[0]);
+});
 
-    @then(/^I create a new "([^"]*)" with the following properties:$/)
-    public createUser(userType: UserType, userData: CucumberTable<IUserTable>) {
-        return this.userPage.fillUserForm(userType, userData.hashes()[0]);
-    }
+Then(/^The users table should have (\d+) users$/, async (userCount) => {
+  return expect(userPage.countUsers())
+    .to.become(userCount);
+});
 
-    @then(/^I edit user "([^"]*)" properties:$/)
-    public editUser(user: string, userData: CucumberTable<IUserTable>) {
-        return this.userPage.editUser(user, userData.hashes()[0]);
-    }
+When(/^I delete user "([^"]*)"$/, async (username) => {
+  return userPage.deleteUser(username);
+});
 
-    @then(/^The users table should have (\d+) users$/)
-    public verifyUserCount(userCount: number) {
-        return expect(this.userPage.countUsers())
-            .to.become(userCount);
-    }
+Then(/^Form field "([^"]*)" should have error "([^"]*)"$/, async (field, message) => {
+  return expect(userPage.getFieldMessage(field))
+    .to.become(message);
+});
 
-    @when(/^I delete user "([^"]*)"$/)
-    public deleteUser(username: string) {
-        return this.userPage.deleteUser(username);
-    }
-
-    @then(/^Form field "([^"]*)" should have error "([^"]*)"$/)
-    public formErrorMessage(field: string, message: string) {
-        return expect(this.userPage.getFieldMessage(field))
-            .to.become(message);
-    }
-
-    @then(/I dismiss the modal$/)
-    public async dismissModal() {
-        return this.userPage.dismissModal();
-    }
-}
+Then(/I dismiss the modal$/, async () => {
+  return userPage.dismissModal();
+});

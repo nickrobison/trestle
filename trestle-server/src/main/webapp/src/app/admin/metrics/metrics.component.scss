@@ -1,0 +1,25 @@
+.metrics-header {
+  display: flex;
+}
+.page-spacer {
+  flex: 1 1 auto;
+}
+
+.container {
+  width: 100%;
+  margin: 0;
+  max-width: 100%;
+}
+
+.mat-progress-spinner {
+  height: 30px;
+  width: 30px;
+}
+
+.mat-select {
+  width: 100%;
+}
+
+.mat-select-panel {
+  max-width: 100%;
+}

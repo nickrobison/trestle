@@ -1,0 +1,77 @@
+<div fxLayout="column" fxLayoutGap="50px">
+    <div class="map-container">
+        <trestle-map #map [single]="false"
+                     [multiSelect]="true"
+                     [zoomOnLoad]="true"
+                     [config]="mapConfig"
+                     [dataChanges]="dataChanges"
+                     class="map-container"></trestle-map>
+    </div>
+    <form fxLayout="column" fxLayoutGap="20px" class="aggregate-container" [formGroup]="aggregationForm">
+        <h4>Aggregation Restriction</h4>
+        <div fxLayout="row" formGroupName="restriction">
+            <div fxFlex="33%">
+                <mat-select matInput
+                            placeholder="Select available dataset"
+                            formControlName="dataset">
+                    <mat-option *ngFor="let ds of datasets" [value]="ds">
+                        {{ds}}
+                    </mat-option>
+                </mat-select>
+            </div>
+            <div fxFlex="33%">
+                <mat-select matInput
+                            placeholder="Select data property"
+                            formControlName="property">
+                    <mat-option *ngFor="let property of properties" [value]="property">
+                        {{property}}
+                    </mat-option>
+                </mat-select>
+            </div>
+            <div [hidden]="restrictionValueHidden" fxFlex="33%">
+                <mat-select
+                        matInput
+                        placeholder="Select value"
+                        formControlName="value">
+                    <mat-option *ngFor="let pv of values | ArraySort" [value]="pv">
+                        {{pv}}
+                    </mat-option>
+                </mat-select>
+            </div>
+        </div>
+        <h4>Aggregation Strategy</h4>
+        <div fxLayout="row" fxLayoutAlign="start" formGroupName="strategy">
+            <div fxFlex="30%">
+                <mat-select [(value)]="selectedAggregation" placeholder="Select an aggregation field"
+                            formControlName="field">
+                    <mat-option *ngFor="let aggregation of aggregationFields" [value]="aggregation">
+                        {{aggregation}}
+                    </mat-option>
+                </mat-select>
+            </div>
+            <div fxFlex="30%">
+                <mat-select placeholder="Select an aggregation operation"
+                            formControlName="operation">
+                    <mat-option *ngFor="let op of availableAggregations" [value]="op.value">
+                        {{op.name}}
+                    </mat-option>
+                </mat-select>
+            </div>
+            <div fxFlex="40%">
+                <mat-form-field>
+                    <input matInput formControlName="value" placeholder="Set value">
+                </mat-form-field>
+            </div>
+            <div>
+                <button mat-raised-button type="submit" color="primary"
+                        [disabled]="!aggregationForm.valid"
+                        (click)="aggregate()">
+                    AGGREGATE
+                </button>
+            </div>
+        </div>
+        <div [hidden]="!inProgress">
+            Aggregating....
+        </div>
+    </form>
+</div>

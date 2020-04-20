@@ -1,0 +1,53 @@
+<mat-toolbar color="primary" class="top-layout z-depth-4">
+  <h4 (click)="sidenav.toggle()">TRESTLE</h4>
+  <span class="toolbar-spacer"></span>
+  <!--User login specific functions-->
+  <div class="action-buttons" *ngIf="user">
+    <img class="img-circle" [src]="getGravatarURL()" alt="User profile picture">
+    <button id="logout" mat-button class="toolbar-button" (click)="logout()" aria-label="Logout">
+      <fa-icon [icon]="logoutIcon" [size]="iconSize"></fa-icon>
+    </button>
+  </div>
+  <button id="login" mat-button class="toolbar-button" *ngIf="!user" routerLink="/login" aria-label="Login">
+    <fa-icon [icon]="loginIcon" [size]="iconSize"></fa-icon>
+  </button>
+</mat-toolbar>
+<mat-sidenav-container>
+  <mat-sidenav #sidenav class="z-depth-3" [mode]="mobileQuery.matches ? 'over' : 'side'" [fixedInViewport]="mobileQuery.matches" fixedTopGap="56" [opened]="!mobileQuery.matches">
+    <mat-nav-list>
+      <div id="user-actions">
+        <h5 matSubheader>Explore</h5>
+        <mat-divider></mat-divider>
+        <a id="viewer" mat-list-item [routerLink]="['explore/viewer']" aria-label="dataset viewer link">
+          <mat-icon>map</mat-icon>VIEWER</a>
+        <a id="visualize" mat-list-item [routerLink]="['explore/visualize']" aria-label="visualizer link">
+          <mat-icon>view_carousel</mat-icon>VISUALIZER</a>
+        <a id="query" mat-list-item [routerLink]="['explore/query']" aria-label="query link">
+          <mat-icon>query_builder</mat-icon>QUERY</a>
+        <a id="compare" mat-list-item [routerLink]="['explore/compare']" aria-label="compare links">
+          <mat-icon>compare</mat-icon>COMPARE</a>
+        <a id="aggregate" mat-list-item [routerLink]="['explore/aggregate']" aria-label="aggregate links">
+          <mat-icon>call_merge</mat-icon>AGGREGATE</a>
+      </div>
+      <div id="admin-actions" *ngIf="userHasRequiredPermissions([Privileges.ADMIN])">
+        <mat-divider></mat-divider>
+        <h5 matSubheader>Admin</h5>
+        <mat-divider></mat-divider>
+        <a id="dashboard" mat-list-item [routerLink]="['admin/dashboard']" aria-label="dashboard link">
+          <mat-icon>dashboard</mat-icon>DASHBOARD</a>
+        <a id="metrics" mat-list-item [routerLink]="['admin/metrics']" aria-label="metrics link">
+          <mat-icon>show_chart</mat-icon>METRICS</a>
+        <a id="users" mat-list-item [routerLink]="['admin/users']" aria-label="users link">
+          <mat-icon>supervisor_account</mat-icon>USERS</a>
+      </div>
+      <div id="dba-actions" *ngIf="userHasRequiredPermissions([Privileges.DBA])">
+        <a id="index" mat-list-item [routerLink]="['admin/index']" aria-label="index link">
+          <mat-icon>supervisor_account</mat-icon>INDICIES</a>
+      </div>
+      <mat-divider></mat-divider>
+    </mat-nav-list>
+  </mat-sidenav>
+  <div class="app-content">
+    <router-outlet></router-outlet>
+  </div>
+</mat-sidenav-container>

@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`NavigationComponent should create 1`] = `
+<app-navigation>
+  <p>
+    navigation works!
+  </p>
+</app-navigation>
+`;
