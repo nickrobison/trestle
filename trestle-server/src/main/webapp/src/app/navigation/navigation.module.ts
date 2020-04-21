@@ -6,6 +6,7 @@ import {MaterialModule} from "../material/material.module";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {Route, RouterModule} from '@angular/router';
 import {Privileges} from '../user/trestle-user';
+import { SidebarComponent } from './sidebar/sidebar.component';
 
 export interface ITrestleRoute extends Route {
   data?: ITrestleRouteData
@@ -16,7 +17,7 @@ export interface ITrestleRouteData {
 }
 
 @NgModule({
-  declarations: [NavigationComponent, LoginComponent],
+  declarations: [NavigationComponent, LoginComponent, SidebarComponent],
   imports: [
     CommonModule,
     MaterialModule,
@@ -26,7 +27,8 @@ export interface ITrestleRouteData {
   ],
   exports: [
     NavigationComponent,
-    LoginComponent
+    LoginComponent,
+    SidebarComponent
   ]
 })
 export class NavigationModule { }
