@@ -3,15 +3,15 @@ import {TrestleUser} from '../user/trestle-user';
 
 export const login = createAction(
   '[Auth] Login',
-  props<{username: string, password: string}>()
+  props<{username: string, password: string, returnUrl: string}>()
 );
 
 export const loginSuccess = createAction(
   '[Auth] Login Success',
-  props<{ user: TrestleUser }>()
+  props<{ user: TrestleUser, returnUrl: string }>()
 );
 
 export const loginFailure = createAction(
-  '[Auth] Load Auths Failure',
+  '[Auth] Login Failure',
   props<{ error: any }>()
 );

@@ -3,20 +3,13 @@
  */
 import {Injectable} from '@angular/core';
 import {Router} from '@angular/router';
-import {TrestleUser} from './trestle-user';
+import {Privileges, TrestleUser} from './trestle-user';
 import {HttpClient} from '@angular/common/http';
 import {JwtHelperService} from '@auth0/angular-jwt';
-import {tap} from 'rxjs/operators';
 import {environment} from '../../environments/environment';
 import {Observable} from 'rxjs';
 
 const _key: string = 'access_token';
-
-export enum Privileges {
-  USER = 1,
-  ADMIN = 2,
-  DBA = 4
-}
 
 export class TrestleToken {
 
@@ -84,12 +77,7 @@ export class AuthService {
   public login(username: string, password: string): Observable<string> {
     return this.http.post(this.baseUrl + '/auth/login', {username, password: password}, {
       responseType: 'text'
-    })
-      .pipe(tap(resp => {
-        console.debug('has token');
-        console.log(resp);
-        // localStorage.setItem(_key, resp);
-      }));
+    });
   }
 
   /**

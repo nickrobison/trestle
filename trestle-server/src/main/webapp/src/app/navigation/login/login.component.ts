@@ -78,6 +78,6 @@ export class LoginComponent implements OnInit, OnDestroy {
    * @param {IUserLogin} user
    */
   public login(user: IUserLogin) {
-    this.store.dispatch(login({username: user.username, password: user.password}));
+    this.store.dispatch(login({username: user.username, password: user.password, returnUrl: this.returnUrl}));
   }
 }

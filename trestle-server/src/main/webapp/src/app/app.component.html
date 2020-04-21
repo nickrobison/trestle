@@ -37,7 +37,7 @@
           <mat-icon>call_merge</mat-icon>
           AGGREGATE</a>
       </div>
-      <div id="admin-actions" *ngIf="userHasRequiredPermissions(user,[Privileges.ADMIN])">
+      <div id="admin-actions" *ngIf="user.hasRequiredPrivileges([Privileges.ADMIN])">
         <mat-divider></mat-divider>
         <h5 matSubheader>Admin</h5>
         <mat-divider></mat-divider>
@@ -51,7 +51,7 @@
           <mat-icon>supervisor_account</mat-icon>
           USERS</a>
       </div>
-      <div id="dba-actions" *ngIf="userHasRequiredPermissions(user,[Privileges.DBA])">
+      <div id="dba-actions" *ngIf="user.hasRequiredPrivileges([Privileges.DBA])">
         <a id="index" mat-list-item [routerLink]="['admin/index']" aria-label="index link">
           <mat-icon>supervisor_account</mat-icon>
           INDICIES</a>

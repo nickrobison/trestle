@@ -33,6 +33,7 @@
     "@mapbox/geojson-extent": "^0.3.2",
     "@ngrx/effects": "^9.1.0",
     "@ngrx/entity": "^9.1.0",
+    "@ngrx/router-store": "^9.1.0",
     "@ngrx/schematics": "^9.1.0",
     "@ngrx/store": "^9.1.0",
     "@ngrx/store-devtools": "^9.1.0",

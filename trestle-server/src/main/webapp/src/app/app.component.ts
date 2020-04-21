@@ -2,8 +2,8 @@
  * Created by nrobison on 1/19/17.
  */
 import {ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation} from '@angular/core';
-import {TrestleUser} from './user/trestle-user';
-import {AuthService, Privileges} from './user/authentication.service';
+import {Privileges, TrestleUser} from './user/trestle-user';
+import {AuthService} from './user/authentication.service';
 import {Router} from '@angular/router';
 import {MD5} from 'crypto-js';
 import {faSignInAlt, faSignOutAlt} from '@fortawesome/free-solid-svg-icons';
@@ -62,16 +62,6 @@ export class AppComponent implements OnInit, OnDestroy {
   //     this.router.navigate(['/login']);
   //   }
   // }
-
-  /**
-   * Does the user have the required permissions?
-   * @param {TrestleUser} user to verify permisisons on
-   * @param {Privileges[]} requiredPrivs
-   * @returns {boolean}
-   */
-  public userHasRequiredPermissions(user: TrestleUser, requiredPrivs: Privileges[]): boolean {
-    return user.hasRequiredPrivileges(requiredPrivs);
-  }
 
   /**
    * Get the Gravitar URL of the user

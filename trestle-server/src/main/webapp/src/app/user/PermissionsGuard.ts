@@ -1,20 +1,25 @@
 /**
  * Created by nrobison on 1/20/17.
  */
-import {CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot} from "@angular/router";
-import {Observable} from "rxjs";
-import {Privileges, AuthService} from "./authentication.service";
-import {Injectable} from "@angular/core";
+import {ActivatedRouteSnapshot, CanActivate, RouterStateSnapshot} from '@angular/router';
+import {Observable} from 'rxjs';
+import {Injectable} from '@angular/core';
+import {State} from '../reducers';
+import {select, Store} from '@ngrx/store';
+import {Privileges, TrestleUser} from './trestle-user';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
 
-    public constructor(private authService: AuthService) {
-    }
+  private user: TrestleUser;
+  private subscription;
 
-    public canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean>|Promise<boolean>|boolean {
-        const roles = route.data["roles"] as Privileges[];
-        console.debug("Needs roles", roles);
-        return this.authService.hasRequiredRoles(roles);
-    }
+  public constructor(private store: Store<State>) {
+    this.subscription = this.store.pipe(select('user'), select('user')).subscribe(user => this.user = user);
+  }
+
+  public canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> | Promise<boolean> | boolean {
+    const roles = route.data['roles'] as Privileges[];
+    return this.user.hasRequiredPrivileges(roles);
+  }
 }

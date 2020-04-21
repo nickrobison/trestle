@@ -3,9 +3,10 @@
  */
 import {Component, OnInit, ViewContainerRef} from '@angular/core';
 import {IUserDialogResponse, UserDialogComponent, UserDialogResponseType} from './users.dialog.component';
-import {ITrestleUser, Privileges} from '../../user/authentication.service';
+import {ITrestleUser} from '../../user/authentication.service';
 import {MatDialog, MatDialogConfig, MatDialogRef} from '@angular/material/dialog';
 import {UserService} from '../../user/users.service';
+import {Privileges} from '../../user/trestle-user';
 
 @Component({
   selector: 'admin-users',

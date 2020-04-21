@@ -1,4 +1,10 @@
-import { ITrestleUser, Privileges } from "./authentication.service";
+import {ITrestleUser} from './authentication.service';
+
+export enum Privileges {
+  USER = 1,
+  ADMIN = 2,
+  DBA = 4
+}
 
 export class TrestleUser {
     private readonly _id: number | undefined;

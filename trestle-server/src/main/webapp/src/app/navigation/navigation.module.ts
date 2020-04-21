@@ -5,7 +5,7 @@ import { LoginComponent } from './login/login.component';
 import {MaterialModule} from "../material/material.module";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {Route, RouterModule} from '@angular/router';
-import {Privileges} from '../user/authentication.service';
+import {Privileges} from '../user/trestle-user';
 
 export interface ITrestleRoute extends Route {
   data?: ITrestleRouteData
