@@ -1,7 +1,7 @@
 /**
  * Created by nrobison on 1/19/17.
  */
-import {Component, OnInit} from '@angular/core';
+import {Component, OnDestroy, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {animate, state, style, transition, trigger} from '@angular/animations';
@@ -34,7 +34,7 @@ interface IUserLogin {
   ]
 })
 
-export class LoginComponent implements OnInit {
+export class LoginComponent implements OnInit, OnDestroy {
   public loginForm: FormGroup;
   public errorMessage: string;
   public errorState: string;
@@ -69,22 +69,15 @@ export class LoginComponent implements OnInit {
     this.errorState = 'inactive';
   }
 
+  public ngOnDestroy(): void {
+    this.errorSubscription.unsubscribe();
+  }
+
   /**
    * Attempt to login the given user
    * @param {IUserLogin} user
    */
   public login(user: IUserLogin) {
     this.store.dispatch(login({username: user.username, password: user.password}));
-    this.authService.login(user.username, user.password).subscribe(() => {
-      // this.eventBus.publish(new UserLoginEvent(true));
-      this.router.navigate([this.returnUrl]);
-    }, (error: Response) => {
-      console.debug('Logged?', error);
-      console.error('Error logging in: ', error.status);
-      if (error.status == 401) {
-        this.errorState = 'active';
-        this.errorMessage = 'Incorrect Username or Password';
-      }
-    });
   }
 }

@@ -9,6 +9,10 @@ import {MD5} from 'crypto-js';
 import {faSignInAlt, faSignOutAlt} from '@fortawesome/free-solid-svg-icons';
 import {SizeProp} from '@fortawesome/fontawesome-svg-core';
 import {MediaMatcher} from '@angular/cdk/layout';
+import {select, Store} from '@ngrx/store';
+import {State} from './reducers';
+import {Observable} from 'rxjs';
+import {tap} from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
@@ -23,14 +27,14 @@ export class AppComponent implements OnInit, OnDestroy {
   public gravatarURL: string;
   // We need this in order to access the Privileges enum from the template
   public Privileges = Privileges;
-  public user: TrestleUser | null;
+  public user: Observable<TrestleUser>;
 
   public mobileQuery: MediaQueryList;
   private readonly mobileQueryListener: () => void;
 
   constructor(private authService: AuthService,
               private router: Router,
-              // private eventBus: EventBus,
+              private store: Store<State>,
               changeDetectorRef: ChangeDetectorRef,
               media: MediaMatcher
   ) {
@@ -42,15 +46,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   public ngOnInit(): void {
     // Get the current user, if it exists
-    this.user = this.authService.getUser();
-    // this.loginSubscription = this.eventBus.subscribe(UserLoginEvent).subscribe((event) => {
-    //     console.debug("User event, is logged in?", event.isLoggedIn());
-    //     if (event.isLoggedIn()) {
-    //         this.user = this.authService.getUser();
-    //     } else {
-    //         this.user = null;
-    //     }
-    // });
+    this.user = this.store.pipe(select("user"), select("user"), tap(user => console.log("User: ", user)));
   }
 
   public ngOnDestroy(): void {
@@ -58,25 +54,23 @@ export class AppComponent implements OnInit, OnDestroy {
     // this.loginSubscription.unsubscribe();
   }
 
-  /**
-   * Attempt to login the user
-   */
-  public login(): void {
-    if (this.user == null) {
-      this.router.navigate(['/login']);
-    }
-  }
+  // /**
+  //  * Attempt to login the user
+  //  */
+  // public login(): void {
+  //   if (this.user == null) {
+  //     this.router.navigate(['/login']);
+  //   }
+  // }
 
   /**
    * Does the user have the required permissions?
+   * @param {TrestleUser} user to verify permisisons on
    * @param {Privileges[]} requiredPrivs
    * @returns {boolean}
    */
-  public userHasRequiredPermissions(requiredPrivs: Privileges[]): boolean {
-    if (this.user == null) {
-      return false;
-    }
-    return this.user.hasRequiredPrivileges(requiredPrivs);
+  public userHasRequiredPermissions(user: TrestleUser, requiredPrivs: Privileges[]): boolean {
+    return user.hasRequiredPrivileges(requiredPrivs);
   }
 
   /**
@@ -84,15 +78,16 @@ export class AppComponent implements OnInit, OnDestroy {
    * @returns {string}
    */
   public getGravatarURL(): string {
-    if (this.gravatarURL == null) {
-      const user = this.authService.getUser();
-      if (user !== null) {
-        const hash = MD5(user.email.trim().toLowerCase()).toString();
-        this.gravatarURL = 'https://www.gravatar.com/avatar/' + hash + '?d=identicon' + '&s=36';
-        return this.gravatarURL;
-      }
-    }
-    return this.gravatarURL;
+    return "";
+    // if (this.gravatarURL == null) {
+    //   const user = this.authService.getUser();
+    //   if (user !== null) {
+    //     const hash = MD5(user.email.trim().toLowerCase()).toString();
+    //     this.gravatarURL = 'https://www.gravatar.com/avatar/' + hash + '?d=identicon' + '&s=36';
+    //     return this.gravatarURL;
+    //   }
+    // }
+    // return this.gravatarURL;
   }
 
   /**

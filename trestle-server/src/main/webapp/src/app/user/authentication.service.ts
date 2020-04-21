@@ -8,6 +8,7 @@ import {HttpClient} from '@angular/common/http';
 import {JwtHelperService} from '@auth0/angular-jwt';
 import {tap} from 'rxjs/operators';
 import {environment} from '../../environments/environment';
+import {Observable} from 'rxjs';
 
 const _key: string = 'access_token';
 
@@ -80,14 +81,14 @@ export class AuthService {
    * @param {string} username
    * @param {string} password
    */
-  public login(username: string, password: string) {
+  public login(username: string, password: string): Observable<string> {
     return this.http.post(this.baseUrl + '/auth/login', {username, password: password}, {
       responseType: 'text'
     })
       .pipe(tap(resp => {
         console.debug('has token');
         console.log(resp);
-        localStorage.setItem(_key, resp);
+        // localStorage.setItem(_key, resp);
       }));
   }
 

@@ -10,23 +10,26 @@ import {JwtHelperService} from '@auth0/angular-jwt';
 
 @Injectable()
 export class AuthEffects {
-  private jwtHelper: JwtHelperService;
+  private readonly jwtHelper: JwtHelperService;
 
   constructor(private actions$: Actions, private authService: AuthService) {
     this.jwtHelper = new JwtHelperService();
   }
 
-  private getToken(jwtToken: string): TrestleToken {
+  private getToken = (jwtToken: string): TrestleToken => {
     return new TrestleToken(this.jwtHelper.decodeToken(jwtToken));
-  }
+  };
 
   login = createEffect(() =>
     this.actions$
-      .pipe(ofType(login), exhaustMap(action =>
-        this.authService.login(action.username, action.password)
+      .pipe(ofType(login), exhaustMap(action => {
+        return this.authService.login(action.username, action.password)
           .pipe(map(this.getToken),
             map(token => new TrestleUser(token.getUser())),
-            map(user => loginSuccess({user})),
-            catchError(error => of(loginFailure({error}))))))
+            map(user => {
+              return loginSuccess({user});
+            }),
+            catchError(error => of(loginFailure({error}))));
+      }))
   );
 }

@@ -18,14 +18,14 @@ export interface State {
 }
 
 const _authReducer = createReducer(initialUserState, on(login, state => {
-  console.log('Trying to login');
-  return state;
-}),
+    console.log('Trying to login');
+    return state;
+  }),
   on(loginSuccess, (state, {user}) => ({
     userError: null,
     user
   })),
-  on(loginFailure, (state, {error}) =>({
+  on(loginFailure, (state, {error}) => ({
     user: null,
     userError: error
   })));
