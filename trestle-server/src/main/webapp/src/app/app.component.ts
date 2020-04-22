@@ -5,7 +5,6 @@ import {ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation} from
 import {Privileges, TrestleUser} from './user/trestle-user';
 import {AuthService} from './user/authentication.service';
 import {Router} from '@angular/router';
-import {MD5} from 'crypto-js';
 import {faSignInAlt, faSignOutAlt} from '@fortawesome/free-solid-svg-icons';
 import {SizeProp} from '@fortawesome/fontawesome-svg-core';
 import {MediaMatcher} from '@angular/cdk/layout';
@@ -46,7 +45,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   public ngOnInit(): void {
     // Get the current user, if it exists
-    this.user = this.store.pipe(select(selectUserFromUser), tap(user => console.log("User: ", user)));
+    this.user = this.store.pipe(select(selectUserFromUser), tap(user => console.log('User: ', user)));
   }
 
   public ngOnDestroy(): void {
@@ -67,7 +66,7 @@ export class AppComponent implements OnInit, OnDestroy {
    * @returns {string}
    */
   public getGravatarURL(): string {
-    return "";
+    return '';
     // if (this.gravatarURL == null) {
     //   const user = this.authService.getUser();
     //   if (user !== null) {
