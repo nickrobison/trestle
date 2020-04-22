@@ -10,7 +10,8 @@
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "protractor protractor.conf.js",
-    "e2e:ci": "protractor config/protractor.ci.conf.js"
+    "e2e:ci": "protractor config/protractor.ci.conf.js",
+    "e2e:setup": "webdriver-manager update"
   },
   "private": true,
   "dependencies": {

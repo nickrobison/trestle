@@ -6,11 +6,13 @@ import {login, loginFailure, loginSuccess, logout} from '../actions/auth.actions
 export interface UserState {
   user: TrestleUser;
   userError: Error;
+  userToken: string;
 }
 
 const initialUserState: UserState = {
   user: null,
-  userError: null
+  userError: null,
+  userToken: ''
 };
 
 export interface State {
@@ -21,17 +23,20 @@ const _authReducer = createReducer(initialUserState, on(login, state => {
     console.log('Trying to login');
     return state;
   }),
-  on(loginSuccess, (state, {user}) => ({
+  on(loginSuccess, (state, {user, token}) => ({
     userError: null,
-    user
+    user,
+    userToken: token
   })),
   on(loginFailure, (state, {error}) => ({
     user: null,
-    userError: error
+    userError: error,
+    userToken: ''
   })),
   on(logout, (state) => ({
     ...state,
-    user: null
+    user: null,
+    token: ''
   })));
 
 
@@ -58,4 +63,9 @@ export const selectUserFromUser = createSelector(
 export const selectErrorFromUser = createSelector(
   selectUserState,
   (state) => state.userError
-)
+);
+
+export const selectTokenFromUser = createSelector(
+  selectUserState,
+  (state) => state.userToken
+);

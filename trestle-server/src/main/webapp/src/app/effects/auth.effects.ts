@@ -20,8 +20,8 @@ export class AuthEffects {
       .pipe(ofType(login), exhaustMap(action => {
         return this.authService.login(action.username, action.password)
           .pipe(
-            map(user => {
-              return loginSuccess({user, returnUrl: action.returnUrl});
+            map(({user, token}) => {
+              return loginSuccess({user, returnUrl: action.returnUrl, token});
             }),
             catchError(error => of(loginFailure({error}))));
       }))
@@ -30,7 +30,6 @@ export class AuthEffects {
   loginSuccess = createEffect(() =>
       this.actions$
         .pipe(ofType(loginSuccess), tap(action => {
-          console.debug('Success! Let\'s redirect');
           return this.router.navigate([action.returnUrl]);
         })), {
       dispatch: false

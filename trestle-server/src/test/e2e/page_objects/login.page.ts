@@ -45,9 +45,6 @@ export class LoginPageObject {
 
     if (login) {
       element(by.buttonText('Login')).click();
-      await browser.sleep(500);
-      // TODO(nickrobison): Remove with TRESTLE-736
-      await browser.refresh();
       return browser.sleep(500);
     }
   }

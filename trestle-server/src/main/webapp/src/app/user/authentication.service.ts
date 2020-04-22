@@ -75,11 +75,14 @@ export class AuthService {
    * @param {string} username
    * @param {string} password
    */
-  public login(username: string, password: string): Observable<TrestleUser> {
+  public login(username: string, password: string): Observable<{ user: TrestleUser, token: string }> {
     return this.http.post(this.baseUrl + '/auth/login', {username, password: password}, {
       responseType: 'text'
     })
-      .pipe(map(this.getToken2), map(token => new TrestleUser(token.getUser())));
+      .pipe(map(token => {
+        const t = this.getToken2(token);
+        return {user: new TrestleUser(t.getUser()), token}
+      }));
   }
 
   /**

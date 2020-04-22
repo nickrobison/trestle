@@ -10,18 +10,17 @@ import {MaterialModule} from './material/material.module';
 import {NavigationModule} from './navigation/navigation.module';
 import {JWT_OPTIONS, JwtModule} from '@auth0/angular-jwt';
 import {environment} from '../environments/environment';
-import {AuthService} from './user/authentication.service';
-import {StoreModule} from '@ngrx/store';
-import {metaReducers, reducers} from './reducers';
+import {select, Store, StoreModule} from '@ngrx/store';
+import {metaReducers, reducers, selectTokenFromUser, State} from './reducers';
 import {StoreDevtoolsModule} from '@ngrx/store-devtools';
 import {EffectsModule} from '@ngrx/effects';
 import {AuthEffects} from './effects/auth.effects';
 
-export function jwtOptionsFactory(service: AuthService) {
-  // noinspection JSUnusedGlobalSymbols
+export function jwtOptionsFactory(store: Store<State>) {
+  const tokenSelector = store.pipe(select(selectTokenFromUser));
   return {
     tokenGetter: () => {
-      return service.getEncodedToken();
+      return tokenSelector.toPromise();
     },
     whitelistedDomains: [environment.domain],
     blacklistedRoutes: ['http://localhost:8080/auth/login'],
@@ -48,7 +47,7 @@ export function jwtOptionsFactory(service: AuthService) {
       jwtOptionsProvider: {
         provide: JWT_OPTIONS,
         useFactory: jwtOptionsFactory,
-        deps: [AuthService]
+        deps: [Store]
       }
     }),
     StoreModule.forRoot(reducers, {
