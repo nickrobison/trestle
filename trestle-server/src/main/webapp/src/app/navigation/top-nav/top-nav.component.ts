@@ -5,6 +5,7 @@ import {Observable} from 'rxjs';
 import {TrestleUser} from '../../user/trestle-user';
 import {select, Store} from '@ngrx/store';
 import {selectUserFromUser, State} from '../../reducers';
+import {logout} from '../../actions/auth.actions';
 
 @Component({
   selector: 'top-nav',
@@ -46,7 +47,7 @@ export class TopNavComponent implements OnInit {
   }
 
   public logout(): void {
-
+    this.store.dispatch(logout());
   }
 
 

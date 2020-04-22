@@ -4,13 +4,14 @@ import {Observable, of, throwError} from 'rxjs';
 
 import {AuthEffects} from './auth.effects';
 import {AuthService} from '../user/authentication.service';
-import {login, loginFailure, loginSuccess} from '../actions/auth.actions';
-import {Privileges, TrestleUser} from '../user/trestle-user';
+import {login, loginFailure, loginSuccess, logout} from '../actions/auth.actions';
+import {Privileges} from '../user/trestle-user';
 import {UserModule} from '../user/user.module';
 import {RouterTestingModule} from '@angular/router/testing';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
 import {cold} from 'jest-marbles';
 import {Router} from '@angular/router';
+import {createMockUser} from '../../test.helpers';
 
 describe('AuthEffects', () => {
   let actions$: Observable<any>;
@@ -71,22 +72,20 @@ describe('AuthEffects', () => {
     const testUser = createMockUser(Privileges.USER);
     router = TestBed.inject(Router);
     const navSpy = spyOn(router, 'navigate');
-    actions$ = of(loginSuccess({user: testUser, returnUrl: "/hello"}));
+    actions$ = of(loginSuccess({user: testUser, returnUrl: '/hello'}));
 
     effects.loginSuccess.subscribe(() => {
-      expect(navSpy).toBeCalledWith(["/hello"]);
-    })
-  })
-});
-
-
-export const createMockUser = (role: Privileges): TrestleUser => {
-  return new TrestleUser({
-    username: 'test',
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    privileges: role
+      expect(navSpy).toBeCalledWith(['/hello']);
+    });
   });
-};
+
+  it('should navigate on logout', () => {
+    router = TestBed.inject(Router);
+    const navSpy = spyOn(router, 'navigate');
+    actions$ = of(logout);
+
+    effects.logout.subscribe(() => {
+      expect(navSpy).toBeCalledWith(['/']);
+    });
+  });
+});

@@ -9,6 +9,7 @@ import {By} from '@angular/platform-browser';
 import {MaterialModule} from '../../material/material.module';
 import {RouterTestingModule} from '@angular/router/testing';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
+import {createMockUser} from '../../../test.helpers';
 
 describe('SidebarComponent', () => {
   let component: SidebarComponent;
@@ -63,14 +64,3 @@ describe('SidebarComponent', () => {
     expect(fixture.debugElement.queryAll(By.css('.mat-list-item-content'))).toHaveLength(9);
   });
 });
-
-export const createMockUser = (role: Privileges): TrestleUser => {
-  return new TrestleUser({
-    username: 'test',
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    privileges: role
-  });
-};

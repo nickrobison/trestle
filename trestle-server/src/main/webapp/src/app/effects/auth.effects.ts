@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {Actions, createEffect, ofType} from '@ngrx/effects';
 import {AuthService} from '../user/authentication.service';
-import {login, loginFailure, loginSuccess} from '../actions/auth.actions';
+import {login, loginFailure, loginSuccess, logout} from '../actions/auth.actions';
 import {catchError, exhaustMap, map, tap} from 'rxjs/operators';
 import {of} from 'rxjs';
 import {Router} from '@angular/router';
@@ -32,13 +32,18 @@ export class AuthEffects {
         .pipe(ofType(loginSuccess), tap(action => {
           console.debug('Success! Let\'s redirect');
           return this.router.navigate([action.returnUrl]);
-          // if (action.user.isAdmin()) {
-          //   return this.router.navigate(['admin', 'dashboard']);
-          // } else {
-          //   return this.router.navigate(['dashboard']);
-          // }
         })), {
       dispatch: false
     }
   );
+
+  logout = createEffect(() =>
+  this.actions$
+    .pipe(ofType(logout), exhaustMap(() => {
+      return this.authService.logout().pipe(tap(() => {
+        return this.router.navigate(['/']);
+      }))
+    })), {
+    dispatch: false
+  })
 }

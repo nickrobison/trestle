@@ -7,6 +7,8 @@ import * as fromState from '../../reducers';
 import {Privileges, TrestleUser} from '../../user/trestle-user';
 import {MaterialModule} from '../../material/material.module';
 import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
+import {logout} from '../../actions/auth.actions';
+import {createMockUser} from '../../../test.helpers';
 
 describe('TopNavComponent', () => {
   let component: TopNavComponent;
@@ -44,15 +46,11 @@ describe('TopNavComponent', () => {
     fixture.detectChanges();
     expect(component).toMatchSnapshot();
   });
-});
 
-export const createMockUser = (role: Privileges): TrestleUser => {
-  return new TrestleUser({
-    username: 'test',
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    privileges: role
-  });
-};
+  it('should dispatch on logout', () => {
+    const dispatchSpy = spyOn(mockStore, 'dispatch');
+    component.logout();
+
+    expect(dispatchSpy).toBeCalledWith(logout());
+  })
+});

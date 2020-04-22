@@ -47,21 +47,4 @@ export class AppComponent implements OnInit, OnDestroy {
   public ngOnDestroy(): void {
     this.mobileQuery.removeEventListener('change', this.mobileQueryListener);
   }
-
-  // /**
-  //  * Attempt to login the user
-  //  */
-  // public login(): void {
-  //   if (this.user == null) {
-  //     this.router.navigate(['/login']);
-  //   }
-  // }
-
-  /**
-   * Logout the currently logged in user
-   */
-  public logout(): void {
-    this.authService.logout();
-    this.user = null;
-  }
 }

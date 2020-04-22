@@ -85,15 +85,8 @@ export class AuthService {
   /**
    * Logout the user
    */
-  public logout(): void {
-    if (this.loggedIn()) {
-      this.http.post(this.baseUrl + '/auth/logout', null)
-        .subscribe(() => {
-          localStorage.removeItem(_key);
-          console.debug('Logged out user');
-          this.router.navigate(['/']);
-        });
-    }
+  public logout(): Observable<void> {
+    return this.http.post<void>(this.baseUrl + '/auth/logout', null);
   }
 
   /**

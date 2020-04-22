@@ -1,7 +1,7 @@
 import {ActionReducerMap, createReducer, createSelector, MetaReducer, on} from '@ngrx/store';
 import {environment} from '../../environments/environment';
 import {TrestleUser} from '../user/trestle-user';
-import {login, loginFailure, loginSuccess} from '../actions/auth.actions';
+import {login, loginFailure, loginSuccess, logout} from '../actions/auth.actions';
 
 export interface UserState {
   user: TrestleUser;
@@ -28,6 +28,10 @@ const _authReducer = createReducer(initialUserState, on(login, state => {
   on(loginFailure, (state, {error}) => ({
     user: null,
     userError: error
+  })),
+  on(logout, (state) => ({
+    ...state,
+    user: null
   })));
 
 
