@@ -1,4 +1,4 @@
-import {ActionReducerMap, createReducer, MetaReducer, on} from '@ngrx/store';
+import {ActionReducerMap, createReducer, createSelector, MetaReducer, on} from '@ngrx/store';
 import {environment} from '../../environments/environment';
 import {TrestleUser} from '../user/trestle-user';
 import {login, loginFailure, loginSuccess} from '../actions/auth.actions';
@@ -41,3 +41,12 @@ export const reducers: ActionReducerMap<State> = {
 
 
 export const metaReducers: MetaReducer<State>[] = !environment.production ? [] : [];
+
+
+export const selectUserState = (state: State) => state.user;
+export const selectUser = (state: UserState) => state.user;
+
+
+export const selectUserFromUser = createSelector(
+  selectUserState,
+  selectUser);

@@ -1,6 +1,6 @@
 import {ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {MediaMatcher} from '@angular/cdk/layout';
-import {State} from '../../reducers';
+import {selectUserFromUser, State} from '../../reducers';
 import {select, Store} from '@ngrx/store';
 import {Observable} from 'rxjs';
 import {TrestleUser, Privileges} from '../../user/trestle-user';
@@ -30,7 +30,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.user = this.store.pipe(select("user"), select("user"), tap(user => console.log("User: ", user)));
+    this.user = this.store.pipe(select(selectUserFromUser), tap(user => console.log("User: ", user)));
   }
 
   ngOnDestroy(): void {

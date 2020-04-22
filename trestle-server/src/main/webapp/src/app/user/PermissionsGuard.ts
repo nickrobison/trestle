@@ -4,7 +4,7 @@
 import {ActivatedRouteSnapshot, CanActivate, RouterStateSnapshot} from '@angular/router';
 import {Observable} from 'rxjs';
 import {Injectable} from '@angular/core';
-import {State} from '../reducers';
+import {selectUserFromUser, State} from '../reducers';
 import {select, Store} from '@ngrx/store';
 import {Privileges, TrestleUser} from './trestle-user';
 
@@ -15,7 +15,7 @@ export class PermissionsGuard implements CanActivate {
   private subscription;
 
   public constructor(private store: Store<State>) {
-    this.subscription = this.store.pipe(select('user'), select('user')).subscribe(user => this.user = user);
+    this.subscription = this.store.pipe(select(selectUserFromUser));
   }
 
   public canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> | Promise<boolean> | boolean {

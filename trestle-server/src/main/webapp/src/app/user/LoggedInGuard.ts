@@ -5,7 +5,7 @@ import {ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot} from '
 import {Injectable} from '@angular/core';
 import {Observable, Subscription} from 'rxjs';
 import {select, Store} from '@ngrx/store';
-import {State} from '../reducers';
+import {selectUserFromUser, State} from '../reducers';
 import {TrestleUser} from './trestle-user';
 
 @Injectable()
@@ -15,7 +15,7 @@ export class LoggedInGuard implements CanActivate {
   private readonly subscription: Subscription;
 
   constructor(private router: Router, private store: Store<State>) {
-    this.subscription = this.store.pipe(select('user'), select('user')).subscribe(user => this.user = user);
+    this.subscription = this.store.pipe(select(selectUserFromUser)).subscribe(user => this.user = user);
   }
 
 

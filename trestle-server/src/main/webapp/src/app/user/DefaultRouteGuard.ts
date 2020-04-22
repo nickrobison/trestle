@@ -6,7 +6,7 @@ import {Injectable} from '@angular/core';
 import {Observable, Subscription} from 'rxjs';
 import {TrestleUser} from './trestle-user';
 import {select, Store} from '@ngrx/store';
-import {State} from '../reducers';
+import {selectUserFromUser, State} from '../reducers';
 
 @Injectable()
 export class DefaultRouteGuard implements CanActivate {
@@ -15,7 +15,7 @@ export class DefaultRouteGuard implements CanActivate {
   private readonly subscription: Subscription;
 
   public constructor(private store: Store<State>, private router: Router) {
-    this.subscription = this.store.pipe(select('user'), select('user')).subscribe(user => this.user = user);
+    this.subscription = this.store.pipe(select(selectUserFromUser)).subscribe(user => this.user = user);
 
   }
 

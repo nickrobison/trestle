@@ -10,7 +10,7 @@ import {faSignInAlt, faSignOutAlt} from '@fortawesome/free-solid-svg-icons';
 import {SizeProp} from '@fortawesome/fontawesome-svg-core';
 import {MediaMatcher} from '@angular/cdk/layout';
 import {select, Store} from '@ngrx/store';
-import {State} from './reducers';
+import {selectUserFromUser, State} from './reducers';
 import {Observable} from 'rxjs';
 import {tap} from 'rxjs/operators';
 
@@ -46,7 +46,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   public ngOnInit(): void {
     // Get the current user, if it exists
-    this.user = this.store.pipe(select("user"), select("user"), tap(user => console.log("User: ", user)));
+    this.user = this.store.pipe(select(selectUserFromUser), tap(user => console.log("User: ", user)));
   }
 
   public ngOnDestroy(): void {
