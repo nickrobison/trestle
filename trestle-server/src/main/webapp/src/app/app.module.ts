@@ -8,15 +8,14 @@ import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {UserModule} from './user/user.module';
 import {MaterialModule} from './material/material.module';
 import {NavigationModule} from './navigation/navigation.module';
-import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
 import {JWT_OPTIONS, JwtModule} from '@auth0/angular-jwt';
 import {environment} from '../environments/environment';
 import {AuthService} from './user/authentication.service';
-import { StoreModule } from '@ngrx/store';
-import { reducers, metaReducers } from './reducers';
-import { StoreDevtoolsModule } from '@ngrx/store-devtools';
-import { EffectsModule } from '@ngrx/effects';
-import { AuthEffects } from './effects/auth.effects';
+import {StoreModule} from '@ngrx/store';
+import {metaReducers, reducers} from './reducers';
+import {StoreDevtoolsModule} from '@ngrx/store-devtools';
+import {EffectsModule} from '@ngrx/effects';
+import {AuthEffects} from './effects/auth.effects';
 
 export function jwtOptionsFactory(service: AuthService) {
   // noinspection JSUnusedGlobalSymbols
@@ -45,7 +44,6 @@ export function jwtOptionsFactory(service: AuthService) {
     UserModule,
     MaterialModule,
     NavigationModule,
-    FontAwesomeModule,
     JwtModule.forRoot({
       jwtOptionsProvider: {
         provide: JWT_OPTIONS,
@@ -54,7 +52,7 @@ export function jwtOptionsFactory(service: AuthService) {
       }
     }),
     StoreModule.forRoot(reducers, {
-      metaReducers, 
+      metaReducers,
       runtimeChecks: {
         strictStateImmutability: true,
         strictActionImmutability: true,

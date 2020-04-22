@@ -5,8 +5,6 @@ import {ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation} from
 import {Privileges, TrestleUser} from './user/trestle-user';
 import {AuthService} from './user/authentication.service';
 import {Router} from '@angular/router';
-import {faSignInAlt, faSignOutAlt} from '@fortawesome/free-solid-svg-icons';
-import {SizeProp} from '@fortawesome/fontawesome-svg-core';
 import {MediaMatcher} from '@angular/cdk/layout';
 import {select, Store} from '@ngrx/store';
 import {selectUserFromUser, State} from './reducers';
@@ -20,9 +18,7 @@ import {tap} from 'rxjs/operators';
   encapsulation: ViewEncapsulation.None
 })
 export class AppComponent implements OnInit, OnDestroy {
-  public readonly iconSize: SizeProp = 'lg';
-  public readonly loginIcon = faSignInAlt;
-  public readonly logoutIcon = faSignOutAlt;
+
   public gravatarURL: string;
   // We need this in order to access the Privileges enum from the template
   public Privileges = Privileges;
@@ -60,23 +56,6 @@ export class AppComponent implements OnInit, OnDestroy {
   //     this.router.navigate(['/login']);
   //   }
   // }
-
-  /**
-   * Get the Gravitar URL of the user
-   * @returns {string}
-   */
-  public getGravatarURL(): string {
-    return '';
-    // if (this.gravatarURL == null) {
-    //   const user = this.authService.getUser();
-    //   if (user !== null) {
-    //     const hash = MD5(user.email.trim().toLowerCase()).toString();
-    //     this.gravatarURL = 'https://www.gravatar.com/avatar/' + hash + '?d=identicon' + '&s=36';
-    //     return this.gravatarURL;
-    //   }
-    // }
-    // return this.gravatarURL;
-  }
 
   /**
    * Logout the currently logged in user
