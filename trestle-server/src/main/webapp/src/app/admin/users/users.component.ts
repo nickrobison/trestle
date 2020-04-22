@@ -1,12 +1,13 @@
 /**
  * Created by nrobison on 1/19/17.
  */
-import {Component, OnInit, ViewContainerRef} from '@angular/core';
+import {Component, OnDestroy, OnInit, ViewContainerRef} from '@angular/core';
 import {IUserDialogResponse, UserDialogComponent, UserDialogResponseType} from './users.dialog.component';
 import {ITrestleUser} from '../../user/authentication.service';
 import {MatDialog, MatDialogConfig, MatDialogRef} from '@angular/material/dialog';
 import {UserService} from '../../user/users.service';
 import {Privileges} from '../../user/trestle-user';
+import {Subscription} from 'rxjs';
 
 @Component({
   selector: 'admin-users',
@@ -14,11 +15,12 @@ import {Privileges} from '../../user/trestle-user';
   styleUrls: ['./users.component.scss'],
 })
 
-export class UsersComponent implements OnInit {
+export class UsersComponent implements OnInit, OnDestroy {
 
   public users: ITrestleUser[];
   public dialogRef: MatDialogRef<any> | null;
   public privileges: Privileges;
+  private subscription: Subscription;
 
   constructor(private userService: UserService,
               public dialog: MatDialog,
@@ -26,17 +28,15 @@ export class UsersComponent implements OnInit {
   }
 
   public ngOnInit(): void {
-    this.loadUsers();
+    this.subscription = this.userService.getUsers().subscribe(users => {
+      console.debug('Has users');
+      this.users = users;
+    });
   }
 
-  /**
-   * Load all registered users
-   */
-  public loadUsers() {
-    this.userService.getUsers()
-      .subscribe((users: ITrestleUser[]) => this.users = users,
-        (err: any) => console.error(err));
-  };
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
+  }
 
   /**
    * Is the user an admin?

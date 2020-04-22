@@ -6,6 +6,7 @@ import {Observable} from 'rxjs';
 import {ITrestleUser} from './authentication.service';
 import {HttpClient} from '@angular/common/http';
 import {environment} from '../../environments/environment';
+import {tap} from 'rxjs/operators';
 
 @Injectable()
 export class UserService {
@@ -23,7 +24,9 @@ export class UserService {
    * @returns {Observable<ITrestleUser[]>}
    */
   public getUsers(): Observable<ITrestleUser[]> {
-    return this.trestleHttp.get<ITrestleUser[]>(this.baseUrl + '/users');
+    console.debug("Getting users?");
+    return this.trestleHttp.get<ITrestleUser[]>(this.baseUrl + '/users')
+      .pipe(tap(l => console.debug("Logging:", l)));
   }
 
   /**

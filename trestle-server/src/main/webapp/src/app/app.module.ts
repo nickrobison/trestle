@@ -20,7 +20,10 @@ export function jwtOptionsFactory(store: Store<State>) {
   const tokenSelector = store.pipe(select(selectTokenFromUser));
   return {
     tokenGetter: () => {
-      return tokenSelector.toPromise();
+      // Awkward workaround for: https://github.com/auth0/angular2-jwt/issues/467
+      return new Promise((resolve) => {
+        tokenSelector.subscribe(token => resolve(token));
+      });
     },
     whitelistedDomains: [environment.domain],
     blacklistedRoutes: ['http://localhost:8080/auth/login'],

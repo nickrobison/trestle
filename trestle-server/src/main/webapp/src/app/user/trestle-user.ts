@@ -69,6 +69,18 @@ export class TrestleUser {
         return (this._privileges & TrestleUser.buildRoleValue(roles)) > 0;
     }
 
+    public serialize(): ITrestleUser {
+      return {
+        email: this._email,
+        firstName: this._firstName,
+        id: this._id,
+        lastName: this._lastName,
+        password: this._password,
+        privileges: this._privileges,
+        username: this._username
+      }
+    }
+
     /**
      * Convert an array of privileges into a single value
      * @param {Privileges[]} roles
