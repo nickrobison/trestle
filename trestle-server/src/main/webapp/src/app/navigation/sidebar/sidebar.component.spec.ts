@@ -47,7 +47,6 @@ describe('SidebarComponent', () => {
     mockStore.refreshState();
     fixture.detectChanges();
     expect(fixture.debugElement.queryAll(By.css('.mat-list-item-content'))).toHaveLength(5);
-    // expect(component).toMatchSnapshot();
   });
 
   it('should have admin options', () => {
@@ -65,7 +64,7 @@ describe('SidebarComponent', () => {
   });
 });
 
-const createMockUser = (role: Privileges): TrestleUser => {
+export const createMockUser = (role: Privileges): TrestleUser => {
   return new TrestleUser({
     username: 'test',
     firstName: '',

@@ -6,7 +6,7 @@ import {ActivatedRoute, Router} from '@angular/router';
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {animate, state, style, transition, trigger} from '@angular/animations';
 import {AuthService} from '../../user/authentication.service';
-import {State} from '../../reducers';
+import {selectErrorFromUser, State} from '../../reducers';
 import {select, Store} from '@ngrx/store';
 import {Subscription} from 'rxjs';
 import {login} from '../../actions/auth.actions';
@@ -48,16 +48,16 @@ export class LoginComponent implements OnInit, OnDestroy {
   public ngOnInit(): void {
 
     this.errorSubscription = this.store
-      .pipe(select('user'), select('userError'))
-      .subscribe((result) => {
-        if (result) {
-          this.errorState = 'active';
-          this.errorMessage = result.message;
-        } else {
-          this.errorState = 'inactive';
-          this.errorMessage = '';
-        }
-      });
+      .pipe(select(selectErrorFromUser))
+        .subscribe((result) => {
+          if (result) {
+            this.errorState = 'active';
+            this.errorMessage = result.message;
+          } else {
+            this.errorState = 'inactive';
+            this.errorMessage = '';
+          }
+        });
 
     this.authService.logout();
     this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';

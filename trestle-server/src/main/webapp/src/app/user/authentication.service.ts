@@ -8,6 +8,7 @@ import {HttpClient} from '@angular/common/http';
 import {JwtHelperService} from '@auth0/angular-jwt';
 import {environment} from '../../environments/environment';
 import {Observable} from 'rxjs';
+import {map} from 'rxjs/operators';
 
 const _key: string = 'access_token';
 
@@ -74,10 +75,11 @@ export class AuthService {
    * @param {string} username
    * @param {string} password
    */
-  public login(username: string, password: string): Observable<string> {
+  public login(username: string, password: string): Observable<TrestleUser> {
     return this.http.post(this.baseUrl + '/auth/login', {username, password: password}, {
       responseType: 'text'
-    });
+    })
+      .pipe(map(this.getToken2), map(token => new TrestleUser(token.getUser())));
   }
 
   /**
@@ -163,4 +165,8 @@ export class AuthService {
     }
     return null;
   }
+
+  private getToken2 = (jwtToken: string): TrestleToken => {
+    return new TrestleToken(this.jwtHelper.decodeToken(jwtToken));
+  };
 }

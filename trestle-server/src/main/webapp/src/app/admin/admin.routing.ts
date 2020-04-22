@@ -3,7 +3,7 @@
  */
 import {DashboardComponent} from './dashboard/dashboard.component';
 import {LoggedInGuard} from '../user/LoggedInGuard';
-import {PermissionsGuard} from '../user/PermissionsGuard';
+import {PermissionsGuard} from '../user/permissions.guard';
 import {ITrestleRoute} from '../navigation/navigation.module';
 import {UsersComponent} from './users/users.component';
 import {MetricsComponent} from './metrics/metrics.component';

@@ -40,5 +40,4 @@ export class SidebarComponent implements OnInit, OnDestroy {
   public async toggle(): Promise<MatDrawerToggleResult> {
     return this.sideNav.toggle();
   }
-
 }
