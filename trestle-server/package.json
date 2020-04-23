@@ -68,7 +68,7 @@
     "@types/file-saver": "^2.0.1",
     "@types/jasmine": "~3.5.0",
     "@types/jasminewd2": "~2.0.3",
-    "@types/jest": "^25.1.4",
+    "@types/jest": "^25.2.1",
     "@types/mapbox-gl": "^1.9.0",
     "@types/node": "^13.13.1",
     "@types/wellknown": "^0.5.1",
