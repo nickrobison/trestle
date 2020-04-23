@@ -1,71 +1,91 @@
 /**
  * Created by nrobison on 1/19/17.
  */
-import { Component, OnInit } from "@angular/core";
-import { ActivatedRoute, Router } from "@angular/router";
-import { FormBuilder, FormGroup, Validators } from "@angular/forms";
-import { state, style, transition, trigger, animate } from "@angular/animations";
-import {AuthService} from "../../user/authentication.service";
+import {Component, OnDestroy, OnInit} from '@angular/core';
+import {ActivatedRoute, Router} from '@angular/router';
+import {FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {animate, state, style, transition, trigger} from '@angular/animations';
+import {AuthService} from '../../user/authentication.service';
+import {selectErrorFromUser, State} from '../../reducers';
+import {select, Store} from '@ngrx/store';
+import {Subscription} from 'rxjs';
+import {login} from '../../actions/auth.actions';
+import {HttpErrorResponse} from '@angular/common/http';
 
 interface IUserLogin {
-    username: string;
-    password: string;
+  username: string;
+  password: string;
 }
 
 @Component({
-    selector: "login",
-    templateUrl: "./login.component.html",
-    styleUrls: ["./login.component.scss"],
-    animations: [
-        trigger("errorMessage", [
-            state("inactive", style({
-                backgroundColor: "white"
-            })),
-            state("active", style({
-                backgroundColor: "red"
-            })),
-            transition("inactive => active", animate("100ms ease-in")),
-            transition("active => inactive", animate("100ms ease-out"))
-        ])
-    ]
+  selector: 'login',
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.scss'],
+  animations: [
+    trigger('errorMessage', [
+      state('inactive', style({
+        backgroundColor: 'white'
+      })),
+      state('active', style({
+        backgroundColor: 'red'
+      })),
+      transition('inactive => active', animate('100ms ease-in')),
+      transition('active => inactive', animate('100ms ease-out'))
+    ])
+  ]
 })
 
-export class LoginComponent implements OnInit {
-    public loginForm: FormGroup;
-    public errorMessage: string;
-    public errorState: string;
-    private returnUrl: string;
+export class LoginComponent implements OnInit, OnDestroy {
+  public loginForm: FormGroup;
+  public errorMessage: string;
+  public errorState: string;
+  private returnUrl: string;
+  private errorSubscription: Subscription;
 
-    constructor(private fb: FormBuilder, private authService: AuthService, private route: ActivatedRoute, private router: Router) {
-    }
+  constructor(private fb: FormBuilder, private authService: AuthService, private route: ActivatedRoute, private router: Router, private store: Store<State>) {
+    // Not used
+  }
 
-    public ngOnInit(): void {
+  public ngOnInit(): void {
 
-        this.authService.logout();
-        this.returnUrl = this.route.snapshot.queryParams["returnUrl"] || "/";
-        this.loginForm = this.fb.group({
-            username: [null, Validators.required],
-            password: [null, Validators.required]
+    this.errorSubscription = this.store
+      .pipe(select(selectErrorFromUser))
+        .subscribe((result) => {
+          if (result) {
+            this.errorState = 'active';
+            this.errorMessage = LoginComponent.parseErrorMessage(result);
+          } else {
+            this.errorState = 'inactive';
+            this.errorMessage = '';
+          }
         });
-        this.errorMessage = "";
-        this.errorState = "inactive";
-    }
 
-    /**
-     * Attempt to login the given user
-     * @param {IUserLogin} user
-     */
-    public login(user: IUserLogin) {
-        this.authService.login(user.username, user.password).subscribe(() => {
-            // this.eventBus.publish(new UserLoginEvent(true));
-            this.router.navigate([this.returnUrl]);
-        }, (error: Response) => {
-          console.debug("Logged?", error);
-            console.error("Error logging in: ", error.status);
-            if (error.status == 401) {
-                this.errorState = "active";
-                this.errorMessage = "Incorrect Username or Password";
-            }
-        });
+    this.authService.logout();
+    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
+    this.loginForm = this.fb.group({
+      username: [null, Validators.required],
+      password: [null, Validators.required]
+    });
+    this.errorMessage = '';
+    this.errorState = 'inactive';
+  }
+
+  public ngOnDestroy(): void {
+    this.errorSubscription.unsubscribe();
+  }
+
+  /**
+   * Attempt to login the given user
+   * @param {IUserLogin} user
+   */
+  public login(user: IUserLogin) {
+    this.store.dispatch(login({username: user.username, password: user.password, returnUrl: this.returnUrl}));
+  }
+
+  private static parseErrorMessage(error: Error): string {
+    if (error instanceof HttpErrorResponse && error.status == 401) {
+      return "Incorrect Username or Password";
     }
+    return error.message;
+  }
 }
