@@ -2,15 +2,14 @@
  * Created by nickrobison on 2/28/18.
  */
 
-// const browserstack = require('browserstack-local');
+const browserstack = require('browserstack-local');
 const helper = require("./helpers");
 exports.config = {
-  baseUrl: "http://localhost:8080/workspace/",
+  baseUrl: "http://trestle:8080/workspace/",
   seleniumAddress: "https://hub-cloud.browserstack.com/wd/hub",
   commonCapabilities: {
     'browserstack.user': process.env.BROWSERSTACK_USERNAME,
     'browserstack.key': process.env.BROWSERSTACK_ACCESS_KEY,
-    'browserstack.local': true,
     'build': 'UI build',
     'project': 'Trestle'
   },
@@ -47,25 +46,25 @@ exports.config = {
   },
 
   // Code to start browserstack local before start of test
-  // beforeLaunch: function () {
-  //   console.log("Connecting local");
-  //   return new Promise(function (resolve, reject) {
-  //     exports.bs_local = new browserstack.Local();
-  //     exports.bs_local.start({'key': exports.config.commonCapabilities['browserstack.key']}, function (error) {
-  //       if (error) return reject(error);
-  //       console.log('Connected. Now testing...');
-  //
-  //       resolve();
-  //     });
-  //   });
-  // },
-  //
-  // // Code to stop browserstack local after end of test
-  // afterLaunch: function () {
-  //   return new Promise(function (resolve, reject) {
-  //     exports.bs_local.stop(resolve);
-  //   });
-  // }
+  beforeLaunch: function () {
+    console.log("Connecting local");
+    return new Promise(function (resolve, reject) {
+      exports.bs_local = new browserstack.Local();
+      exports.bs_local.start({'key': exports.config.commonCapabilities['browserstack.key']}, function (error) {
+        if (error) return reject(error);
+        console.log('Connected. Now testing...');
+
+        resolve();
+      });
+    });
+  },
+
+  // Code to stop browserstack local after end of test
+  afterLaunch: function () {
+    return new Promise(function (resolve, reject) {
+      exports.bs_local.stop(resolve);
+    });
+  }
 };
 
 exports.config.multiCapabilities.forEach(function (caps) {

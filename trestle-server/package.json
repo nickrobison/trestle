@@ -71,6 +71,7 @@
     "@types/mapbox-gl": "^1.9.1",
     "@types/node": "^13.13.2",
     "@types/wellknown": "^0.5.1",
+    "browserstack-local": "^1.4.5",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "codelyzer": "^5.1.2",
