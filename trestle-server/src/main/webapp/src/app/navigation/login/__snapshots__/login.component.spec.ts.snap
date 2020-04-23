@@ -5,11 +5,13 @@ exports[`LoginComponent should create 1`] = `
   authService={[Function AuthService]}
   errorMessage=""
   errorState={[Function String]}
+  errorSubscription={[Function Subscriber]}
   fb={[Function FormBuilder]}
   loginForm={[Function FormGroup]}
   returnUrl={[Function String]}
   route={[Function ActivatedRoute]}
   router={[Function Router]}
+  store={[Function MockStore]}
 >
   <div
     class="login"
@@ -96,109 +98,6 @@ exports[`LoginComponent should create 1`] = `
           style="background-color:white;0:background-color;"
         >
           
-        </mat-card-footer>
-      </form>
-    </mat-card>
-  </div>
-</login>
-`;
-
-exports[`LoginComponent should render error message 1`] = `
-<login
-  authService={[Function AuthService]}
-  errorMessage={[Function String]}
-  errorState={[Function String]}
-  fb={[Function FormBuilder]}
-  loginForm={[Function FormGroup]}
-  returnUrl={[Function String]}
-  route={[Function ActivatedRoute]}
-  router={[Function Router]}
->
-  <div
-    class="login"
-  >
-    <mat-card
-      class="login-input z-depth-5"
-    >
-      <mat-card-header
-        class="ng-tns-c1-0"
-      >
-        <mat-card-title
-          class="ng-tns-c1-0"
-        >
-          <h4
-            class="ng-tns-c1-0"
-          >
-            Login to Trestle
-          </h4>
-        </mat-card-title>
-      </mat-card-header>
-      <form
-        class="ng-tns-c1-0 ng-untouched ng-pristine ng-invalid"
-        id="login-form"
-        novalidate=""
-      >
-        <mat-card-content
-          class="ng-tns-c1-0"
-        >
-          <table
-            cellspacing="0"
-            class="input-full-width"
-          >
-            <tr
-              class="ng-tns-c1-0"
-            >
-              <td
-                class="ng-tns-c1-0"
-              >
-                <mat-form-field
-                  class="input-full-width"
-                >
-                  <input
-                    class="ng-tns-c1-0 ng-untouched ng-pristine ng-invalid"
-                    formcontrolname="username"
-                    matinput=""
-                    name="username"
-                    placeholder="Username"
-                  />
-                </mat-form-field>
-              </td>
-              <td
-                class="ng-tns-c1-0"
-              >
-                <mat-form-field
-                  class="input-full-width"
-                >
-                  <input
-                    class="ng-tns-c1-0 ng-untouched ng-pristine ng-invalid"
-                    formcontrolname="password"
-                    matinput=""
-                    name="password"
-                    placeholder="Password"
-                    type="password"
-                  />
-                </mat-form-field>
-              </td>
-            </tr>
-          </table>
-        </mat-card-content>
-        <mat-card-actions
-          class="ng-tns-c1-0"
-        >
-          <button
-            class="ng-tns-c1-0"
-            disabled=""
-            mat-raised-button=""
-            type="submit"
-          >
-            Login
-          </button>
-        </mat-card-actions>
-        <mat-card-footer
-          class="ng-tns-c1-0 ng-trigger ng-trigger-errorMessage ng-animating"
-          style=""
-        >
-          Incorrect Username or Password
         </mat-card-footer>
       </form>
     </mat-card>

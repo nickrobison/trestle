@@ -5,7 +5,10 @@ import { LoginComponent } from './login/login.component';
 import {MaterialModule} from "../material/material.module";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {Route, RouterModule} from '@angular/router';
-import {Privileges} from '../user/authentication.service';
+import {Privileges} from '../user/trestle-user';
+import { SidebarComponent } from './sidebar/sidebar.component';
+import { TopNavComponent } from './top-nav/top-nav.component';
+import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
 
 export interface ITrestleRoute extends Route {
   data?: ITrestleRouteData
@@ -16,17 +19,20 @@ export interface ITrestleRouteData {
 }
 
 @NgModule({
-  declarations: [NavigationComponent, LoginComponent],
+  declarations: [NavigationComponent, LoginComponent, SidebarComponent, TopNavComponent],
   imports: [
     CommonModule,
     MaterialModule,
     FormsModule,
     ReactiveFormsModule,
-    RouterModule
+    RouterModule,
+    FontAwesomeModule
   ],
   exports: [
     NavigationComponent,
-    LoginComponent
+    LoginComponent,
+    SidebarComponent,
+    TopNavComponent
   ]
 })
 export class NavigationModule { }

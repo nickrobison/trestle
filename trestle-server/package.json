@@ -10,7 +10,8 @@
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "protractor protractor.conf.js",
-    "e2e:ci": "protractor config/protractor.ci.conf.js"
+    "e2e:ci": "protractor config/protractor.ci.conf.js",
+    "e2e:setup": "webdriver-manager update"
   },
   "private": true,
   "dependencies": {
@@ -31,6 +32,13 @@
     "@fortawesome/free-regular-svg-icons": "^5.13.0",
     "@fortawesome/free-solid-svg-icons": "^5.13.0",
     "@mapbox/geojson-extent": "^0.3.2",
+    "@ngrx/effects": "^9.1.0",
+    "@ngrx/entity": "^9.1.0",
+    "@ngrx/router-store": "^9.1.0",
+    "@ngrx/schematics": "^9.1.0",
+    "@ngrx/store": "^9.1.0",
+    "@ngrx/store-devtools": "^9.1.0",
+    "@types/lodash": "^4.14.150",
     "codemirror": "^5.53.2",
     "crypto-js": "^4.0.0",
     "d3": "^5.16.0",
@@ -70,7 +78,8 @@
     "cucumber": "^6.0.5",
     "jasmine-core": "~3.5.0",
     "jasmine-spec-reporter": "~5.0.1",
-    "jest": "^25.4.0",
+    "jest": "^25.2.4",
+    "jest-marbles": "^2.5.1",
     "protractor": "~5.4.4",
     "protractor-cucumber-framework": "^6.2.1",
     "ts-node": "~8.9.0",

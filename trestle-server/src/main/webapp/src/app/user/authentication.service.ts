@@ -3,19 +3,14 @@
  */
 import {Injectable} from '@angular/core';
 import {Router} from '@angular/router';
-import {TrestleUser} from './trestle-user';
+import {Privileges, TrestleUser} from './trestle-user';
 import {HttpClient} from '@angular/common/http';
 import {JwtHelperService} from '@auth0/angular-jwt';
-import {tap} from 'rxjs/operators';
 import {environment} from '../../environments/environment';
+import {Observable} from 'rxjs';
+import {map} from 'rxjs/operators';
 
 const _key: string = 'access_token';
-
-export enum Privileges {
-  USER = 1,
-  ADMIN = 2,
-  DBA = 4
-}
 
 export class TrestleToken {
 
@@ -80,29 +75,21 @@ export class AuthService {
    * @param {string} username
    * @param {string} password
    */
-  public login(username: string, password: string) {
+  public login(username: string, password: string): Observable<{ user: TrestleUser, token: string }> {
     return this.http.post(this.baseUrl + '/auth/login', {username, password: password}, {
       responseType: 'text'
     })
-      .pipe(tap(resp => {
-        console.debug('has token');
-        console.log(resp);
-        localStorage.setItem(_key, resp);
+      .pipe(map(token => {
+        const t = this.getToken2(token);
+        return {user: new TrestleUser(t.getUser()), token}
       }));
   }
 
   /**
    * Logout the user
    */
-  public logout(): void {
-    if (this.loggedIn()) {
-      this.http.post(this.baseUrl + '/auth/logout', null)
-        .subscribe(() => {
-          localStorage.removeItem(_key);
-          console.debug('Logged out user');
-          this.router.navigate(['/']);
-        });
-    }
+  public logout(): Observable<void> {
+    return this.http.post<void>(this.baseUrl + '/auth/logout', null);
   }
 
   /**
@@ -174,4 +161,8 @@ export class AuthService {
     }
     return null;
   }
+
+  private getToken2 = (jwtToken: string): TrestleToken => {
+    return new TrestleToken(this.jwtHelper.decodeToken(jwtToken));
+  };
 }

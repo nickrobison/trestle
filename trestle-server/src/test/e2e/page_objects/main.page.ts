@@ -19,12 +19,7 @@ export class DashboardPageObject {
     }
 
     public async clickButton(button: string) {
-        await element(by.id(button)).click();
-        if (button == "logout") {
-          // TODO(nickrobison): Remove with TRESTLE-736
-          return browser.refresh();
-        }
-        return;
+        return element(by.id(button)).click();
     }
 
     public async getPageActions(optionType: PageActionType): Promise<number> {

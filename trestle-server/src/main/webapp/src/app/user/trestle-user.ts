@@ -1,4 +1,10 @@
-import { ITrestleUser, Privileges } from "./authentication.service";
+import {ITrestleUser} from './authentication.service';
+
+export enum Privileges {
+  USER = 1,
+  ADMIN = 2,
+  DBA = 4
+}
 
 export class TrestleUser {
     private readonly _id: number | undefined;
@@ -61,6 +67,18 @@ export class TrestleUser {
     public hasRequiredPrivileges(roles: Privileges[]): boolean {
         // tslint:disable-next-line:no-bitwise
         return (this._privileges & TrestleUser.buildRoleValue(roles)) > 0;
+    }
+
+    public serialize(): ITrestleUser {
+      return {
+        email: this._email,
+        firstName: this._firstName,
+        id: this._id,
+        lastName: this._lastName,
+        password: this._password,
+        privileges: this._privileges,
+        username: this._username
+      }
     }
 
     /**

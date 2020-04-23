@@ -3,11 +3,12 @@
  */
 import {Component, OnInit} from '@angular/core';
 import {AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators} from '@angular/forms';
-import {ITrestleUser, Privileges} from '../../user/authentication.service';
+import {ITrestleUser} from '../../user/authentication.service';
 import {UserService} from '../../user/users.service';
 import {MatDialogRef} from '@angular/material/dialog';
 import {Observable, of, timer} from 'rxjs';
 import {map, switchMap} from 'rxjs/operators';
+import {Privileges} from '../../user/trestle-user';
 
 export enum UserDialogResponseType {
   ADD,

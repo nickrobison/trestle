@@ -3,12 +3,12 @@
  */
 import {DashboardComponent} from './dashboard/dashboard.component';
 import {LoggedInGuard} from '../user/LoggedInGuard';
-import {PermissionsGuard} from '../user/PermissionsGuard';
-import {Privileges} from '../user/authentication.service';
+import {PermissionsGuard} from '../user/permissions.guard';
 import {ITrestleRoute} from '../navigation/navigation.module';
 import {UsersComponent} from './users/users.component';
 import {MetricsComponent} from './metrics/metrics.component';
 import {IndexComponent} from './indicies/index.component';
+import {Privileges} from '../user/trestle-user';
 
 export const AdminRoutes: ITrestleRoute[] = [
   {path: '', redirectTo: 'dashboard', pathMatch: 'full'},
