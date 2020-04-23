@@ -1,7 +1,8 @@
 import {Action, ActionReducer} from '@ngrx/store';
-import {merge, pick} from 'lodash-es';
 import {ITrestleUser} from '../user/authentication.service';
 import {TrestleUser} from '../user/trestle-user';
+import merge from "lodash/merge";
+import pick from "lodash/pick";
 
 function isSerializedUser(value: any): value is ITrestleUser {
   return (value as ITrestleUser).email !== undefined;
@@ -11,18 +12,18 @@ function setSavedState(state: any, localStorageKey: string) {
   localStorage.setItem(localStorageKey, JSON.stringify(state, (key, value) => {
     console.debug('Replace:', key, value);
     if (value instanceof TrestleUser) {
-      console.debug("Is User");
-      return (value as TrestleUser).serialize();
+      console.debug('Is User');
+      return value.serialize();
     }
     return value;
   }));
 }
 
-function getSavedState(localStorageKey: string): any {
-  return JSON.parse(localStorage.getItem(localStorageKey), (key, value) => {
+function getSavedState(key: string): any {
+  return JSON.parse(localStorage.getItem(key), (key, value) => {
     console.debug('KV', key, value);
     if (value !== null && isSerializedUser(value)) {
-      console.debug("Is serialized user");
+      console.debug('Is serialized user');
       return new TrestleUser(value);
     }
     return value;

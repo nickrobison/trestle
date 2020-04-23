@@ -10,6 +10,7 @@ import {selectErrorFromUser, State} from '../../reducers';
 import {select, Store} from '@ngrx/store';
 import {Subscription} from 'rxjs';
 import {login} from '../../actions/auth.actions';
+import {HttpErrorResponse} from '@angular/common/http';
 
 interface IUserLogin {
   username: string;
@@ -52,7 +53,7 @@ export class LoginComponent implements OnInit, OnDestroy {
         .subscribe((result) => {
           if (result) {
             this.errorState = 'active';
-            this.errorMessage = result.message;
+            this.errorMessage = LoginComponent.parseErrorMessage(result);
           } else {
             this.errorState = 'inactive';
             this.errorMessage = '';
@@ -79,5 +80,12 @@ export class LoginComponent implements OnInit, OnDestroy {
    */
   public login(user: IUserLogin) {
     this.store.dispatch(login({username: user.username, password: user.password, returnUrl: this.returnUrl}));
+  }
+
+  private static parseErrorMessage(error: Error): string {
+    if (error instanceof HttpErrorResponse && error.status == 401) {
+      return "Incorrect Username or Password";
+    }
+    return error.message;
   }
 }

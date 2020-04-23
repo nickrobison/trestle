@@ -33,7 +33,7 @@ Then(/^The login form is validated (.*)$/, async (valid) => {
 });
 
 Then(/^The error message should be "([^"]*)"$/, async (message) => {
-      return expect(login.getElementText(by.id("mat-card-footer")))
+      return expect(login.getElementText(by.className("mat-card-footer")))
         .to.become(message);
 });
 

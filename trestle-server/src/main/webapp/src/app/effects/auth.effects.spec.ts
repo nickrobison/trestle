@@ -40,14 +40,14 @@ describe('AuthEffects', () => {
     authService = TestBed.inject(AuthService);
     router = TestBed.inject(Router);
     const testUser = createMockUser(Privileges.USER);
-    spyOn(authService, 'login').and.returnValue(of(testUser));
+    spyOn(authService, 'login').and.returnValue(of({user: testUser, token: ""}));
 
     actions$ = cold('a', {
       a: login({username: '', password: '', returnUrl: ''})
     });
 
     const expected = cold('a', {
-      a: loginSuccess({user: testUser, returnUrl: ''})
+      a: loginSuccess({user: testUser, returnUrl: '', token: ""})
     });
 
     expect(effects.login).toBeObservable(expected);
@@ -72,7 +72,7 @@ describe('AuthEffects', () => {
     const testUser = createMockUser(Privileges.USER);
     router = TestBed.inject(Router);
     const navSpy = spyOn(router, 'navigate');
-    actions$ = of(loginSuccess({user: testUser, returnUrl: '/hello'}));
+    actions$ = of(loginSuccess({user: testUser, returnUrl: '/hello', token: ""}));
 
     effects.loginSuccess.subscribe(() => {
       expect(navSpy).toBeCalledWith(['/hello']);

@@ -10,6 +10,7 @@ import {MockStore, provideMockStore} from '@ngrx/store/testing';
 import {MemoizedSelector} from '@ngrx/store';
 import * as fromState from '../../reducers';
 import {AuthService} from '../../user/authentication.service';
+import {HttpErrorResponse} from '@angular/common/http';
 
 describe('LoginComponent', () => {
   let component: LoginComponent;
@@ -49,11 +50,30 @@ describe('LoginComponent', () => {
   });
 
   it('should render error message', () => {
-      mockUsernameSelector.setResult(new Error('Incorrect Username or Password'));
+      mockUsernameSelector.setResult(new HttpErrorResponse({
+        status: 401
+      }));
       mockStore.refreshState();
       fixture.detectChanges();
 
       expect(component.errorMessage).toBe('Incorrect Username or Password');
+      expect(component.errorState).toBe('active');
+
+      mockUsernameSelector.setResult(null);
+      mockStore.refreshState();
+      fixture.detectChanges();
+
+      expect(component.errorMessage).toBe('');
+      expect(component.errorState).toBe('inactive');
+    }
+  );
+
+  it('should render error message', () => {
+      mockUsernameSelector.setResult(new Error('Generic error'));
+      mockStore.refreshState();
+      fixture.detectChanges();
+
+      expect(component.errorMessage).toBe('Generic error');
       expect(component.errorState).toBe('active');
     }
   );

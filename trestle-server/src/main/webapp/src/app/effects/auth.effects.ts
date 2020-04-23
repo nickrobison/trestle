@@ -23,7 +23,9 @@ export class AuthEffects {
             map(({user, token}) => {
               return loginSuccess({user, returnUrl: action.returnUrl, token});
             }),
-            catchError(error => of(loginFailure({error}))));
+            catchError(error => {
+              return of(loginFailure({error}));
+            }));
       }))
   );
 
@@ -37,12 +39,12 @@ export class AuthEffects {
   );
 
   logout = createEffect(() =>
-  this.actions$
-    .pipe(ofType(logout), exhaustMap(() => {
-      return this.authService.logout().pipe(tap(() => {
-        return this.router.navigate(['/']);
-      }))
-    })), {
+    this.actions$
+      .pipe(ofType(logout), exhaustMap(() => {
+        return this.authService.logout().pipe(tap(() => {
+          return this.router.navigate(['/']);
+        }));
+      })), {
     dispatch: false
-  })
+  });
 }
