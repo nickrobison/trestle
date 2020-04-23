@@ -176,8 +176,14 @@ stages:
               dockerComposeFile: docker-compose.yml
           - script: yarn --cwd trestle-server/ install
             displayName: Install Dependencies
+          - task: BrowserStackConfig@0
+            inputs:
+              BrowserStackServiceEndPoint: 'Browserstack'
+              browserstackLocal: true
           - script: yarn --cwd trestle-server/ run e2e:ci
             displayName: Run E2E Tests
+          - task: BrowserStackResults@0
+          - task: BrowserStackStopLocal@0
 
 #  - stage: Deploy
 #    displayName: Deploy resources
