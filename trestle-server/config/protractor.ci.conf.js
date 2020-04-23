@@ -2,7 +2,7 @@
  * Created by nickrobison on 2/28/18.
  */
 
-const browserstack = require('browserstack-local');
+// const browserstack = require('browserstack-local');
 const helper = require("./helpers");
 exports.config = {
   baseUrl: "http://localhost:8080/workspace/",
@@ -47,25 +47,25 @@ exports.config = {
   },
 
   // Code to start browserstack local before start of test
-  beforeLaunch: function () {
-    console.log("Connecting local");
-    return new Promise(function (resolve, reject) {
-      exports.bs_local = new browserstack.Local();
-      exports.bs_local.start({'key': exports.config.commonCapabilities['browserstack.key']}, function (error) {
-        if (error) return reject(error);
-        console.log('Connected. Now testing...');
-
-        resolve();
-      });
-    });
-  },
-
-  // Code to stop browserstack local after end of test
-  afterLaunch: function () {
-    return new Promise(function (resolve, reject) {
-      exports.bs_local.stop(resolve);
-    });
-  }
+  // beforeLaunch: function () {
+  //   console.log("Connecting local");
+  //   return new Promise(function (resolve, reject) {
+  //     exports.bs_local = new browserstack.Local();
+  //     exports.bs_local.start({'key': exports.config.commonCapabilities['browserstack.key']}, function (error) {
+  //       if (error) return reject(error);
+  //       console.log('Connected. Now testing...');
+  //
+  //       resolve();
+  //     });
+  //   });
+  // },
+  //
+  // // Code to stop browserstack local after end of test
+  // afterLaunch: function () {
+  //   return new Promise(function (resolve, reject) {
+  //     exports.bs_local.stop(resolve);
+  //   });
+  // }
 };
 
 exports.config.multiCapabilities.forEach(function (caps) {
