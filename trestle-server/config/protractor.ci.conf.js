@@ -5,11 +5,12 @@
 const browserstack = require('browserstack-local');
 const helper = require("./helpers");
 exports.config = {
-  baseUrl: "http://trestle:8080/workspace/",
+  baseUrl: "http://localhost:8080/workspace/",
   seleniumAddress: "https://hub-cloud.browserstack.com/wd/hub",
   commonCapabilities: {
     'browserstack.user': process.env.BROWSERSTACK_USERNAME,
     'browserstack.key': process.env.BROWSERSTACK_ACCESS_KEY,
+    'browserstack.local': true,
     'build': 'UI build',
     'project': 'Trestle'
   },
@@ -50,18 +51,28 @@ exports.config = {
     console.log("Connecting local");
     return new Promise(function (resolve, reject) {
       exports.bs_local = new browserstack.Local();
-      exports.bs_local.start({'key': exports.config.commonCapabilities['browserstack.key']}, function (error) {
-        if (error) return reject(error);
-        console.log('Connected. Now testing...');
+      helper.getBranch().then(branch => {
+        const branchName = process.env.BUILD_SOURCEBRANCHNAME || branch;
+        console.debug("Setting build name: ", branchName);
+        exports.config.multiCapabilities.forEach(caps => {
+          caps.build = branchName;
+        });
+        exports.bs_local.start({'key': exports.config.commonCapabilities['browserstack.key']}, function (error) {
+          if (error) return reject(error);
+          console.log('Connected. Now testing...');
 
-        resolve();
-      });
+          resolve();
+        });
+      }, error => {
+        return reject(error);
+      })
+
     });
   },
 
   // Code to stop browserstack local after end of test
   afterLaunch: function () {
-    return new Promise(function (resolve, reject) {
+    return new Promise(function (resolve) {
       exports.bs_local.stop(resolve);
     });
   }
