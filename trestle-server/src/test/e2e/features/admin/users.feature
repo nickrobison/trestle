@@ -5,16 +5,17 @@ Feature: User Admin Feature
   This feature tests simple user creation/deletion/modification
   Nothing fancy, but useful
 
-  Scenario: Create User
-    Given I login and submit with "dba" and "dba"
-    When I am viewing the "users" page
-    Then I create and submit a new "user" with the following properties:
-      | username | password        | first_name | last_name | email        |
-      | newUser1 | newUserPassword | New        | User      | new@test.com |
-    Then The users table should have 4 users
-    When I delete user "newUser1"
-    Then The users table should have 3 users
-    Then I logout
+  # TODO(nickrobison): Fix with TRESTLE-741
+#  Scenario: Create User
+#    Given I login and submit with "dba" and "dba"
+#    When I am viewing the "users" page
+#    Then I create and submit a new "user" with the following properties:
+#      | username | password        | first_name | last_name | email        |
+#      | newUser1 | newUserPassword | New        | User      | new@test.com |
+#    Then The users table should have 4 users
+#    When I delete user "newUser1"
+#    Then The users table should have 3 users
+#    Then I logout
 
 
   Scenario: Create Duplicate User

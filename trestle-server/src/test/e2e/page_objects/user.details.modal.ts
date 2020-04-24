@@ -48,16 +48,13 @@ export class UserDetailsModal {
             case "dba": {
                 await UserDetailsModal.selectUserPermission("dba");
                 await UserDetailsModal.selectUserPermission("admin");
-                await UserDetailsModal.selectUserPermission("user");
                 break;
             }
             case "admin": {
                 await UserDetailsModal.selectUserPermission("admin");
-                await UserDetailsModal.selectUserPermission("user");
                 break;
             }
             case "user": {
-                await UserDetailsModal.selectUserPermission("user");
                 break;
             }
         }

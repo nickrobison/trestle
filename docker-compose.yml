@@ -15,10 +15,3 @@ services:
       CONFIG_FILE: ${CONFIG_FILE:-/app/resources/config.ci.yml}
     ports:
       - "8080:8080"
-
-  chrome:
-    depends_on:
-      - trestle
-    image: selenium/standalone-chrome:3.141.59-zirconium
-    ports:
-      - "4444:4444"
