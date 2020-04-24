@@ -101,20 +101,24 @@ public abstract class RDF4JOntology extends TransactingOntology {
         final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(getFullIRIString(individual));
         final org.eclipse.rdf4j.model.IRI propertyIRI = vf.createIRI(getFullIRIString(property));
         this.openTransaction(false);
-        final RepositoryResult<Statement> statements = getThreadConnection().getStatements(individualIRI, propertyIRI, null);
-        return Flowable.fromIterable(statements)
-                .map(statement -> {
-                    final Value object = statement.getObject();
-                    final OWLNamedIndividual propertyObject = df.getOWLNamedIndividual(object.stringValue());
-                    return df.getOWLObjectPropertyAssertionAxiom(
-                            property,
-                            individual,
-                            propertyObject);
-                })
-                .doFinally(() -> {
-                    statements.close();
-                    this.commitTransaction(false);
-                });
+        try {
+            final RepositoryResult<Statement> statements = getThreadConnection().getStatements(individualIRI, propertyIRI, null);
+            return Flowable.fromIterable(statements)
+                    .map(statement -> {
+                        final Value object = statement.getObject();
+                        final OWLNamedIndividual propertyObject = df.getOWLNamedIndividual(object.stringValue());
+                        return df.getOWLObjectPropertyAssertionAxiom(
+                                property,
+                                individual,
+                                propertyObject);
+                    })
+                    .doOnComplete(() -> this.commitTransaction(false))
+                    .doOnError(error -> this.unlockAndAbort(false))
+                    .doFinally(statements::close);
+        } catch (Exception e) {
+            this.unlockAndAbort(false);
+            throw e;
+        }
     }
 
     @Override
