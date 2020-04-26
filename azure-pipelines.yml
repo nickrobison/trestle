@@ -159,7 +159,7 @@ stages:
             displayName: Login for Private Docker Images
             inputs:
               command: login
-              containerRegistry: dockerHub
+              containerRegistry: Artifactory (Docker)
           - task: Maven@3
             displayName: Build Docker image
             inputs:
