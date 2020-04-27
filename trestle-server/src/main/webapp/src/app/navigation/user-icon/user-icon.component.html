@@ -1,6 +1,6 @@
 <!--User login specific functions-->
 <div class="action-buttons" *ngIf="user | async as user; else loginDiv">
-    <img class="img-circle" [matMenuTriggerFor]="userMenu" [src]="getGravatarURL(user)" alt="User profile picture">
+    <img id="user-icon" class="img-circle" [matMenuTriggerFor]="userMenu" [src]="getGravatarURL(user)" alt="User profile picture">
   <mat-menu #userMenu="matMenu" yPosition="below">
     <button class="menu-button" id="logout" mat-button (click)="logout()" aria-label="Logout">
       Logout

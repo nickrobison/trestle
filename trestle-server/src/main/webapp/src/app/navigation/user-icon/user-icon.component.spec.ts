@@ -9,6 +9,7 @@ import {createMockUser} from '../../../test.helpers';
 import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
 import {logout} from '../../actions/auth.actions';
 import {MaterialModule} from '../../material/material.module';
+import {By} from '@angular/platform-browser';
 
 describe('UserIconComponent', () => {
   let component: UserIconComponent;
@@ -44,7 +45,8 @@ describe('UserIconComponent', () => {
     mockUsernameSelector.setResult(createMockUser(Privileges.ADMIN + Privileges.USER));
     mockStore.refreshState();
     fixture.detectChanges();
-    expect(component).toMatchSnapshot();
+    let list = fixture.debugElement.queryAll(By.css('mat-menu'));
+    expect(list).toHaveLength(1);
   })
 
   it('should dispatch on logout', () => {

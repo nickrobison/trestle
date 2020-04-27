@@ -90,7 +90,7 @@ exports[`LoginComponent should create 1`] = `
             mat-raised-button=""
             type="submit"
           >
-            Login
+            Submit
           </button>
         </mat-card-actions>
         <mat-card-footer
