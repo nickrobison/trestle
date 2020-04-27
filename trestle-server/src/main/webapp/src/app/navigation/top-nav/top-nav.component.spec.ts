@@ -7,8 +7,8 @@ import * as fromState from '../../reducers';
 import {Privileges, TrestleUser} from '../../user/trestle-user';
 import {MaterialModule} from '../../material/material.module';
 import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
-import {logout} from '../../actions/auth.actions';
 import {createMockUser} from '../../../test.helpers';
+import {UserIconComponent} from '../user-icon/user-icon.component';
 
 describe('TopNavComponent', () => {
   let component: TopNavComponent;
@@ -18,7 +18,7 @@ describe('TopNavComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [TopNavComponent],
+      declarations: [TopNavComponent, UserIconComponent],
       imports: [MaterialModule, FontAwesomeModule],
       providers: [provideMockStore()]
     })
@@ -46,11 +46,4 @@ describe('TopNavComponent', () => {
     fixture.detectChanges();
     expect(component).toMatchSnapshot();
   });
-
-  it('should dispatch on logout', () => {
-    const dispatchSpy = spyOn(mockStore, 'dispatch');
-    component.logout();
-
-    expect(dispatchSpy).toBeCalledWith(logout());
-  })
 });

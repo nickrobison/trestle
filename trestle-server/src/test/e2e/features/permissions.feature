@@ -11,7 +11,7 @@ Feature: User permissions feature
     And I can see 1 "dba" options
     Then I can navigate to "admin/users"
     And I can navigate to "admin/index"
-    Then I click the "logout" button
+    Then I logout
 
   Scenario: Admin permissions
     When I click the "login" button
@@ -21,7 +21,7 @@ Feature: User permissions feature
     And I can see 0 "dba" options
     Then I can navigate to "admin/users"
     And I can not navigate to "admin/index"
-    Then I click the "logout" button
+    Then I logout
 
   Scenario: User permissions
     When I click the "login" button
@@ -29,3 +29,4 @@ Feature: User permissions feature
     When I login and submit with "user" and "user1"
     Then I can not navigate to "admin/users"
     And I can not navigate to "admin/index"
+    Then I logout

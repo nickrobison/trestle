@@ -15,7 +15,7 @@ exports.config = {
     browserName: 'chrome'
   },
   directConnect: true,
-  baseUrl: 'http://localhost:8080/workspace/',
+  baseUrl: 'http://localhost:4200/workspace/',
 
   framework: 'custom',
   frameworkPath: require.resolve('protractor-cucumber-framework'),

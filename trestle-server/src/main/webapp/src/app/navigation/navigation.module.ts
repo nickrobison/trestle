@@ -9,6 +9,7 @@ import {Privileges} from '../user/trestle-user';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { TopNavComponent } from './top-nav/top-nav.component';
 import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
+import { UserIconComponent } from './user-icon/user-icon.component';
 
 export interface ITrestleRoute extends Route {
   data?: ITrestleRouteData
@@ -19,7 +20,7 @@ export interface ITrestleRouteData {
 }
 
 @NgModule({
-  declarations: [NavigationComponent, LoginComponent, SidebarComponent, TopNavComponent],
+  declarations: [NavigationComponent, LoginComponent, SidebarComponent, TopNavComponent, UserIconComponent],
   imports: [
     CommonModule,
     MaterialModule,
