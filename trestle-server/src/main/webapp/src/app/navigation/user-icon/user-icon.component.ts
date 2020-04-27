@@ -6,6 +6,7 @@ import {selectUserFromUser, State} from '../../reducers';
 import {Observable} from 'rxjs';
 import {TrestleUser} from '../../user/trestle-user';
 import {logout} from '../../actions/auth.actions';
+import {MD5} from 'crypto-js';
 
 @Component({
   selector: 'user-icon',
@@ -32,17 +33,9 @@ export class UserIconComponent implements OnInit {
    * Get the Gravitar URL of the user
    * @returns {string}
    */
-  public getGravatarURL(): string {
-    return '';
-    // if (this.gravatarURL == null) {
-    //   const user = this.authService.getUser();
-    //   if (user !== null) {
-    //     const hash = MD5(user.email.trim().toLowerCase()).toString();
-    //     this.gravatarURL = 'https://www.gravatar.com/avatar/' + hash + '?d=identicon' + '&s=36';
-    //     return this.gravatarURL;
-    //   }
-    // }
-    // return this.gravatarURL;
+  public getGravatarURL(user: TrestleUser): string {
+    const hash = MD5(user.email.trim().toLowerCase()).toString();
+    return 'https://www.gravatar.com/avatar/' + hash + '?d=identicon' + '&s=36';
   }
 
   public logout(): void {

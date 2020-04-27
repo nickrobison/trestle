@@ -8,6 +8,7 @@ import {Privileges, TrestleUser} from '../../user/trestle-user';
 import {createMockUser} from '../../../test.helpers';
 import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
 import {logout} from '../../actions/auth.actions';
+import {MaterialModule} from '../../material/material.module';
 
 describe('UserIconComponent', () => {
   let component: UserIconComponent;
@@ -18,7 +19,7 @@ describe('UserIconComponent', () => {
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [ UserIconComponent ],
-      imports: [FontAwesomeModule],
+      imports: [FontAwesomeModule, MaterialModule],
       providers: [provideMockStore()]
     })
     .compileComponents();
