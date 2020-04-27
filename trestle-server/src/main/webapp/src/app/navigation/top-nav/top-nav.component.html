@@ -1,16 +1,6 @@
 <mat-toolbar color="primary" class="top-layout z-depth-4">
   <h4 (click)="headerClicked.emit()">TRESTLE</h4>
   <span class="toolbar-spacer"></span>
-  <!--User login specific functions-->
-  <div class="action-buttons" *ngIf="user | async as user; else loginDiv">
-    <img class="img-circle" [src]="getGravatarURL()" alt="User profile picture">
-    <button id="logout" mat-button class="toolbar-button" (click)="logout()" aria-label="Logout">
-      <fa-icon [icon]="logoutIcon" [size]="iconSize"></fa-icon>
-    </button>
-  </div>
-  <ng-template #loginDiv>
-    <button id="login" mat-button class="toolbar-button" routerLink="/login" aria-label="Login">
-      <fa-icon [icon]="loginIcon" [size]="iconSize"></fa-icon>
-    </button>
-  </ng-template>
+  <user-icon></user-icon>
+
 </mat-toolbar>
