@@ -1,13 +1,14 @@
 /**
  * Created by nrobison on 1/19/17.
  */
-import {Component, OnDestroy, OnInit, ViewContainerRef} from '@angular/core';
+import {Component, OnDestroy, OnInit, ViewChild, ViewContainerRef} from '@angular/core';
 import {IUserDialogResponse, UserDialogComponent, UserDialogResponseType} from './users.dialog.component';
 import {ITrestleUser} from '../../user/authentication.service';
 import {MatDialog, MatDialogConfig, MatDialogRef} from '@angular/material/dialog';
 import {UserService} from '../../user/users.service';
 import {Privileges} from '../../user/trestle-user';
 import {Subscription} from 'rxjs';
+import {MatTable} from '@angular/material/table';
 
 @Component({
   selector: 'admin-users',
@@ -21,6 +22,9 @@ export class UsersComponent implements OnInit, OnDestroy {
   public dialogRef: MatDialogRef<any> | null;
   public privileges: Privileges;
   private subscription: Subscription;
+  @ViewChild(MatTable)
+  public table: MatTable<ITrestleUser>;
+  public readonly displayedColumns = ["username", "firstName", "lastName", "email"];
 
   constructor(private userService: UserService,
               public dialog: MatDialog,
@@ -91,6 +95,7 @@ export class UsersComponent implements OnInit, OnDestroy {
             }
             break;
         }
+        this.table.renderRows();
       }
       this.dialogRef = null;
     });
