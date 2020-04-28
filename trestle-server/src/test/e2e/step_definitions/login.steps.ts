@@ -38,5 +38,6 @@ Then(/^The error message should be "([^"]*)"$/, async (message) => {
 });
 
 Then(/^I logout$/, async () => {
+  await dashboard.clickButton("user-icon");
   return dashboard.clickButton("logout");
 });

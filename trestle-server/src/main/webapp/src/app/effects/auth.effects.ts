@@ -41,7 +41,8 @@ export class AuthEffects {
   logout = createEffect(() =>
     this.actions$
       .pipe(ofType(logout), exhaustMap(() => {
-        return this.authService.logout().pipe(tap(() => {
+        return this.authService.logout().pipe(map(() => {
+          console.debug("Ready to logout");
           return this.router.navigate(['/']);
         }));
       })), {

@@ -26,7 +26,7 @@ export function jwtOptionsFactory(store: Store<State>) {
       });
     },
     whitelistedDomains: [environment.domain],
-    blacklistedRoutes: ['http://localhost:8080/auth/login'],
+    blacklistedRoutes: ['http://localhost:8080/auth/login', 'http://localhost:8080/auth/logout'],
     throwNoTokenError: true,
     authScheme: ''
   };

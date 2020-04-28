@@ -20,8 +20,10 @@ exports[`AppComponent should create the app 1`] = `
       <span
         class="toolbar-spacer"
       />
-      
-      
+      <user-icon>
+        
+        
+      </user-icon>
     </mat-toolbar>
   </top-nav><mat-sidenav-container
     class="mat-drawer-container mat-sidenav-container"

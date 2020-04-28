@@ -44,7 +44,7 @@ export class LoginPageObject {
     await this.passwordField.sendKeys(password);
 
     if (login) {
-      element(by.buttonText('Login')).click();
+      element(by.buttonText('Submit')).click();
       return browser.sleep(500);
     }
   }

@@ -88,8 +88,11 @@ export class AuthService {
   /**
    * Logout the user
    */
-  public logout(): Observable<void> {
-    return this.http.post<void>(this.baseUrl + '/auth/logout', null);
+  public logout(): Observable<string> {
+    console.debug("Logging out");
+    return this.http.post(this.baseUrl + '/auth/logout', null, {
+      responseType: 'text'
+    });
   }
 
   /**
