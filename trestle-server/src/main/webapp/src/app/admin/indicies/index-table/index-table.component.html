@@ -1,21 +1,36 @@
-<table>
-    <thead>
-    <tr>
-        <th>ID</th>
-        <th>Binary ID</th>
-        <th>Type</th>
-        <th>Direction</th>
-        <th>Coordinates</th>
-        <th>Fill Factor</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr *ngFor="let leaf of sortedData" (click)="printLeaf(leaf)">
-        <td>{{leaf.leafID}}</td>
-        <td>{{leaf.binaryID}}</td>
-        <td>{{leaf.type}}</td>
-        <td>{{leaf.direction}}</td>
-        <td>{{leaf.records / 20 }}</td>
-    </tr>
-    </tbody>
+<table mat-table [dataSource]="sortedData" class="mat-elevation-z1 index-table">
+
+  <ng-container matColumnDef="id">
+    <th id="leaf-id" mat-header-cell *matHeaderCellDef>ID</th>
+    <td mat-cell *matCellDef="let leaf">{{leaf.leafID}}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="binID">
+    <th id="leaf-bin-id" mat-header-cell *matHeaderCellDef>Binary ID</th>
+    <td mat-cell *matCellDef="let leaf">{{leaf.binaryID}}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="type">
+    <th id="leaf-type" mat-header-cell *matHeaderCellDef>Type</th>
+    <td mat-cell *matCellDef="let leaf">{{leaf.type}}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="direction">
+    <th id="leaf-direction" mat-header-cell *matHeaderCellDef>Direction</th>
+    <td mat-cell *matCellDef="let leaf">{{leaf.direction}}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="coordinates">
+    <th id="leaf-coordinates" mat-header-cell *matHeaderCellDef>Coordinates</th>
+    <td mat-cell *matCellDef="let leaf">{{leaf.direction}}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="fillFactor">
+    <th id="leaf-fill" mat-header-cell *matHeaderCellDef>Fill Factor</th>
+    <td mat-cell *matCellDef="let leaf">{{leaf.records / 20}}</td>
+  </ng-container>
+
+  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+  <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
 </table>

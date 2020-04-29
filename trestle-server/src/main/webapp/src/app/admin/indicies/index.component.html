@@ -1,6 +1,3 @@
-<div class="disabled_text light_gray_text" *ngIf="!stats">
-    Caching is disabled
-</div>
 <div *ngIf="stats">
     <h4>Valid Index</h4>
     <tree-graph #valid_graph
@@ -15,4 +12,8 @@
     <button mat-raised-button color="accent" (click)="openDialog('Rebuild', 'DB Index')">REBUILD INDEX</button>
     <index-table #db_table [data]="stats.dbLeafStats"></index-table>
     <button mat-raised-button color="warn" (click)="openDialog('Purge', 'Object Cache')">PURGE CACHE</button>
+</div>
+
+<div class="disabled_text light_gray_text" *ngIf="!stats">
+  Caching is disabled
 </div>
