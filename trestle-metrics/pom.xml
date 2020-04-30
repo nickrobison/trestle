@@ -9,7 +9,7 @@
 
     <artifactId>trestle-metrics</artifactId>
     <properties>
-        <bytebuddy.version>1.10.9</bytebuddy.version>
+        <bytebuddy.version>1.10.10</bytebuddy.version>
     </properties>
 
     <dependencies>
