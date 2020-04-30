@@ -14,6 +14,7 @@ exports.config = {
     'build': 'UI build',
     'project': 'Trestle'
   },
+  maxSessions: 2,
   multiCapabilities: [{
     'browserName': 'Chrome',
     'name': 'Trestle UI [Chrome] Test'
@@ -51,22 +52,12 @@ exports.config = {
     console.log("Connecting local");
     return new Promise(function (resolve, reject) {
       exports.bs_local = new browserstack.Local();
-      helper.getBranch().then(branch => {
-        const branchName = process.env.BUILD_SOURCEBRANCHNAME || branch;
-        console.debug("Setting build name: ", branchName);
-        exports.config.multiCapabilities.forEach(caps => {
-          caps.build = branchName;
-        });
-        exports.bs_local.start({'key': exports.config.commonCapabilities['browserstack.key']}, function (error) {
-          if (error) return reject(error);
-          console.log('Connected. Now testing...');
+      exports.bs_local.start({'key': exports.config.commonCapabilities['browserstack.key']}, function (error) {
+        if (error) return reject(error);
+        console.log('Connected. Now testing...');
 
-          resolve();
-        });
-      }, error => {
-        return reject(error);
-      })
-
+        resolve();
+      });
     });
   },
 
