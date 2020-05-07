@@ -232,10 +232,10 @@
   resolved "https://registry.yarnpkg.com/@angular/language-service/-/language-service-9.1.3.tgz#89883b9941f9aaaa8cbb14c37b298e4c2623fa9e"
   integrity sha512-mcZDO6C2BpDinMjDeMAdohTefpFxNu/S0JEqewYQIQ8TXtKm77xDPUdNdNb4qD4zYW+c46f7UXNMX/tbYCicQw==
 
-"@angular/material@^9.2.0":
-  version "9.2.0"
-  resolved "https://registry.yarnpkg.com/@angular/material/-/material-9.2.0.tgz#1b6f0a2e115f93885d7fc2dc4b258d8c9cf6821f"
-  integrity sha512-KKzEIVh6/m56m+Ao8p4PK0SyEr0574l3VP2swj1qPag3u+FYgemmXCGTaChrKdDsez+zeTCPXImBGXzE6NQ80Q==
+"@angular/material@^9.2.1":
+  version "9.2.2"
+  resolved "https://registry.yarnpkg.com/@angular/material/-/material-9.2.2.tgz#53b2d8a62fe48b79127cdf43b3b8b082e4c3df27"
+  integrity sha512-gdQiMJ6PtW/5fd+0mglHFyzxULDCBGjn9RTET3sUq2rkc9+jBXr4OvnsUyBWSnqqv97XqotVDIx5JgE4/YX/Rw==
 
 "@angular/platform-browser-dynamic@~9.1.3":
   version "9.1.3"
