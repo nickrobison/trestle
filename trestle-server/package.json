@@ -35,7 +35,7 @@
     "@ngrx/effects": "^9.1.0",
     "@ngrx/entity": "^9.1.0",
     "@ngrx/router-store": "^9.1.0",
-    "@ngrx/schematics": "^9.1.0",
+    "@ngrx/schematics": "^9.1.2",
     "@ngrx/store": "^9.1.0",
     "@ngrx/store-devtools": "^9.1.0",
     "@types/lodash": "^4.14.150",
