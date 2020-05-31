@@ -8,8 +8,8 @@ variables:
 resources:
   containers:
     - container: graphdb
-      endpoint: Artifactory (Docker)
-      image: trestle-docker-local.jfrog.io/graphdb:8.2.0-free
+      endpoint: dockerHub
+      image: nickrobison/graphdb:8.2.0-free
       ports:
         - 7200:7200
 
@@ -159,7 +159,7 @@ stages:
             displayName: Login for Private Docker Images
             inputs:
               command: login
-              containerRegistry: Artifactory (Docker)
+              containerRegistry: dockerHub
           - task: Maven@3
             displayName: Build Docker image
             inputs:
