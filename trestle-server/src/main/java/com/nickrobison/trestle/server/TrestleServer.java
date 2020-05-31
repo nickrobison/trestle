@@ -1,7 +1,6 @@
 package com.nickrobison.trestle.server;
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.hubspot.dropwizard.guice.GuiceBundle;
 import com.nickrobison.trestle.server.auth.AuthDynamicFeature;
 import com.nickrobison.trestle.server.auth.AuthValueFactoryProvider;
 import com.nickrobison.trestle.server.config.TrestleServerConfiguration;
@@ -11,15 +10,12 @@ import com.nickrobison.trestle.server.modules.TrestleServerModule;
 import com.nickrobison.trestle.server.serializers.GeometrySerializer;
 import io.dropwizard.Application;
 import io.dropwizard.db.DataSourceFactory;
-import io.dropwizard.db.ManagedDataSource;
 import io.dropwizard.db.ManagedPooledDataSource;
 import io.dropwizard.db.PooledDataSourceFactory;
 import io.dropwizard.jersey.setup.JerseyEnvironment;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import io.federecio.dropwizard.swagger.SwaggerBundle;
-import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
 import liquibase.Liquibase;
 import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
@@ -29,6 +25,7 @@ import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.locationtech.jts.geom.Geometry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.vyarus.dropwizard.guice.GuiceBundle;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
@@ -66,17 +63,11 @@ public class TrestleServer extends Application<TrestleServerConfiguration> {
 //        bootstrap.addBundle(hibernate);
         bootstrap.addBundle(migrations);
 
-        final GuiceBundle<TrestleServerConfiguration> guiceBundle = GuiceBundle.<TrestleServerConfiguration>newBuilder()
-                .addModule(new TrestleServerModule())
-                .addModule(new HibernateModule())
-                .addModule(new JWTModule())
-                .setConfigClass(TrestleServerConfiguration.class)
+
+
+        final GuiceBundle guiceBundle = GuiceBundle.builder()
+                .modules(new TrestleServerModule(), new HibernateModule(), new JWTModule())
                 .enableAutoConfig(getClass().getPackage().getName())
-//                .setInjectorFactory((stage, modules) -> LifecycleInjector.builder()
-//                        .inStage(stage)
-//                        .withModules(modules)
-//                        .build()
-//                        .createInjector())
                 .build();
 
         bootstrap.addBundle(guiceBundle);
