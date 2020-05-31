@@ -2,7 +2,7 @@ version: '3'
 
 services:
   graphdb:
-    image: trestle-docker-local.jfrog.io/graphdb:8.2.0-free
+    image: nickrobison/graphdb:8.2.0-free
     ports:
       - "7200:7200"
 
