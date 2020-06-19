@@ -11,6 +11,7 @@ export class IndexTableComponent implements OnChanges {
     @Input()
     public data: IIndexLeafStatistics[];
     public sortedData: IIndexLeafStatistics[];
+    public readonly displayedColumns = ["id", "binID", "type", "direction", "fillFactor"];
 
     public constructor() { }
 

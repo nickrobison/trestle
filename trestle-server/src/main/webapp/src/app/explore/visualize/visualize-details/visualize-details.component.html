@@ -1,89 +1,97 @@
 <div *ngIf="individual">
-    <div class="section">
-        <h4>{{individual.getID()}}</h4>
-        <div class="row">
-            <div class="col s12 l7 ui-row">
-                <trestle-map [dataChanges]="mapIndividual" [single]="true" [multiSelect]="false"></trestle-map>
-            </div>
-            <div class="col s12 l5 ui-row">
-                <individual-graph [config]="{data: individual,
+  <div class="section">
+    <h4>{{individual.getID()}}</h4>
+    <div class="row">
+      <div class="col s12 l7 ui-row">
+        <trestle-map [dataChanges]="mapIndividual" [single]="true" [multiSelect]="false"></trestle-map>
+      </div>
+      <div class="col s12 l5 ui-row">
+        <individual-graph [config]="{data: individual,
             validAt: validAt,
             dbAt: dbAt}"></individual-graph>
-            </div>
+      </div>
+    </div>
+  </div>
+  <div class="section">
+    <a mat-raised-button [routerLink]="['/explore', 'compare']"
+       [queryParams]="{id: individual.getID()}" color="primary">Add to Compare</a>
+    <button mat-raised-button color="warn">DELETE</button>
+  </div>
+  <div class="section">
+    <mat-tab-group>
+      <mat-tab label="Fact History">
+        <div class="section">
+          <history-graph id="fact-history" [data]="individualFactHistory" [minTime]="minTime"
+                         [maxTime]="maxTime"
+                         [graphHeight]="300"></history-graph>
         </div>
-    </div>
-    <div class="section">
-        <a mat-raised-button [routerLink]="['/explore', 'compare']"
-        [queryParams]="{id: individual.getID()}" color="primary">Add to Compare</a>
-        <button mat-raised-button color="warn">DELETE</button>
-    </div>
-    <div class="section">
-        <mat-tab-group>
-            <mat-tab label="Fact History">
-                <div class="section">
-                    <history-graph id="fact-history" [data]="individualFactHistory" [minTime]="minTime"
-                                   [maxTime]="maxTime"
-                                   [graphHeight]="300"></history-graph>
-                </div>
-                <div class="section">
-                    <table class="responsive-table highlight">
-                        <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Type</th>
-                            <th>Value</th>
-                            <th>From</th>
-                            <th>To</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr *ngFor="let fact of individual.getFacts()">
-                            <td>{{fact.getName()}}</td>
-                            <td>{{fact.getType()}}</td>
-                            <td class="red lighten-2" *ngIf="fact.getValue().length >= 200"
-                                (click)="openValueModal(fact)">
-                                ...
-                            </td>
-                            <td *ngIf="fact.getValue().length < 200">{{fact.getValue()}}</td>
-                            <td>{{fact.getValidTemporal().getFrom()}}</td>
-                            <td>{{fact.getValidTemporal().getTo()}}</td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </mat-tab>
-            <mat-tab label="Object Relations">
-                <div class="section" *ngIf="individual">
-                    <table class="responsive-table highlight">
-                        <thead>
-                        <tr>
-                            <th>Relation</th>
-                            <th>From</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr *ngFor="let relation of individual.getRelations()">
-                            <td>{{relation.getType()}}</td>
-                            <td>{{displayFn(relation.getObject())}}
-                                <a
-                                        matTooltip="Visualize individual"
-                                        [routerLink]="['/explore',
+        <div class="section">
+
+          <table mat-table [dataSource]="individual.getFacts()" class="mat-elevation-z1">
+            <ng-container matColumnDef="name">
+              <th id="fact-name" mat-header-cell *matHeaderCellDef>Name</th>
+              <td mat-cell *matCellDef="let fact">{{fact.getName()}}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="type">
+              <th id="fact-type" mat-header-cell *matHeaderCellDef>Type</th>
+              <td mat-cell *matCellDef="let fact">{{fact.getType()}}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="value">
+              <th id="fact-value" mat-header-cell *matHeaderCellDef>Value</th>
+              <td mat-cell *matCellDef="let fact"
+                  [className]="fact.getValue().length > 200 ? 'cell-truncated mat-cell' : 'mat-cell'"
+                  (click)="fact.getValue().length > 200 ? openValueModal(fact) : null">{{fact.getValue().length > 200 ? '...' : fact.getValue()}}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="from">
+              <th id="fact-from" mat-header-cell *matHeaderCellDef>From</th>
+              <td mat-cell *matCellDef="let fact">{{fact.getValidTemporal().getFrom()}}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="to">
+              <th id="fact-to" mat-header-cell *matHeaderCellDef>To</th>
+              <td mat-cell *matCellDef="let fact">{{fact.getValidTemporal().getFrom()}}</td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          </table>
+        </div>
+      </mat-tab>
+      <mat-tab label="Object Relations">
+        <div class="section" *ngIf="individual">
+          <table class="responsive-table highlight">
+            <thead>
+            <tr>
+              <th>Relation</th>
+              <th>From</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let relation of individual.getRelations()">
+              <td>{{relation.getType()}}</td>
+              <td>{{displayFn(relation.getObject())}}
+                <a
+                  matTooltip="Visualize individual"
+                  [routerLink]="['/explore',
                                 'visualize',
                                 getSuffix(relation.getObject())]"
-                                        [queryParams]="{root: getPrefix(relation.getObject())}">
-                                    <mat-icon>link</mat-icon>
-                                </a>                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </mat-tab>
-            <mat-tab label="Spatial Union" *ngIf="individual.isUnion()">
-                <spatial-union
-                        [minDate]="minGraphDate"
-                        [maxDate]="maxGraphDate"
-                        [individual]="individual"></spatial-union>
-            </mat-tab>
-        </mat-tab-group>
-    </div>
+                  [queryParams]="{root: getPrefix(relation.getObject())}">
+                  <mat-icon>link</mat-icon>
+                </a></td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </mat-tab>
+      <mat-tab label="Spatial Union" *ngIf="individual.isUnion()">
+        <spatial-union
+          [minDate]="minGraphDate"
+          [maxDate]="maxGraphDate"
+          [individual]="individual"></spatial-union>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
 </div>

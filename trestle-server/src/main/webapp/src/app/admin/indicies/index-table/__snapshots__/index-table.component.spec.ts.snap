@@ -1,3 +1,13 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`IndexTableComponent should create 1`] = `IndexTableComponent {}`;
+exports[`IndexTableComponent should create 1`] = `
+IndexTableComponent {
+  "displayedColumns": Array [
+    "id",
+    "binID",
+    "type",
+    "direction",
+    "fillFactor",
+  ],
+}
+`;

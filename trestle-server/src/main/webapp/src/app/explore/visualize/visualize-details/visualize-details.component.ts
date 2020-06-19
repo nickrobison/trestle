@@ -32,6 +32,7 @@ export class VisualizeDetailsComponent implements AfterViewInit {
     public maxGraphDate = new Date("2017-01-01");
     public validAt: Moment;
     public dbAt: Moment;
+    public displayedColumns = ["name", "type", "value", "from", "to"];
     private routeObservable: Observable<IRouteObservable>;
     private dialogRef: MatDialogRef<IndividualValueDialog> | null;
 

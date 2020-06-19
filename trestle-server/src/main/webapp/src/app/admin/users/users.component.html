@@ -1,28 +1,31 @@
-<table id="users-table" class="centered highlight user-table responsive-table z-depth-1">
-    <thead>
-    <tr>
-        <th>First Name</th>
-        <th>Last Name</th>
-        <th>Username</th>
-        <th>Email</th>
-        <th>Permissions</th>
-    </tr>
-    </thead>
-    <tbody>
-        <tr *ngFor="let user of users" (click)="openUserModal(user)">
-            <td>{{user.firstName}}</td>
-            <td>{{user.lastName}}</td>
-            <td>{{user.username}}</td>
-            <td>{{user.email}}</td>
-            <td>
-                <mat-chip-list>
-                <mat-chip color="red" selected="false" *ngIf="isDBA(user)">DBA</mat-chip>
-                <mat-chip color="primary" selected="false" *ngIf="isAdmin(user)">ADMIN</mat-chip>
-                </mat-chip-list>
-            </td>
-        </tr>
-    </tbody>
-  <button id="add-user" mat-fab color="primary" (click)="openUserModal(null)"><mat-icon>add</mat-icon></button>
-</table>
-<div>
-</div>
+<table mat-table [dataSource]="users" class="user-table mat-elevation-z8">
+
+  <ng-container matColumnDef="firstName">
+    <th id="fn-header" mat-header-cell *matHeaderCellDef>First Name</th>
+    <td mat-cell *matCellDef="let user">{{user.firstName}}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="lastName">
+    <th id="ln-header" mat-header-cell *matHeaderCellDef>Last Name</th>
+    <td mat-cell *matCellDef="let user">{{user.lastName}}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="email">
+    <th id="e-header" mat-header-cell *matHeaderCellDef>Email</th>
+    <td mat-cell *matCellDef="let user">{{user.email}}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="username">
+    <th id="un-header" mat-header-cell *matHeaderCellDef>Username</th>
+    <td mat-cell *matCellDef="let user">{{user.username}}</td>
+  </ng-container>
+
+  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+  <tr mat-row *matRowDef="let row; columns: displayedColumns;" (click)="openUserModal(row)"></tr>
+  </table>
+  <span></span>
+  <div class="button-add">
+    <button id="add-user" mat-fab color="primary" (click)="openUserModal(null)">
+      <mat-icon>add</mat-icon>
+    </button>
+  </div>

@@ -19,6 +19,7 @@ import {TreeGraphComponent} from './indicies/tree-graph/tree-graph.component';
 import {WarningDialogComponent} from './indicies/warning-dialog/warning-dialog-component';
 import {IndexService} from './indicies/index.service';
 import {IndexComponent} from './indicies/index.component';
+import {FlexLayoutModule} from '@angular/flex-layout';
 
 
 @NgModule({
@@ -44,7 +45,8 @@ import {IndexComponent} from './indicies/index.component';
     ReactiveFormsModule,
     NavigationModule,
     RouterModule.forChild(AdminRoutes),
-    SharedModule
+    SharedModule,
+    FlexLayoutModule
   ],
   // This will not be needed once we enable Ivy
   entryComponents: [UserDialogComponent, WarningDialogComponent]
