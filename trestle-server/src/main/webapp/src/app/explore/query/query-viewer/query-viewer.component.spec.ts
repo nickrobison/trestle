@@ -1,5 +1,7 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import {QueryViewerComponent} from './query-viewer.component';
+import {MaterialModule} from '../../../material/material.module';
+import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 
 describe('QueryViewerComponent', () => {
   let component: QueryViewerComponent;
@@ -7,6 +9,7 @@ describe('QueryViewerComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
+      imports: [MaterialModule, NoopAnimationsModule],
       declarations: [ QueryViewerComponent ]
     })
     .compileComponents();
@@ -19,6 +22,6 @@ describe('QueryViewerComponent', () => {
   });
 
   it('should create', () => {
-    expect(component).toMatchSnapshot();
+    expect(component).toBeTruthy();
   });
 });

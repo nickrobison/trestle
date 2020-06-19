@@ -15,10 +15,14 @@ import {MatPaginator} from '@angular/material/paginator';
 export class QueryViewerComponent implements OnInit, OnChanges {
 
   @Input('data')
-  public queryData: ITrestleResultSet;
+  public queryData: ITrestleResultSet = {
+    rows: 0,
+    bindingNames: [],
+    results: []
+  };
   @ViewChild(MatPaginator)
   public paginator: MatPaginator;
-  public dataSource = new MatTableDataSource<ITrestleResultSet>([]);;
+  public dataSource = new MatTableDataSource<ITrestleResultSet>([]);
 
   constructor() {
     // Not used
