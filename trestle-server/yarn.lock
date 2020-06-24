@@ -252,10 +252,10 @@
   resolved "https://registry.yarnpkg.com/@angular/router/-/router-9.1.11.tgz#b6d28af55fe5631bbc46f306a0e7866253d4f3b1"
   integrity sha512-D6CCDeSK/F6dWSB/a1g/zB072xG5LadLSV8afQ57oX1KHePx21LcoRG4tUtFMMHh/jZXRc9pMQIR1/9FrrXF3Q==
 
-"@auth0/angular-jwt@^4.1.2":
-  version "4.1.2"
-  resolved "https://registry.yarnpkg.com/@auth0/angular-jwt/-/angular-jwt-4.1.2.tgz#365726e9a5f062f822b01baf3e902b0993d38836"
-  integrity sha512-DPZzo+nIJ/gg/wapIzrdcGHSJvcstB3LeUakny3NJZ4rkAxgg20j6UDzkQ9MP/Me7hg+jZvi7psATAiODL12ww==
+"@auth0/angular-jwt@^4.2.0":
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/@auth0/angular-jwt/-/angular-jwt-4.2.0.tgz#60f74552fbdd9404aeb55e41fa4d3d514f8465d6"
+  integrity sha512-kxHMztP0scAaKSfWRQ4y3ba5ggcGh2YVapC1UnimyE1I1Vs68gdSlV00bnpAK4aCaNut9IqtdGurgbljHt24Lw==
   dependencies:
     url "^0.11.0"
 
