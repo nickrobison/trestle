@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.server.tasks;
 
-import com.google.common.collect.ImmutableMultimap;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import com.nickrobison.trestle.server.modules.ReasonerModule;
 import io.dropwizard.servlets.tasks.Task;
@@ -11,6 +10,8 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import java.io.PrintWriter;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by nrobison on 11/29/16.
@@ -28,9 +29,10 @@ public class UpdateInferenceTask extends Task {
         reasoner = reasonerModule.getReasoner();
         logger.info("Creating task {}", name);
     }
-    @Override
-    public void execute(ImmutableMultimap<String, String> immutableMultimap, PrintWriter printWriter) throws Exception {
-        logger.info("Updating inference");
-        this.reasoner.getUnderlyingOntology().runInference();
-    }
+
+  @Override
+  public void execute(Map<String, List<String>> map, PrintWriter printWriter) {
+    logger.info("Updating inference");
+    this.reasoner.getUnderlyingOntology().runInference();
+  }
 }
