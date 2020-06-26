@@ -4,6 +4,7 @@ import com.nickrobison.trestle.server.auth.Privilege;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.security.Principal;
 import java.util.Objects;
 import java.util.Set;
 
@@ -20,7 +21,7 @@ import java.util.Set;
 })
 // I think we can suppress this for Beans
 @SuppressWarnings({"initialization.fields.uninitialized"})
-public class User {
+public class User implements Principal {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -135,4 +136,9 @@ public class User {
 
         return Objects.hash(id, firstName, lastName, username, email, password, privileges);
     }
+
+  @Override
+  public String getName() {
+    return this.username;
+  }
 }
