@@ -76,6 +76,13 @@
         <dependency>
             <groupId>org.geotools</groupId>
             <artifactId>gt-main</artifactId>
+<!--            Exclude the Java EE API, because it breaks embedding with Dropwizard-->
+            <exclusions>
+                <exclusion>
+                    <artifactId>javaee-api</artifactId>
+                    <groupId>javax</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.geotools</groupId>
