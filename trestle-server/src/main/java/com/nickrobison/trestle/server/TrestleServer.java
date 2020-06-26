@@ -56,13 +56,14 @@ public class TrestleServer extends Application<TrestleServerConfiguration> {
     final SimpleModule m = new SimpleModule();
     m.addSerializer(Geometry.class, new GeometrySerializer());
     bootstrap.getObjectMapper().registerModule(m);
-//        bootstrap.addBundle(new FileAssetsBundle("src/main/resources/build/", "/static", "index.html"));
-//        bootstrap.addBundle(hibernate);
     bootstrap.addBundle(migrations);
+
+    final HibernateModule.TrestleHibernateBundle hibernateBundle = new HibernateModule.TrestleHibernateBundle();
+    bootstrap.addBundle(hibernateBundle);
 
 
     final GuiceBundle guiceBundle = GuiceBundle.builder()
-      .modules(new TrestleServerModule(), new HibernateModule(), new JWTModule())
+      .modules(new TrestleServerModule(), new HibernateModule(hibernateBundle), new JWTModule())
       .enableAutoConfig(getClass().getPackage().getName())
       .build();
 

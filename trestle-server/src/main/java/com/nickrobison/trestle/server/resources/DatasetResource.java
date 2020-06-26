@@ -4,7 +4,7 @@ import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.server.annotations.AuthRequired;
 import com.nickrobison.trestle.server.auth.Privilege;
-import com.nickrobison.trestle.server.modules.ReasonerModule;
+import com.nickrobison.trestle.server.modules.ManagedReasoner;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -30,8 +30,8 @@ public class DatasetResource {
     private final TrestleReasoner reasoner;
 
     @Inject
-    public DatasetResource(ReasonerModule reasonerModule) {
-        this.reasoner = reasonerModule.getReasoner();
+    public DatasetResource(ManagedReasoner managedReasoner) {
+        this.reasoner = managedReasoner.getReasoner();
     }
 
     @GET

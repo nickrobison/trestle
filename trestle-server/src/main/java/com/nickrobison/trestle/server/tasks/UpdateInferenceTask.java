@@ -1,7 +1,7 @@
 package com.nickrobison.trestle.server.tasks;
 
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
-import com.nickrobison.trestle.server.modules.ReasonerModule;
+import com.nickrobison.trestle.server.modules.ManagedReasoner;
 import io.dropwizard.servlets.tasks.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,9 +24,9 @@ public class UpdateInferenceTask extends Task {
     private final TrestleReasoner reasoner;
 
     @Inject
-    public UpdateInferenceTask(@Named(INFERENCE_TASK_NAME) String name, ReasonerModule reasonerModule) {
+    public UpdateInferenceTask(@Named(INFERENCE_TASK_NAME) String name, ManagedReasoner managedReasoner) {
         super(name);
-        reasoner = reasonerModule.getReasoner();
+        reasoner = managedReasoner.getReasoner();
         logger.info("Creating task {}", name);
     }
 

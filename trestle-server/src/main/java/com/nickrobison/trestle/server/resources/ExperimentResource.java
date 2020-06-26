@@ -2,9 +2,9 @@ package com.nickrobison.trestle.server.resources;
 
 import com.google.common.collect.ImmutableList;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
-import com.nickrobison.trestle.server.models.UserExperimentResultDAO;
-import com.nickrobison.trestle.server.modules.ReasonerModule;
 import com.nickrobison.trestle.server.models.UserExperimentResult;
+import com.nickrobison.trestle.server.models.UserExperimentResultDAO;
+import com.nickrobison.trestle.server.modules.ManagedReasoner;
 import io.dropwizard.hibernate.UnitOfWork;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,9 +33,9 @@ public class ExperimentResource {
 
 
     @Inject
-    public ExperimentResource(ReasonerModule reasonerModule,
+    public ExperimentResource(ManagedReasoner managedReasoner,
                               UserExperimentResultDAO userExperimentResultDAO) {
-        this.reasoner = reasonerModule.getReasoner();
+        this.reasoner = managedReasoner.getReasoner();
         this.userExperimentResultDAO = userExperimentResultDAO;
     }
 

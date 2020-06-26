@@ -20,15 +20,15 @@ import javax.inject.Singleton;
  */
 @Singleton
 @SuppressWarnings({"initialization.fields.uninitialized"})
-public class ReasonerModule implements Managed {
+public class ManagedReasoner implements Managed {
 
-    private static final Logger logger = LoggerFactory.getLogger(ReasonerModule.class);
+    private static final Logger logger = LoggerFactory.getLogger(ManagedReasoner.class);
 
     private TrestleReasoner reasoner;
     private final TrestleReasonerConfiguration configuration;
 
     @Inject
-    public ReasonerModule(TrestleServerConfiguration configuration) {
+    public ManagedReasoner(TrestleServerConfiguration configuration) {
         this.configuration = configuration.getReasonerConfig();
     }
 

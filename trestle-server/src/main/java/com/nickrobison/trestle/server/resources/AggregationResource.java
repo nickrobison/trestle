@@ -9,7 +9,7 @@ import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.AggregationT
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
 import com.nickrobison.trestle.server.annotations.AuthRequired;
 import com.nickrobison.trestle.server.auth.Privilege;
-import com.nickrobison.trestle.server.modules.ReasonerModule;
+import com.nickrobison.trestle.server.modules.ManagedReasoner;
 import com.nickrobison.trestle.server.resources.requests.AggregationRequest;
 import org.locationtech.jts.geom.Geometry;
 
@@ -33,8 +33,8 @@ public class AggregationResource {
     private final TrestleReasoner reasoner;
 
     @Inject
-    public AggregationResource(ReasonerModule reasonerModule) {
-        this.reasoner = reasonerModule.getReasoner();
+    public AggregationResource(ManagedReasoner managedReasoner) {
+        this.reasoner = managedReasoner.getReasoner();
     }
 
     @POST

@@ -2,7 +2,7 @@ package com.nickrobison.trestle.server.resources;
 
 import com.codahale.metrics.annotation.Timed;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
-import com.nickrobison.trestle.server.modules.ReasonerModule;
+import com.nickrobison.trestle.server.modules.ManagedReasoner;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -23,7 +23,7 @@ public class RDFResource {
     private final TrestleReasoner reasoner;
 
     @Inject
-    public RDFResource(ReasonerModule reasoner) {
+    public RDFResource(ManagedReasoner reasoner) {
         this.reasoner = reasoner.getReasoner();
     }
 
