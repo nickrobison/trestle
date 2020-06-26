@@ -1,12 +1,15 @@
 package com.nickrobison.trestle.server;
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.nickrobison.trestle.server.auth.AuthModule;
 import com.nickrobison.trestle.server.config.TrestleServerConfiguration;
+import com.nickrobison.trestle.server.models.User;
 import com.nickrobison.trestle.server.modules.HibernateModule;
 import com.nickrobison.trestle.server.modules.JWTModule;
 import com.nickrobison.trestle.server.modules.TrestleServerModule;
 import com.nickrobison.trestle.server.serializers.GeometrySerializer;
 import io.dropwizard.Application;
+import io.dropwizard.auth.AuthValueFactoryProvider;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.db.ManagedPooledDataSource;
 import io.dropwizard.db.PooledDataSourceFactory;
@@ -63,7 +66,7 @@ public class TrestleServer extends Application<TrestleServerConfiguration> {
 
 
     final GuiceBundle guiceBundle = GuiceBundle.builder()
-      .modules(new TrestleServerModule(), new HibernateModule(hibernateBundle), new JWTModule())
+      .modules(new JWTModule(), new AuthModule(), new HibernateModule(hibernateBundle), new TrestleServerModule())
       .enableAutoConfig(getClass().getPackage().getName())
       .build();
 
@@ -82,6 +85,7 @@ public class TrestleServer extends Application<TrestleServerConfiguration> {
   public void run(TrestleServerConfiguration trestleServerConfiguration, Environment environment) throws Exception {
     configureCors(environment);
     final JerseyEnvironment jersey = environment.jersey();
+    jersey.register(new AuthValueFactoryProvider.Binder<>(User.class));
 //    Stream.of(
 //      new AuthDynamicFeature(),
 //      new AuthValueFactoryProvider.Binder()).forEach(jersey::register);

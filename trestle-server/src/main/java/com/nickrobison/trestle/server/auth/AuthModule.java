@@ -1,8 +1,10 @@
 package com.nickrobison.trestle.server.auth;
 
+import com.google.inject.Provides;
 import com.google.inject.TypeLiteral;
 import com.nickrobison.trestle.server.config.TrestleServerConfiguration;
 import com.nickrobison.trestle.server.models.User;
+import io.dropwizard.auth.AuthDynamicFeature;
 import io.dropwizard.auth.Authenticator;
 import io.dropwizard.auth.Authorizer;
 import ru.vyarus.dropwizard.guice.module.support.DropwizardAwareModule;
@@ -20,5 +22,13 @@ public class AuthModule extends DropwizardAwareModule<TrestleServerConfiguration
     };
     bind(authenticatorTypeLiteral).to(TrestleAuthenticator.class);
     bind(authorizerTypeLiteral).to(TrestleAuthorizer.class);
+  }
+
+  @Provides
+  AuthDynamicFeature provideFeature(TrestleAuthorizer authorizer, TrestleAuthenticator authenticator) {
+    return new AuthDynamicFeature(new JWTAuthFilterBuilder()
+      .setAuthorizer(authorizer)
+      .setAuthenticator(authenticator)
+      .buildAuthFilter());
   }
 }

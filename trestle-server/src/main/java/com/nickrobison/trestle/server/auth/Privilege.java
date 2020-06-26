@@ -2,7 +2,6 @@ package com.nickrobison.trestle.server.auth;
 
 import java.util.EnumSet;
 import java.util.Set;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -10,17 +9,23 @@ import java.util.stream.Stream;
  * Created by nrobison on 1/19/17.
  */
 public enum Privilege {
-    USER(1),
-    ADMIN(2),
-    DBA(4);
+    USER(1, "USER"),
+    ADMIN(2, "ADMIN"),
+    DBA(4, "DBA");
 
-    private int value;
-    Privilege(int val) {
-        value = val;
+    private final int value;
+    private final String name;
+    Privilege(int val, String name) {
+        this.value = val;
+        this.name = name;
     }
 
     public int getValue() {
         return value;
+    }
+
+    public String getName() {
+      return name;
     }
 
     public static Set<Privilege> parsePrivileges(int val) {

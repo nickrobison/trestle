@@ -25,6 +25,8 @@ public class TrestleAuthenticator implements io.dropwizard.auth.Authenticator<St
     this.handler = handler;
   }
 
+
+
   @Override
   public Optional<User> authenticate(String s) {
     final User user;
