@@ -150,7 +150,6 @@
         <dependency>
             <groupId>org.clojure</groupId>
             <artifactId>clojure</artifactId>
-            <version>1.10.1</version>
         </dependency>
         <dependency>
             <groupId>org.clojure</groupId>
@@ -160,7 +159,6 @@
         <dependency>
             <groupId>org.clojure</groupId>
             <artifactId>tools.logging</artifactId>
-            <version>1.1.0</version>
         </dependency>
         <dependency>
             <groupId>clj-fuzzy</groupId>
@@ -170,14 +168,10 @@
         <dependency>
             <groupId>else-let</groupId>
             <artifactId>else-let</artifactId>
-            <version>0.1.0</version>
         </dependency>
-        <!--Test Dependencies-->
         <dependency>
             <groupId>org.clojure</groupId>
             <artifactId>tools.nrepl</artifactId>
-            <version>0.2.13</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
     <build>

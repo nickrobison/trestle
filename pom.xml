@@ -20,6 +20,7 @@
         <module>trestle-tools</module>
         <module>trestle-graphdb</module>
         <module>trestle-ontology-testing</module>
+        <module>trestle-compiler</module>
         <!--        <module>trestle-oracle</module>-->
     </modules>
     <packaging>pom</packaging>
@@ -339,6 +340,28 @@
                 <groupId>io.dropwizard.metrics</groupId>
                 <artifactId>metrics-jmx</artifactId>
                 <version>${metrics.version}</version>
+            </dependency>
+<!--            Clojure dependencies-->
+            <dependency>
+                <groupId>org.clojure</groupId>
+                <artifactId>clojure</artifactId>
+                <version>1.10.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.clojure</groupId>
+                <artifactId>tools.logging</artifactId>
+                <version>1.1.0</version>
+            </dependency>
+            <dependency>
+                <groupId>else-let</groupId>
+                <artifactId>else-let</artifactId>
+                <version>0.1.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.clojure</groupId>
+                <artifactId>tools.nrepl</artifactId>
+                <version>0.2.13</version>
+                <scope>provided</scope>
             </dependency>
             <!--Testing dependencies-->
             <dependency>

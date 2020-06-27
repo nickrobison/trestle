@@ -83,3 +83,5 @@ trestle-server/.cache-loader
 # Data directory
 data/
 
+*.nrepl-port
+
