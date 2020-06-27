@@ -36,6 +36,7 @@ export class LoginPageObject {
     } else {
       // Logout and log in again
       await element(by.id('logout')).click();
+      await browser.sleep(1000);
       await loginButton.click();
     }
     await this.usernameField.clear();
@@ -45,7 +46,8 @@ export class LoginPageObject {
 
     if (login) {
       element(by.buttonText('Submit')).click();
-      return browser.sleep(500);
+      await browser.sleep(1000);
+      return browser.refresh();
     }
   }
 
