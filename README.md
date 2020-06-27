@@ -1,6 +1,7 @@
 # Trestle
 [![Build Status](https://nickrobison.visualstudio.com/Trestle/_apis/build/status/nickrobison.trestle?branchName=master)](https://nickrobison.visualstudio.com/Trestle/_build/latest?definitionId=2&branchName=master)
 [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=nickrobison/trestle)](https://dependabot.com)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=com.nickrobison.trestle%3Atrestle&metric=alert_status)](https://sonarcloud.io/dashboard?id=com.nickrobison.trestle%3Atrestle)
 
 Trestle is an experimental spatio-temporal reasoner originally developed at the Univeristy of Washington.
 
