@@ -47,7 +47,6 @@ export class LoginPageObject {
     if (login) {
       element(by.buttonText('Submit')).click();
       await browser.sleep(1000);
-      return browser.refresh();
     }
   }
 
