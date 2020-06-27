@@ -1,7 +1,23 @@
-(ns trestle.compiler.core)
+(ns trestle.compiler.core
+  (:require [clojure.spec.alpha :as s]))
 
-(defn hello [name]
-  (str "hello" " " name))
+(s/def
+  ::version
+  (s/and number? #(>= 1 %) pos?))
 
-(defn printer [f & args]
-  (print (f args)))
+(s/def ::dataset-name string?)
+
+(s/def ::name string?)
+(s/def ::type string?)
+(s/def ::spatial boolean?)
+(s/def ::identifier boolean?)
+
+(s/def ::fact
+  (s/keys :req-un [ ::name
+                   ::type
+                   (or ::spatial ::identifier)]))
+
+(s/def ::facts (s/coll-of ::fact))
+
+(s/def ::dataset
+  (s/keys :req-un [::version ::name ::facts]))

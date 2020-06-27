@@ -28,7 +28,48 @@
             <groupId>org.clojure</groupId>
             <artifactId>tools.nrepl</artifactId>
         </dependency>
+        <dependency>
+            <groupId>cheshire</groupId>
+            <artifactId>cheshire</artifactId>
+            <version>5.10.0</version>
+        </dependency>
+        <!--        Test dependencies-->
+        <dependency>
+            <groupId>org.clojure</groupId>
+            <artifactId>test.check</artifactId>
+            <version>0.9.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
-
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.theoryinpractise</groupId>
+                <artifactId>clojure-maven-plugin</artifactId>
+                <version>1.8.4</version>
+                <executions>
+                    <execution>
+                        <id>default-clojure</id>
+                        <goals>
+                            <goal>add-source</goal>
+                            <goal>compile</goal>
+                            <goal>add-test-source</goal>
+                            <goal>testCompile</goal>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <copyAllCompiledNamespaces>true</copyAllCompiledNamespaces>
+                    <sourceDirectories>
+                        <sourceDirectory>src/main/clj</sourceDirectory>
+                    </sourceDirectories>
+                    <testSourceDirectories>
+                        <testSourceDirectory>src/test/clj</testSourceDirectory>
+                    </testSourceDirectories>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

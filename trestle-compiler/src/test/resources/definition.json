@@ -1,0 +1,16 @@
+{
+  "version": 0.1,
+  "dataset": "test-dataset",
+  "facts": [
+    {
+      "name": "geom",
+      "type": "MultiPolygon",
+      "spatial": true
+    },
+    {
+      "name": "geoid",
+      "identifiter": true,
+      "type": "String"
+    }
+  ]
+}
