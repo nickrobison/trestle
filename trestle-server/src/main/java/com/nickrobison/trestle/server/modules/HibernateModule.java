@@ -22,52 +22,51 @@ import java.security.ProviderException;
  * Created by nrobison on 1/18/17.
  */
 public class HibernateModule extends AbstractModule {
-    private static final Logger logger = LoggerFactory.getLogger(HibernateModule.class);
 
-    private final TrestleHibernateBundle hibernate;
+  private final TrestleHibernateBundle hibernate;
 
   public HibernateModule(TrestleHibernateBundle hibernate) {
     this.hibernate = hibernate;
   }
 
   @Override
-    protected void configure() {
-        bind(TrestleHibernateBundle.class).asEagerSingleton();
+  protected void configure() {
+    bind(TrestleHibernateBundle.class).asEagerSingleton();
+  }
+
+  @Provides
+  @Singleton
+  public SessionFactory sessionFactory(TrestleHibernateBundle h2) {
+    final SessionFactory sessionFactory = this.hibernate.getSessionFactory();
+    if (sessionFactory == null) {
+      throw new ProviderException("Unable to get SessionFactory");
+    }
+    return sessionFactory;
+  }
+
+
+  @Singleton
+  public static class TrestleHibernateBundle extends HibernateBundle<TrestleServerConfiguration> implements ConfiguredBundle<TrestleServerConfiguration> {
+    private static final Logger logger = LoggerFactory.getLogger(HibernateBundle.class);
+    public static final String ENTITY_PREFIX = "com.nickrobison.trestle.server.models";
+
+    @Inject
+    public TrestleHibernateBundle() {
+      super(applicationEntities(), new SessionFactoryFactory());
     }
 
-    @Provides
-    @Singleton
-    public SessionFactory sessionFactory(TrestleHibernateBundle h2) {
-        final SessionFactory sessionFactory = this.hibernate.getSessionFactory();
-        if (sessionFactory == null) {
-            throw new ProviderException("Unable to get SessionFactory");
-        }
-        return sessionFactory;
+    private static ImmutableList<Class<?>> applicationEntities() {
+      logger.info("Scanning prefix {} for Hibernate entities", ENTITY_PREFIX);
+      final Reflections reflections = new Reflections(ENTITY_PREFIX);
+      final ImmutableList<Class<?>> entities = ImmutableList.copyOf(reflections.getTypesAnnotatedWith(Entity.class));
+      logger.info("Founded {} entities in prefix", entities.size());
+      return entities;
     }
 
-
-    @Singleton
-    public static class TrestleHibernateBundle extends HibernateBundle<TrestleServerConfiguration> implements ConfiguredBundle<TrestleServerConfiguration> {
-        private static final Logger logger = LoggerFactory.getLogger(HibernateBundle.class);
-        public static final String ENTITY_PREFIX = "com.nickrobison.trestle.server.models";
-
-        @Inject
-        public TrestleHibernateBundle() {
-            super(applicationEntities(), new SessionFactoryFactory());
-        }
-
-        private static ImmutableList<Class<?>> applicationEntities() {
-            logger.info("Scanning prefix {} for Hibernate entities", ENTITY_PREFIX);
-            final Reflections reflections = new Reflections(ENTITY_PREFIX);
-            final ImmutableList<Class<?>> entities = ImmutableList.copyOf(reflections.getTypesAnnotatedWith(Entity.class));
-            logger.info("Founded {} entities in prefix", entities.size());
-            return entities;
-        }
-
-        @Override
-        public PooledDataSourceFactory getDataSourceFactory(TrestleServerConfiguration configuration) {
-            return configuration.getDataSourceFactory();
-        }
+    @Override
+    public PooledDataSourceFactory getDataSourceFactory(TrestleServerConfiguration configuration) {
+      return configuration.getDataSourceFactory();
     }
+  }
 }
 

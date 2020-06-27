@@ -15,14 +15,12 @@ public class TrestleAuthenticator implements io.dropwizard.auth.Authenticator<St
 
   private static final Logger logger = LoggerFactory.getLogger(TrestleAuthenticator.class);
 
-  JWTHandler<User> handler;
+  private final JWTHandler<User> handler;
 
   @Inject
   public TrestleAuthenticator(JWTHandler<User> handler) {
     this.handler = handler;
   }
-
-
 
   @Override
   public Optional<User> authenticate(String s) {

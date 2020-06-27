@@ -30,7 +30,7 @@ public class UserResourceTest {
 
   public UserDAO dao = Mockito.mock(UserDAO.class);
 
-  private JWTHandler<User> handler = new JWTHandlerBuilder<User>()
+  private final JWTHandler<User> handler = new JWTHandlerBuilder<User>()
     .withSecret("test-key".getBytes(Charset.defaultCharset()))
     .withDataClass(User.class)
     .withIssuedAtEnabled(true)
@@ -40,12 +40,12 @@ public class UserResourceTest {
   public ResourceExtension resource = buildResource(new UserResource(dao), handler);
 
   @BeforeEach
-  void setup() {
+  public void setup() {
     Mockito.reset(dao);
   }
 
   @Test
-  void testNoAuth() {
+  public void testNoAuth() {
     final Response response = resource.target("users/1")
       .request(MediaType.APPLICATION_JSON)
       .get();
@@ -54,7 +54,7 @@ public class UserResourceTest {
   }
 
   @Test
-  void testAdminOK() {
+  public void testAdminOK() {
     final User user = new User();
     user.setId(1);
     user.setUsername("test-user");
@@ -72,7 +72,7 @@ public class UserResourceTest {
   }
 
   @Test
-  void testDBAOK() {
+  public void testDBAOK() {
     final User user = new User();
     user.setId(1);
     user.setUsername("test-user");
@@ -90,7 +90,7 @@ public class UserResourceTest {
   }
 
   @Test
-  void testUserNotOK() {
+  public void testUserNotOK() {
     final User user = new User();
     user.setId(1);
     user.setUsername("test-user");
@@ -108,7 +108,7 @@ public class UserResourceTest {
   }
 
   @Test
-  void testNoPermissions() {
+  public void testNoPermissions() {
     final User user = new User();
     user.setId(1);
     user.setUsername("test-user");

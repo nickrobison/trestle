@@ -22,7 +22,6 @@ public class TrestleServerModule extends DropwizardAwareModule<TrestleServerConf
   @Provides
   @Singleton
   public TrestleReasoner provideReasoner(ManagedReasoner m) {
-    m.start();
     return m.getReasoner();
   }
 }
