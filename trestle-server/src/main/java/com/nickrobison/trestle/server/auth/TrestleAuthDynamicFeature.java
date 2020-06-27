@@ -1,48 +1,34 @@
 package com.nickrobison.trestle.server.auth;
 
-import com.nickrobison.trestle.server.annotations.AuthRequired;
+import com.nickrobison.trestle.server.annotations.PrivilegesAllowed;
 import io.dropwizard.auth.Auth;
-import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.glassfish.jersey.server.model.AnnotatedMethod;
 
 import javax.annotation.security.DenyAll;
 import javax.annotation.security.PermitAll;
+import javax.inject.Inject;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.DynamicFeature;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.FeatureContext;
+import javax.ws.rs.ext.Provider;
 import java.lang.annotation.Annotation;
 import java.util.Optional;
 
 /**
- * A {@link DynamicFeature} that registers the provided auth filter
- * to resource methods annotated with the {@link com.nickrobison.trestle.server.annotations.AuthRequired}, {@link PermitAll}
- * and {@link DenyAll} annotations.
- * <p>In conjunction with {@link RolesAllowedDynamicFeature} it enables
- * authorization <i>AND</i> authentication of requests on the annotated methods.</p>
- * <p>If authorization is not a concern, then {@link RolesAllowedDynamicFeature}
- * could be omitted. But to enable authentication, the {@link PermitAll} annotation
- * should be placed on the corresponding resource methods.</p>
- * <p>Note that registration of the filter will follow the semantics of
- * {@link FeatureContext#register(Class)} and {@link FeatureContext#register(Object)}:
- * passing the filter as a {@link Class} to the {@link #TrestleAuthDynamicFeature(Class)}
- * constructor will result in dependency injection, while objects passed to
- * the {@link #TrestleAuthDynamicFeature(ContainerRequestFilter)} will be used directly.</p>
+ * {@link DynamicFeature} pulled from {@link io.dropwizard.auth.AuthDynamicFeature}, which lets us handle {@link PrivilegesAllowed} annotations.
  */
+@Provider
 public class TrestleAuthDynamicFeature implements DynamicFeature {
 
   private final ContainerRequestFilter authFilter;
 
   private final Class<? extends ContainerRequestFilter> authFilterClass;
 
-  public TrestleAuthDynamicFeature(ContainerRequestFilter authFilter) {
+  @Inject
+  public TrestleAuthDynamicFeature(AuthFilter authFilter) {
     this.authFilter = authFilter;
     this.authFilterClass = null;
-  }
-
-  public TrestleAuthDynamicFeature(Class<? extends ContainerRequestFilter> authFilterClass) {
-    this.authFilter = null;
-    this.authFilterClass = authFilterClass;
   }
 
   @Override
@@ -69,9 +55,9 @@ public class TrestleAuthDynamicFeature implements DynamicFeature {
 
     // Second, check for any authorization annotations on the class or method.
     // Note that @DenyAll shouldn't be attached to classes.
-    final boolean annotationOnClass = (resourceInfo.getResourceClass().getAnnotation(AuthRequired.class) != null) ||
+    final boolean annotationOnClass = (resourceInfo.getResourceClass().getAnnotation(PrivilegesAllowed.class) != null) ||
       (resourceInfo.getResourceClass().getAnnotation(PermitAll.class) != null);
-    final boolean annotationOnMethod = am.isAnnotationPresent(AuthRequired.class) || am.isAnnotationPresent(DenyAll.class) ||
+    final boolean annotationOnMethod = am.isAnnotationPresent(PrivilegesAllowed.class) || am.isAnnotationPresent(DenyAll.class) ||
       am.isAnnotationPresent(PermitAll.class);
 
     if (annotationOnClass || annotationOnMethod) {

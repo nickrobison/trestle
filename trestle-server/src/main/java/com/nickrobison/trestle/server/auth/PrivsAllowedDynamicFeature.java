@@ -1,6 +1,6 @@
 package com.nickrobison.trestle.server.auth;
 
-import com.nickrobison.trestle.server.annotations.AuthRequired;
+import com.nickrobison.trestle.server.annotations.PrivilegesAllowed;
 import org.glassfish.jersey.server.internal.LocalizationMessages;
 import org.glassfish.jersey.server.model.AnnotatedMethod;
 
@@ -14,11 +14,15 @@ import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.DynamicFeature;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.FeatureContext;
+import javax.ws.rs.ext.Provider;
 
 /**
  * Created by nickrobison on 6/26/20.
+ *
+ * This {@link DynamicFeature} is pulled directly from the {@link org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature} from Dropwizard.
+ * It's slightly modified to allow us to handle {@link PrivilegesAllowed} annotations.
  */
-
+@Provider
 public class PrivsAllowedDynamicFeature implements DynamicFeature {
 
   @Override
@@ -32,7 +36,7 @@ public class PrivsAllowedDynamicFeature implements DynamicFeature {
     }
 
     // RolesAllowed on the method takes precedence over PermitAll
-    AuthRequired ra = am.getAnnotation(AuthRequired.class);
+    PrivilegesAllowed ra = am.getAnnotation(PrivilegesAllowed.class);
     if (ra != null) {
       configuration.register(new PrivsAllowedRequestFilter(ra.value()));
       return;
@@ -47,7 +51,7 @@ public class PrivsAllowedDynamicFeature implements DynamicFeature {
     // DenyAll can't be attached to classes
 
     // RolesAllowed on the class takes precedence over PermitAll
-    ra = resourceInfo.getResourceClass().getAnnotation(AuthRequired.class);
+    ra = resourceInfo.getResourceClass().getAnnotation(PrivilegesAllowed.class);
     if (ra != null) {
       configuration.register(new PrivsAllowedRequestFilter(ra.value()));
     }

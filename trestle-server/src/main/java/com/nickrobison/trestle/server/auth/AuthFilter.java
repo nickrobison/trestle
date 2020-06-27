@@ -1,8 +1,11 @@
 package com.nickrobison.trestle.server.auth;
 
 import com.nickrobison.trestle.server.models.User;
+import io.dropwizard.auth.Authenticator;
+import io.dropwizard.auth.Authorizer;
 
 import javax.annotation.Priority;
+import javax.inject.Inject;
 import javax.ws.rs.Priorities;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.ContainerRequestContext;
@@ -14,7 +17,10 @@ import javax.ws.rs.core.Response;
 @Priority(Priorities.AUTHENTICATION)
 public class AuthFilter extends io.dropwizard.auth.AuthFilter<String, User> {
 
-  public AuthFilter() {
+  @Inject
+  public AuthFilter(Authenticator<String, User> authenticator, Authorizer<User> authorizer) {
+    this.authenticator = authenticator;
+    this.authorizer = authorizer;
   }
 
   @Override

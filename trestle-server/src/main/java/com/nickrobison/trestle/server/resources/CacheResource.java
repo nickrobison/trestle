@@ -3,7 +3,7 @@ package com.nickrobison.trestle.server.resources;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
 import com.nickrobison.trestle.reasoner.caching.TrestleCacheStatistics;
-import com.nickrobison.trestle.server.annotations.AuthRequired;
+import com.nickrobison.trestle.server.annotations.PrivilegesAllowed;
 import com.nickrobison.trestle.server.auth.Privilege;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -21,7 +21,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 @Path("/cache")
-@AuthRequired({Privilege.DBA})
+@PrivilegesAllowed({Privilege.DBA})
 @Produces(MediaType.APPLICATION_JSON)
 @Api("cache")
 public class CacheResource {

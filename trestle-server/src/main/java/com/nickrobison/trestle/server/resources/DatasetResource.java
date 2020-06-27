@@ -2,7 +2,7 @@ package com.nickrobison.trestle.server.resources;
 
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
-import com.nickrobison.trestle.server.annotations.AuthRequired;
+import com.nickrobison.trestle.server.annotations.PrivilegesAllowed;
 import com.nickrobison.trestle.server.auth.Privilege;
 import com.nickrobison.trestle.server.modules.ManagedReasoner;
 import io.swagger.annotations.Api;
@@ -22,7 +22,7 @@ import static javax.ws.rs.core.Response.ok;
  * Created by nickrobison on 4/9/18.
  */
 @Path("/datasets")
-@AuthRequired({Privilege.USER})
+@PrivilegesAllowed({Privilege.USER})
 @Produces(MediaType.APPLICATION_JSON)
 @Api(value = "datasets")
 public class DatasetResource {

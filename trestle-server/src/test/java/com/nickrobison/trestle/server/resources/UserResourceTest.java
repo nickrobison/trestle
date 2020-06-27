@@ -30,21 +30,14 @@ public class UserResourceTest {
 
   public UserDAO dao = Mockito.mock(UserDAO.class);
 
-  public JWTHandler<User> handler = new JWTHandlerBuilder<User>()
+  private JWTHandler<User> handler = new JWTHandlerBuilder<User>()
     .withSecret("test-key".getBytes(Charset.defaultCharset()))
     .withDataClass(User.class)
     .withIssuedAtEnabled(true)
     .withExpirationSeconds(500)
     .build();
 
-  public ResourceExtension resource = ResourceExtension
-    .builder()
-    .setTestContainerFactory(new GrizzlyWebTestContainerFactory())
-    .addProvider(PrivsAllowedDynamicFeature.class)
-    .addProvider(new TrestleAuthDynamicFeature(new JWTAuthFilterBuilder().setAuthenticator(new TrestleAuthenticator(null, handler)).setAuthorizer(new TrestleAuthorizer()).setPrefix("Bearer").buildAuthFilter()))
-    .addProvider(new AuthValueFactoryProvider.Binder<>(User.class))
-    .addResource(new UserResource(dao))
-    .build();
+  public ResourceExtension resource = buildResource(new UserResource(dao), handler);
 
   @BeforeEach
   void setup() {
@@ -129,5 +122,20 @@ public class UserResourceTest {
       .get();
 
     assertEquals(Response.Status.FORBIDDEN.getStatusCode(), response.getStatus(), "User should fail");
+  }
+
+  private static ResourceExtension buildResource(Object r, JWTHandler<User> handler) {
+
+    final AuthFilter filter = new AuthFilter(new TrestleAuthenticator(handler), new TrestleAuthorizer());
+
+
+    return ResourceExtension
+      .builder()
+      .setTestContainerFactory(new GrizzlyWebTestContainerFactory())
+      .addProvider(PrivsAllowedDynamicFeature.class)
+      .addProvider(new TrestleAuthDynamicFeature(filter))
+      .addProvider(new AuthValueFactoryProvider.Binder<>(User.class))
+      .addResource(r)
+      .build();
   }
 }

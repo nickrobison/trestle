@@ -7,7 +7,7 @@ import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.AggregationE
 import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.AggregationOperation;
 import com.nickrobison.trestle.reasoner.engines.spatial.aggregation.AggregationType;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
-import com.nickrobison.trestle.server.annotations.AuthRequired;
+import com.nickrobison.trestle.server.annotations.PrivilegesAllowed;
 import com.nickrobison.trestle.server.auth.Privilege;
 import com.nickrobison.trestle.server.modules.ManagedReasoner;
 import com.nickrobison.trestle.server.resources.requests.AggregationRequest;
@@ -26,7 +26,7 @@ import java.util.Optional;
  * Created by nickrobison on 3/24/18.
  */
 @Path("/aggregate")
-@AuthRequired({Privilege.USER})
+@PrivilegesAllowed({Privilege.USER})
 @Produces(MediaType.APPLICATION_JSON)
 public class AggregationResource {
 

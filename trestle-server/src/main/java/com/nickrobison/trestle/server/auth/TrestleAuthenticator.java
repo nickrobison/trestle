@@ -1,6 +1,5 @@
 package com.nickrobison.trestle.server.auth;
 
-import com.nickrobison.trestle.server.config.JWTConfig;
 import com.nickrobison.trestle.server.models.User;
 import jwt4j.JWTHandler;
 import org.slf4j.Logger;
@@ -16,12 +15,10 @@ public class TrestleAuthenticator implements io.dropwizard.auth.Authenticator<St
 
   private static final Logger logger = LoggerFactory.getLogger(TrestleAuthenticator.class);
 
-  JWTConfig config;
   JWTHandler<User> handler;
 
   @Inject
-  public TrestleAuthenticator(JWTConfig config, JWTHandler<User> handler) {
-    this.config = config;
+  public TrestleAuthenticator(JWTHandler<User> handler) {
     this.handler = handler;
   }
 

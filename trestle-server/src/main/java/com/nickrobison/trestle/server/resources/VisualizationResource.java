@@ -8,7 +8,7 @@ import com.nickrobison.trestle.reasoner.engines.AbstractComparisonReport;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
-import com.nickrobison.trestle.server.annotations.AuthRequired;
+import com.nickrobison.trestle.server.annotations.PrivilegesAllowed;
 import com.nickrobison.trestle.server.auth.Privilege;
 import com.nickrobison.trestle.server.modules.ManagedReasoner;
 import com.nickrobison.trestle.server.resources.requests.ComparisonRequest;
@@ -46,7 +46,7 @@ import static javax.ws.rs.core.Response.ok;
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Path("/visualize")
-@AuthRequired({Privilege.USER})
+@PrivilegesAllowed({Privilege.USER})
 @Produces(MediaType.APPLICATION_JSON)
 @Api(value = "visualize")
 public class VisualizationResource {

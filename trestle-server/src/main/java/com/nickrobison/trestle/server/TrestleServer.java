@@ -86,12 +86,6 @@ public class TrestleServer extends Application<TrestleServerConfiguration> {
     configureCors(environment);
     final JerseyEnvironment jersey = environment.jersey();
     jersey.register(new AuthValueFactoryProvider.Binder<>(User.class));
-//    Stream.of(
-//      new AuthDynamicFeature(),
-//      new AuthValueFactoryProvider.Binder()).forEach(jersey::register);
-
-//        URL Rewriting
-//        environment.getApplicationContext().addFilter(new FilterHolder(new URLRewriter()), "/workspace/*", EnumSet.allOf(DispatcherType.class));
 
     //    database migration?
     final ManagedPooledDataSource migrationDataSource = createMigrationDataSource(trestleServerConfiguration, environment);

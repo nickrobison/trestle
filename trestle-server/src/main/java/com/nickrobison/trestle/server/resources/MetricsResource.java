@@ -4,17 +4,17 @@ import com.nickrobison.metrician.Metrician;
 import com.nickrobison.metrician.MetricianHeader;
 import com.nickrobison.metrician.backends.MetricianExportedValue;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
-import com.nickrobison.trestle.server.annotations.AuthRequired;
+import com.nickrobison.trestle.server.annotations.PrivilegesAllowed;
 import com.nickrobison.trestle.server.auth.Privilege;
 import com.nickrobison.trestle.server.resources.requests.MetricsQueryRequest;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import org.hibernate.validator.constraints.NotEmpty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -30,7 +30,7 @@ import java.util.Map;
  * Created by nrobison on 3/24/17.
  */
 @Path("/metrics")
-@AuthRequired({Privilege.ADMIN})
+@PrivilegesAllowed({Privilege.ADMIN})
 @Produces(MediaType.APPLICATION_JSON)
 @Api(value = "metrics")
 public class MetricsResource {
