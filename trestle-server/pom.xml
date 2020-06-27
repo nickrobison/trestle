@@ -196,7 +196,7 @@
       <groupId>com.esri.geometry</groupId>
       <artifactId>esri-geometry-api</artifactId>
     </dependency>
-<!--    Testing dependencies-->
+    <!--    Testing dependencies-->
     <dependency>
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-testing</artifactId>
@@ -361,6 +361,7 @@
             <entrypoint>/entrypoint.sh</entrypoint>
             <ports>
               <port>8080</port>
+              <port>8087</port>
             </ports>
           </container>
           <extraDirectories>
