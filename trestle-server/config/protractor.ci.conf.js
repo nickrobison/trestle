@@ -4,8 +4,17 @@
 
 const browserstack = require('browserstack-local');
 const helper = require("./helpers");
+const fetch = require('node-fetch');
+
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
 exports.config = {
   baseUrl: "http://localhost:8080/workspace/",
+  healthUrl: "http://localhost:8087/healthcheck",
   seleniumAddress: "https://hub-cloud.browserstack.com/wd/hub",
   commonCapabilities: {
     'browserstack.user': process.env.BROWSERSTACK_USERNAME,
@@ -49,7 +58,7 @@ exports.config = {
   // Code to start browserstack local before start of test
   beforeLaunch: function () {
     console.log("Connecting local");
-    return new Promise(function (resolve, reject) {
+    const bsPromise = new Promise(function (resolve, reject) {
       exports.bs_local = new browserstack.Local();
       helper.getBranch().then(branch => {
         const branchName = process.env.BUILD_SOURCEBRANCHNAME || branch;
@@ -68,6 +77,30 @@ exports.config = {
       })
 
     });
+
+    // Ensure Trestle is working
+    const trestlePromise = (async () => {
+      console.log("Waiting for Trestle to start");
+      let retryCount = 10;
+      let ok = false;
+      while (!ok && retryCount > 0) {
+        try {
+          const response = await fetch(exports.config.healthUrl);
+          ok = response.ok;
+        } catch (e) {
+          console.log("Cannot connect to trestle, retrying", e);
+        }
+        // Sleep for 10 seconds
+        await sleep(10000);
+        retryCount--;
+      }
+      if (retryCount === 0) {
+        throw Error("Cannot connect to Trestle after 10 tries");
+      }
+
+      console.log("Trestle running");
+    });
+    return Promise.all([bsPromise, trestlePromise()]);
   },
 
   // Code to stop browserstack local after end of test
