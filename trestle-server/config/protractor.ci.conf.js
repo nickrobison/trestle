@@ -2,9 +2,9 @@
  * Created by nickrobison on 2/28/18.
  */
 
-const browserstack = require('browserstack-local');
+const browserstack = require("browserstack-local");
 const helper = require("./helpers");
-const fetch = require('node-fetch');
+const fetch = require("node-fetch");
 
 function sleep(ms) {
   return new Promise((resolve) => {
