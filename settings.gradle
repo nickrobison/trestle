@@ -22,5 +22,6 @@ include(
         "trestle-querybuilder",
         "trestle-reasoner",
         "trestle-server",
-        "trestle-tools"
+        "trestle-tools",
+        "trestle-integrations"
 )

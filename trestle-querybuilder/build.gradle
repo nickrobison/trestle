@@ -1,6 +1,6 @@
 dependencies {
     implementation project(":trestle-common")
-    implementation group: 'org.locationtech.jts', name: 'jts-core', version: jtsVersion
+    implementation group: 'org.locationtech.jts', name: 'jts-core'
     implementation group: 'net.sourceforge.owlapi', name: 'owlapi-apibinding', version: owlVersion
     implementation group: 'org.apache.jena', name: 'jena-arq', version: jenaVersion
 }

@@ -1,0 +1,64 @@
+ext {
+    hadoopVersion = '3.2.1'
+}
+apply plugin: 'application'
+
+application {
+    mainClassName = 'com.nickrobison.trestle.gaulintegrator.IntegrationRunner'
+}
+
+task gaulIntegrator(type: JavaExec) {
+    group = "Execution"
+    description = "Run the main class with JavaExecTask"
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'com.nickrobison.trestle.gaulintegrator.IntegrationRunner'
+}
+
+task covidIntegrator(type: JavaExec) {
+    group = "Execution"
+    description = "Run the main class with JavaExecTask"
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'com.nickrobison.trestle.covidintegrator.CovidDataLoader'
+}
+
+task tigerIntegrator(type: JavaExec) {
+    group = "Execution"
+    description = "Run the main class with JavaExecTask"
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'com.nickrobison.trestle.tigerintegrator.TigerLoader'
+}
+
+sourceSets {
+    test {
+        resources {
+            srcDir "${project.projectDir}/data"
+            includes = ["gates_test/*"]
+            excludes = ["gates_test/.done"]
+        }
+    }
+}
+
+dependencies {
+    implementation(project(":trestle-reasoner"))
+    implementation(project(":trestle-graphdb"))
+    implementation(project(":trestle-datasets"))
+    compileOnly group: 'javax.servlet', name: 'javax.servlet-api', version: '4.0.1'
+    implementation group: 'commons-io', name: 'commons-io'
+    implementation group: 'com.google.inject.extensions', name: 'guice-multibindings', version: guiceVersion
+    implementation group: 'com.google.inject.extensions', name: 'guice-assistedinject', version: guiceVersion
+    implementation(group: 'com.github.nickrobison', name: 'Shapefile', version: "cabbd18957") {
+        exclude group: 'org.apache.hadoop', module: 'hadoop-core'
+    }
+    implementation group: 'org.locationtech.jts', name: 'jts-core'
+    implementation group: 'com.esri.geometry', name: 'esri-geometry-api'
+    implementation group: 'org.apache.hadoop', name: 'hadoop-client', version: hadoopVersion
+    testCompile(group: 'org.apache.hadoop', name: 'hadoop-minicluster', version: hadoopVersion) {
+        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+    }
+    testCompile group: 'org.apache.hadoop', name: 'hadoop-auth', version: hadoopVersion
+
+
+    implementation group: "org.geotools", name: "gt-shapefile", version: geotoolsVersion
+    implementation group: "org.geotools", name: "gt-cql", version: geotoolsVersion
+    implementation group: 'me.tongfei', name: 'progressbar'
+}

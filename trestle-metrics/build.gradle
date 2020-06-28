@@ -1,5 +1,5 @@
 ext {
-    byteBuddyVersion = '1.10.9'
+    byteBuddyVersion = '1.10.13'
 }
 
 dependencies {

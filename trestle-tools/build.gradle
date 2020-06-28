@@ -1,7 +1,6 @@
 ext {
     mainClass = 'com.nickrobison.trestle.tools.GAULSubsetEngine'
 }
-apply plugin: 'com.google.cloud.tools.jib'
 apply plugin: 'application'
 
 application {

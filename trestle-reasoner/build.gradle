@@ -5,19 +5,18 @@ dependencies {
     api project(":trestle-common")
     api project(":trestle-exporter")
     api project(":trestle-iri")
+    api project(":trestle-metrics")
     api group: "org.geotools", name: "gt-main", version: geotoolsVersion
-    api group: 'com.esri.geometry', name: 'esri-geometry-api', version: esriVersion
-    api group: 'org.locationtech.jts', name: 'jts-core', version: jtsVersion
+    api group: 'com.esri.geometry', name: 'esri-geometry-api'
+    api group: 'org.locationtech.jts', name: 'jts-core'
     implementation project(":trestle-graphdb")
     implementation project(":trestle-querybuilder")
-    implementation project(":trestle-metrics")
     implementation group: 'net.sourceforge.owlapi', name: 'owlapi-parsers', version: owlVersion
     implementation group: 'org.apache.commons', name: 'commons-lang3', version: commonsLangVersion
     implementation group: 'commons-io', name: 'commons-io'
     implementation group: "org.geotools", name: "gt-epsg-hsql", version: geotoolsVersion
     implementation group: 'com.google.inject', name: 'guice', version: guiceVersion
     implementation group: 'com.google.inject.extensions', name: 'guice-assistedinject', version: guiceVersion
-    implementation group: 'com.google.guava', name: 'guava', version: guavaVersion
     implementation group: 'joda-time', name: 'joda-time', version: '2.10.5'
     implementation group: 'com.github.ben-manes.caffeine', name: 'caffeine', version: caffeineVersion
     implementation group: 'com.github.ben-manes.caffeine', name: 'jcache', version: caffeineVersion

@@ -1,7 +1,5 @@
 ext {
   logbackVersion = '1.2.3'
-  dropwizardVersion = '1.3.22'
-  swaggerVersion = '1.5.17'
   dockerImagePrefix = 'nickrobison'
   mainClass = 'com.nickrobison.trestle.server.TrestleServer'
 }
@@ -15,14 +13,12 @@ application {
 
 task runTrestleServer(type: JavaExec) {
   group = "Execution"
-  description = "Run the main class with JavaExecTask"
+  description = "Run main Trestle Server"
   classpath = sourceSets.main.runtimeClasspath
   main = mainClass
   args = ['server', 'src/main/resources/config.yml']
 }
 
-
-// FIXME: Make this a var
 jib {
   to {
     image = "${dockerImagePrefix}/trestle-server"
@@ -33,13 +29,13 @@ jib {
   }
   container {
     mainClass = mainClass
-    entrypoint = ["./entrypoint.sh"]
+    entrypoint = ["/entrypoint.sh"]
     ports = ['8080']
   }
 
   extraDirectories {
     paths = ["./docker"]
-    permissions = ["./entrypoint.sh": "755"]
+    permissions = ["/entrypoint.sh": "755"]
   }
 }
 
@@ -54,8 +50,8 @@ dependencies {
     exclude group: 'org.slf4j'
   }
 
-  implementation platform("ru.vyarus.guicey:guicey-bom:5.0.0-0")
-  implementation platform("io.dropwizard:dropwizard-bom:2.0.10")
+  implementation platform(group: "ru.vyarus.guicey", name: "guicey-bom", version: "5.1.0-2")
+  implementation platform(group: "io.dropwizard", name: "dropwizard-bom", version: "2.0.10")
 
 
   implementation group: 'ch.qos.logback', name: 'logback-core', version: logbackVersion
@@ -63,20 +59,14 @@ dependencies {
   compileOnly group: 'javax.servlet', name: 'javax.servlet-api', version: '4.0.1'
   implementation group: 'io.dropwizard', name: 'dropwizard-core'
   implementation group: 'io.dropwizard', name: 'dropwizard-hibernate'
-//    {
-//        exclude group: "xml-apis", module: "xml-apis"
-//    }
-  implementation group: 'io.dropwizard', name: 'dropwizard-migrations', version: dropwizardVersion
-//    {
-//        exclude group: "xml-apis", module: "xml-apis"
-//    }
-  implementation group: 'com.hubspot.dropwizard', name: 'dropwizard-guice', version: '1.3.5.0'
-  // I think this can go?
-  implementation 'com.github.dirkraft.dropwizard:dropwizard-file-assets:0.0.2'
-  implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
+  implementation group: 'io.dropwizard', name: 'dropwizard-migrations'
+  implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind'
   implementation group: 'com.bedatadriven', name: 'jackson-datatype-jts', version: '2.4'
-  implementation group: 'com.smoketurner', name: 'dropwizard-swagger', version: '1.3.17-1'
-  api group: 'com.google.inject', name: 'guice', version: guiceVersion
+  implementation(group: 'com.smoketurner', name: 'dropwizard-swagger', version: '2.0.0-1') {
+    // Swagger uses the 1.x version of javax.validation, but dropwizard needs 2.x now
+    exclude group: "javax.validation", module: "validation-api"
+  }
+  api group: 'com.google.inject', name: 'guice'
   implementation group: 'com.h2database', name: 'h2', version: h2Version
   compileOnly group: 'org.postgresql', name: 'postgresql', version: postgresVersion
   // This should get replaced with something newer

@@ -27,23 +27,31 @@ stages:
           - task: Cache@2
             displayName: Cache Maven local repo
             inputs:
-              key: 'maven | "$(Agent.OS)" | **/pom.xml'
+              key: 'gradle | "$(Agent.OS)" | **/build.gradle'
               restoreKeys: |
                 maven | "$(Agent.OS)"
                 maven
               path: $(MAVEN_CACHE_FOLDER)
-          - task: Maven@3
-            displayName: Maven Package
+          - task: Gradle@2
+            displayName: Build Java
             inputs:
-              mavenPomFile: 'pom.xml'
-              mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+              gradleOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
               javaHomeOption: 'JDKVersion'
               jdkVersionOption: '1.11'
+              tasks: 'assemble'
               jdkArchitectureOption: 'x64'
-              goals: 'package -DskipTests '
+#          - task: Maven@3
+#            displayName: Maven Package
+#            inputs:
+#              mavenPomFile: 'pom.xml'
+#              mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+#              javaHomeOption: 'JDKVersion'
+#              jdkVersionOption: '1.11'
+#              jdkArchitectureOption: 'x64'
+#              goals: 'package -DskipTests '
           - task: CopyFiles@2
             inputs:
-              contents: "trestle-*/target/**"
+              contents: "trestle-*/build/**"
               targetFolder: $(Build.ArtifactStagingDirectory)
           - publish: $(Build.ArtifactStagingDirectory)
             artifact: java
@@ -89,7 +97,7 @@ stages:
               targetFolder: $(Build.SourcesDirectory)
           - task: Cache@2
             inputs:
-              key: 'maven | "$(Agent.OS)" | **/pom.xml'
+              key: 'gradle | "$(Agent.OS)" | **/build.gradle'
               restoreKeys: |
                 maven | "$(Agent.OS)"
                 maven
@@ -100,17 +108,28 @@ stages:
               SonarCloud: 'Sonar Cloud'
               organization: 'nickrobison-github'
               scannerMode: 'Other'
-          - task: Maven@3
+          - task: Gradle@2
             inputs:
-              mavenPomFile: 'pom.xml'
-              mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+              gradleOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
               javaHomeOption: 'JDKVersion'
               jdkVersionOption: '1.11'
+              tasks: 'build jacocoTestReport'
+              sonarQubeRunAnalysis: true
+              sqGradlePluginVersionChoice: 'build'
               jdkArchitectureOption: 'x64'
               publishJUnitResults: true
-              testResultsFiles: '**/TEST-*.xml'
-              goals: 'test'
-              sonarQubeRunAnalysis: true
+              testResultsFiles: '**/test-results/test/TEST-*.xml'
+#          - task: Maven@3
+#            inputs:
+#              mavenPomFile: 'pom.xml'
+#              mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+#              javaHomeOption: 'JDKVersion'
+#              jdkVersionOption: '1.11'
+#              jdkArchitectureOption: 'x64'
+#              publishJUnitResults: true
+#              testResultsFiles: '**/TEST-*.xml'
+#              goals: 'test'
+#              sonarQubeRunAnalysis: true
           - task: SonarCloudPublish@1
             inputs:
               pollingTimeoutSec: '300'
@@ -149,7 +168,7 @@ stages:
               targetFolder: $(Build.SourcesDirectory)/trestle-server/src/main/resources/build
           - task: Cache@2
             inputs:
-              key: 'maven | "$(Agent.OS)" | **/pom.xml'
+              key: 'gradle | "$(Agent.OS)" | **/build.gradle'
               restoreKeys: |
                 maven | "$(Agent.OS)"
                 maven
@@ -160,15 +179,22 @@ stages:
             inputs:
               command: login
               containerRegistry: dockerHub
-          - task: Maven@3
-            displayName: Build Docker image
+          - task: Gradle@2
             inputs:
-              mavenPomFile: 'pom.xml'
-              mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+              gradleOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
               javaHomeOption: 'JDKVersion'
               jdkVersionOption: '1.11'
+              tasks: 'jibDockerBuild'
               jdkArchitectureOption: 'x64'
-              goals: 'package -DskipTests' # Not sure why the skip has to be here
+#          - task: Maven@3
+#            displayName: Build Docker image
+#            inputs:
+#              mavenPomFile: 'pom.xml'
+#              mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+#              javaHomeOption: 'JDKVersion'
+#              jdkVersionOption: '1.11'
+#              jdkArchitectureOption: 'x64'
+#              goals: 'package -DskipTests' # Not sure why the skip has to be here
           - task: DockerCompose@0
             displayName: Run Stack
             inputs:
