@@ -3,18 +3,18 @@ package com.nickrobison.trestle.server.resources;
 import com.nickrobison.metrician.Metrician;
 import com.nickrobison.metrician.MetricianHeader;
 import com.nickrobison.metrician.backends.MetricianExportedValue;
-import com.nickrobison.trestle.server.annotations.AuthRequired;
+import com.nickrobison.trestle.reasoner.TrestleReasoner;
+import com.nickrobison.trestle.server.annotations.PrivilegesAllowed;
 import com.nickrobison.trestle.server.auth.Privilege;
-import com.nickrobison.trestle.server.modules.ReasonerModule;
 import com.nickrobison.trestle.server.resources.requests.MetricsQueryRequest;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import org.hibernate.validator.constraints.NotEmpty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -30,7 +30,7 @@ import java.util.Map;
  * Created by nrobison on 3/24/17.
  */
 @Path("/metrics")
-@AuthRequired({Privilege.ADMIN})
+@PrivilegesAllowed({Privilege.ADMIN})
 @Produces(MediaType.APPLICATION_JSON)
 @Api(value = "metrics")
 public class MetricsResource {
@@ -39,8 +39,8 @@ public class MetricsResource {
     private final Metrician metrician;
 
     @Inject
-    public MetricsResource(ReasonerModule reasonerModule) {
-        this.metrician = reasonerModule.getReasoner().getMetricsEngine();
+    public MetricsResource(TrestleReasoner reasoner) {
+        this.metrician = reasoner.getMetricsEngine();
     }
 
     @GET
@@ -80,13 +80,12 @@ public class MetricsResource {
         final StreamingOutput metricsOutput = output -> {
             final BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(output, Charset.defaultCharset()));
             for (final MetricianExportedValue metric : exportedMetrics) {
-                final StringBuilder resultRow = new StringBuilder();
-                resultRow.append(metric.getMetric());
-                resultRow.append(CSV_SEPARATOR);
-                resultRow.append(metric.getTimestamp());
-                resultRow.append(CSV_SEPARATOR);
-                resultRow.append(metric.getValue());
-                bufferedWriter.write(resultRow.toString());
+              String resultRow = metric.getMetric() +
+                CSV_SEPARATOR +
+                metric.getTimestamp() +
+                CSV_SEPARATOR +
+                metric.getValue();
+              bufferedWriter.write(resultRow);
                 bufferedWriter.newLine();
             }
             bufferedWriter.flush();

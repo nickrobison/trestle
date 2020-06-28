@@ -45,7 +45,6 @@ hs_err_pid*
 
 # sbt specific
 .cache
-.history
 .lib/
 dist/*
 target/
@@ -83,3 +82,4 @@ trestle-server/.cache-loader
 # Data directory
 data/
 
+*.db

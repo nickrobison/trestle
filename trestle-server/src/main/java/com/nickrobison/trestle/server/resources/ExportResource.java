@@ -3,9 +3,9 @@ package com.nickrobison.trestle.server.resources;
 import com.nickrobison.trestle.exporter.ITrestleExporter;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
-import com.nickrobison.trestle.server.annotations.AuthRequired;
+import com.nickrobison.trestle.server.annotations.PrivilegesAllowed;
 import com.nickrobison.trestle.server.auth.Privilege;
-import com.nickrobison.trestle.server.modules.ReasonerModule;
+import com.nickrobison.trestle.server.modules.ManagedReasoner;
 import com.nickrobison.trestle.server.resources.requests.ExportRequest;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -22,7 +22,7 @@ import java.io.IOException;
 import static javax.ws.rs.core.Response.ok;
 
 @Path("/export")
-@AuthRequired({Privilege.USER})
+@PrivilegesAllowed({Privilege.USER})
 @Api(value = "export")
 public class ExportResource {
 
@@ -30,8 +30,8 @@ public class ExportResource {
 
 
     @Inject
-    public ExportResource(ReasonerModule reasonerModule) {
-        this.reasoner = reasonerModule.getReasoner();
+    public ExportResource(ManagedReasoner managedReasoner) {
+        this.reasoner = managedReasoner.getReasoner();
     }
 
     @POST

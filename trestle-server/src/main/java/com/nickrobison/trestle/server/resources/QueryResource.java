@@ -1,19 +1,19 @@
 package com.nickrobison.trestle.server.resources;
 
-import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
-import com.nickrobison.trestle.server.annotations.AuthRequired;
+import com.nickrobison.trestle.reasoner.TrestleReasoner;
+import com.nickrobison.trestle.server.annotations.PrivilegesAllowed;
 import com.nickrobison.trestle.server.auth.Privilege;
-import com.nickrobison.trestle.server.modules.ReasonerModule;
+import com.nickrobison.trestle.server.modules.ManagedReasoner;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.hibernate.validator.constraints.NotEmpty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.validation.constraints.NotEmpty;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -28,7 +28,7 @@ import static javax.ws.rs.core.Response.ok;
  * Created by nrobison on 2/27/17.
  */
 @Path("/query")
-@AuthRequired({Privilege.USER})
+@PrivilegesAllowed({Privilege.USER})
 @Produces(MediaType.APPLICATION_JSON)
 @Api(value = "query")
 public class QueryResource {
@@ -38,8 +38,8 @@ public class QueryResource {
 
 
     @Inject
-    public QueryResource(ReasonerModule reasonerModule) {
-        this.reasoner = reasonerModule.getReasoner();
+    public QueryResource(ManagedReasoner managedReasoner) {
+        this.reasoner = managedReasoner.getReasoner();
     }
 
     @GET

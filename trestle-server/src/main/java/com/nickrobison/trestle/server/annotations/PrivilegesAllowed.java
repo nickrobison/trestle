@@ -12,6 +12,6 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.PARAMETER, ElementType.TYPE})
-public @interface AuthRequired {
+public @interface PrivilegesAllowed {
     Privilege[] value() default Privilege.USER;
 }

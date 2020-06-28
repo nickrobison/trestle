@@ -2,9 +2,9 @@ package com.nickrobison.trestle.server.resources;
 
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
-import com.nickrobison.trestle.server.annotations.AuthRequired;
+import com.nickrobison.trestle.server.annotations.PrivilegesAllowed;
 import com.nickrobison.trestle.server.auth.Privilege;
-import com.nickrobison.trestle.server.modules.ReasonerModule;
+import com.nickrobison.trestle.server.modules.ManagedReasoner;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -22,7 +22,7 @@ import static javax.ws.rs.core.Response.ok;
  * Created by nickrobison on 4/9/18.
  */
 @Path("/datasets")
-@AuthRequired({Privilege.USER})
+@PrivilegesAllowed({Privilege.USER})
 @Produces(MediaType.APPLICATION_JSON)
 @Api(value = "datasets")
 public class DatasetResource {
@@ -30,8 +30,8 @@ public class DatasetResource {
     private final TrestleReasoner reasoner;
 
     @Inject
-    public DatasetResource(ReasonerModule reasonerModule) {
-        this.reasoner = reasonerModule.getReasoner();
+    public DatasetResource(ManagedReasoner managedReasoner) {
+        this.reasoner = managedReasoner.getReasoner();
     }
 
     @GET

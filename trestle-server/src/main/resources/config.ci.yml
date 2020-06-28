@@ -29,3 +29,11 @@ jwt:
 
 swagger:
   resourcePackage: com.nickrobison.trestle.server.resources
+
+server:
+  applicationConnectors:
+    - type: http
+      port: 8080
+  adminConnectors:
+    - type: http
+      port: 8087
