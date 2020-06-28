@@ -31,38 +31,26 @@ ext {
     postgresVersion = '42.2.12'
 }
 
-subprojects {
-    group = "com.nickrobison.trestle"
-    version = "0.9.2-SNAPSHOT"
-    // val isRelease = !version.toString().endsWith("SNAPSHOT")
-
-    apply plugin: 'java-library'
-
-    tasks.withType(JavaCompile) {
-        options.compilerArgs << '-parameters'
-    }
-
+allprojects {
     repositories {
         // This needs to go first, in order to get the jai core jars, which jcenter doesn't have.
-        maven {url "https://repo.osgeo.org/repository/release/"}
+        maven { url "https://repo.osgeo.org/repository/release/" }
         jcenter()
         maven { url "https://clojars.org/repo" }
-        maven {url "https://jitpack.io"}
+        maven { url "https://jitpack.io" }
     }
 
-    java {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-        withJavadocJar()
-        withSourcesJar()
-    }
+    // val isRelease = !version.toString().endsWith("SNAPSHOT")
 
-    test {
-    	useJUnitPlatform()
-    }
+}
 
-    // Dependencies
+subprojects {
+
+    group = "com.nickrobison.trestle"
+    version = "0.9.2-SNAPSHOT"
+    apply plugin: 'java-library'
     dependencies {
+        // Dependencies
         compileOnly group: 'org.checkerframework', name: 'checker', version: checkerVersion
         implementation group: 'net.sourceforge.owlapi', name: 'owlapi-api', version: owlVersion
         implementation group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
@@ -73,5 +61,18 @@ subprojects {
         testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-params', version: junitJupiterVersion
         testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: junitJupiterVersion
     }
-    
+    java {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+        withJavadocJar()
+        withSourcesJar()
+    }
+
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << '-parameters'
+    }
+
+    test {
+        useJUnitPlatform()
+    }
 }
