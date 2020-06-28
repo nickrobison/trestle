@@ -21,5 +21,6 @@ include(
         "trestle-ontology-testing",
         "trestle-querybuilder",
         "trestle-reasoner",
-        "trestle-server"
+        "trestle-server",
+        "trestle-tools"
 )

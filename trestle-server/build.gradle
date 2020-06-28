@@ -13,7 +13,7 @@ application {
   mainClassName = mainClass
 }
 
-task runWithJavaExec(type: JavaExec) {
+task runTrestleServer(type: JavaExec) {
   group = "Execution"
   description = "Run the main class with JavaExecTask"
   classpath = sourceSets.main.runtimeClasspath

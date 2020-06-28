@@ -13,7 +13,7 @@ dependencies {
     implementation project(":trestle-metrics")
     implementation group: 'net.sourceforge.owlapi', name: 'owlapi-parsers', version: owlVersion
     implementation group: 'org.apache.commons', name: 'commons-lang3', version: commonsLangVersion
-    implementation group: 'commons-io', name: 'commons-io', version: commonsIOVersion
+    implementation group: 'commons-io', name: 'commons-io'
     implementation group: "org.geotools", name: "gt-epsg-hsql", version: geotoolsVersion
     implementation group: 'com.google.inject', name: 'guice', version: guiceVersion
     implementation group: 'com.google.inject.extensions', name: 'guice-assistedinject', version: guiceVersion
