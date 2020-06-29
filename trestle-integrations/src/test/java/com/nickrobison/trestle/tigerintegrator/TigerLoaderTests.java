@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
 
-import static com.ibm.icu.impl.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Created by detwiler on 4/13/17.
@@ -25,11 +25,7 @@ public class TigerLoaderTests {
             loader.computeRelations();
 //            if(!loader.verifyObjects())
 //                fail("Loaded Trestle objects not equivalent to retrieved objects.");
-        } catch (SQLException e) {
-            fail(e);
-        } catch (TrestleClassException e) {
-            fail(e);
-        } catch (MissingOntologyEntity e) {
+        } catch (SQLException | TrestleClassException | MissingOntologyEntity e) {
             fail(e);
         }
     }

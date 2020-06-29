@@ -1,8 +1,4 @@
 extraction:
   java:
     index:
-      java_version: "11"
-      build_command:
-        - mvn package -DskipTests -Djib.skip=true
-      maven:
-        settings_file: src/main/resources/lgtm.settings.xml
+      java_version: "1.8"

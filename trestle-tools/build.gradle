@@ -1,0 +1,22 @@
+ext {
+    mainClass = 'com.nickrobison.trestle.tools.GAULSubsetEngine'
+}
+apply plugin: 'application'
+
+application {
+    mainClassName = mainClass
+}
+
+task runSubsetter(type: JavaExec) {
+    group = "Execution"
+    description = "Run the main class with JavaExecTask"
+    classpath = sourceSets.main.runtimeClasspath
+    main = mainClass
+}
+
+dependencies {
+    implementation group: 'commons-io', name: 'commons-io'
+    implementation group: "org.geotools", name: "gt-shapefile", version: geotoolsVersion
+    implementation group: "org.geotools", name: "gt-cql", version: geotoolsVersion
+    implementation group: 'me.tongfei', name: 'progressbar'
+}

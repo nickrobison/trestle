@@ -1,0 +1,83 @@
+ext {
+  logbackVersion = '1.2.3'
+  dockerImagePrefix = 'nickrobison'
+  mainClass = 'com.nickrobison.trestle.server.TrestleServer'
+}
+
+apply plugin: 'com.google.cloud.tools.jib'
+apply plugin: 'application'
+
+application {
+  mainClassName = mainClass
+}
+
+task runTrestleServer(type: JavaExec) {
+  group = "Execution"
+  description = "Run main Trestle Server"
+  classpath = sourceSets.main.runtimeClasspath
+  main = mainClass
+  args = ['server', 'src/main/resources/config.yml']
+}
+
+jib {
+  to {
+    image = "${dockerImagePrefix}/trestle-server"
+    tags = ['latest']
+  }
+  from {
+    image = "openjdk:11-jdk-slim-buster"
+  }
+  container {
+    mainClass = mainClass
+    entrypoint = ["/entrypoint.sh"]
+    ports = ['8080']
+  }
+
+  extraDirectories {
+    paths = ["./docker"]
+    permissions = ["/entrypoint.sh": "755"]
+  }
+}
+
+dependencies {
+  implementation(project(":trestle-reasoner")) {
+    exclude group: 'org.slf4j'
+    exclude group: 'javax', module: 'javaee-api'
+  }
+  implementation project(":trestle-metrics")
+  implementation project(":trestle-datasets")
+  implementation(project(":trestle-graphdb")) {
+    exclude group: 'org.slf4j'
+  }
+
+  implementation platform(group: "ru.vyarus.guicey", name: "guicey-bom", version: "5.1.0-2")
+  implementation platform(group: "io.dropwizard", name: "dropwizard-bom", version: "2.0.10")
+
+
+  implementation group: 'ch.qos.logback', name: 'logback-core', version: logbackVersion
+  implementation group: 'ch.qos.logback', name: 'logback-classic', version: logbackVersion
+  compileOnly group: 'javax.servlet', name: 'javax.servlet-api', version: '4.0.1'
+  implementation group: 'io.dropwizard', name: 'dropwizard-core'
+  implementation group: 'io.dropwizard', name: 'dropwizard-hibernate'
+  implementation group: 'io.dropwizard', name: 'dropwizard-migrations'
+  implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind'
+  implementation group: 'com.bedatadriven', name: 'jackson-datatype-jts', version: '2.4'
+  implementation(group: 'com.smoketurner', name: 'dropwizard-swagger', version: '2.0.0-1') {
+    // Swagger uses the 1.x version of javax.validation, but dropwizard needs 2.x now
+    exclude group: "javax.validation", module: "validation-api"
+  }
+  api group: 'com.google.inject', name: 'guice'
+  implementation group: 'com.h2database', name: 'h2', version: h2Version
+  compileOnly group: 'org.postgresql', name: 'postgresql', version: postgresVersion
+  // This should get replaced with something newer
+  implementation group: 'com.jwt4j', name: 'jwt4j', version: '0.1.1'
+  implementation group: 'at.favre.lib', name: 'bcrypt', version: '0.9.0'
+  implementation group: 'org.wololo', name: 'jts2geojson', version: '0.14.3'
+  implementation group: 'de.grundid.opendatalab', name: 'geojson-jackson', version: '1.14'
+  implementation group: 'ru.vyarus', name: 'dropwizard-guicey'
+
+  // Test dependencies
+  testImplementation group: 'io.dropwizard', name: 'dropwizard-testing'
+  testImplementation group: 'org.mockito', name: 'mockito-core', version: mockitoVersion
+  testImplementation group: 'org.glassfish.jersey.test-framework.providers', name: 'jersey-test-framework-provider-grizzly2', version: '2.31'
+}

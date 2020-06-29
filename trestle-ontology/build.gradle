@@ -1,0 +1,16 @@
+dependencies {
+    implementation project(":trestle-querybuilder")
+    implementation project(":trestle-common")
+    implementation project(":trestle-annotations")
+    api project(":trestle-metrics")
+    api group: 'com.google.inject', name: 'guice', version: guiceVersion
+    api group: 'com.google.inject.extensions', name: 'guice-multibindings', version: guiceVersion
+    api group: 'net.sourceforge.owlapi', name: 'owlapi-apibinding', version: owlVersion
+    api group: 'com.google.guava', name: 'guava'
+    implementation group: 'org.apache.jena', name: 'jena-core', version: jenaVersion
+    implementation group: 'org.apache.jena', name: 'jena-arq', version: jenaVersion
+    implementation group: 'org.apache.jena', name: 'jena-spatial', version: "3.12.0"
+    implementation group: 'org.apache.jena', name: 'jena-tdb', version: jenaVersion
+    implementation group: 'org.eclipse.rdf4j', name: 'rdf4j-runtime'
+    compileOnly group: 'io.dropwizard.metrics', name: 'metrics-annotation', version: metricsVersion
+}

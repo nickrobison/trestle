@@ -1,0 +1,12 @@
+dependencies {
+    implementation project(":trestle-common")
+    implementation group: "org.geotools", name: "gt-shapefile", version: geotoolsVersion
+    implementation group: "org.geotools", name: "gt-epsg-hsql", version: geotoolsVersion
+    implementation group: "com.googlecode.json-simple", name: "json-simple", version: "1.1.1"
+    implementation group: "com.fasterxml.jackson.dataformat", name: "jackson-dataformat-xml"
+    implementation group: "com.fasterxml.jackson.datatype", name: "jackson-datatype-jsr310"
+    implementation group: "org.locationtech.jts", name: "jts-core"
+    implementation group: 'com.fasterxml.woodstox', name: 'woodstox-core', version: '6.1.1'
+    testImplementation group: 'commons-io', name: 'commons-io'
+
+}
