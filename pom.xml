@@ -44,7 +44,7 @@
         <caffeine.version>2.8.4</caffeine.version>
         <guice.version>4.2.3</guice.version>
         <!--This will probably need to get bumped each time we upgrade Dropwizard-->
-        <jackson.version>2.11.0</jackson.version>
+        <jackson.version>2.11.1</jackson.version>
         <!--Checker properties-->
         <checker.version>3.3.0</checker.version>
         <annotatedJdk>${org.checkerframework:jdk8:jar}</annotatedJdk>
