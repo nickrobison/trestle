@@ -2,7 +2,7 @@
 
 exports[`TopNavComponent should should be logged in 1`] = `
 TopNavComponent {
-  "headerClicked": EventEmitter {
+  "headerClicked": EventEmitter_ {
     "__isAsync": false,
     "_isScalar": false,
     "closed": false,
@@ -958,7 +958,7 @@ TopNavComponent {
 
 exports[`TopNavComponent should should be logged out 1`] = `
 TopNavComponent {
-  "headerClicked": EventEmitter {
+  "headerClicked": EventEmitter_ {
     "__isAsync": false,
     "_isScalar": false,
     "closed": false,
