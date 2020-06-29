@@ -69,8 +69,7 @@ import {FlexModule} from '@angular/flex-layout';
       provide: INDIVIDUAL_CACHE, useFactory: () => (new CacheService<string, TrestleIndividual>(INDIVIDUAL_CACHE_DI_CONFIG))
     }
   ],
-  schemas: [NO_ERRORS_SCHEMA],
-  entryComponents: [IndividualValueDialog]
+  schemas: [NO_ERRORS_SCHEMA]
 })
 export class ExploreModule {
 }
