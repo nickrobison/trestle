@@ -47,9 +47,7 @@ import {FlexLayoutModule} from '@angular/flex-layout';
     RouterModule.forChild(AdminRoutes),
     SharedModule,
     FlexLayoutModule
-  ],
-  // This will not be needed once we enable Ivy
-  entryComponents: [UserDialogComponent, WarningDialogComponent]
+  ]
 })
 export class AdminModule {
 }
