@@ -33,6 +33,11 @@
             <artifactId>cheshire</artifactId>
             <version>5.10.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.codehaus.janino</groupId>
+            <artifactId>janino</artifactId>
+            <version>3.1.0</version>
+        </dependency>
         <!--        Test dependencies-->
         <dependency>
             <groupId>org.clojure</groupId>
