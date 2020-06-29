@@ -31,6 +31,6 @@ dependencies {
     implementation group: "else-let", name: "else-let", version: "0.1.0"
 
     testImplementation group: "org.geotools", name: "gt-shapefile", version: geotoolsVersion
-    testImplementation group: 'org.mockito', name: 'mockito-core', version: '3.3.3'
+    testImplementation group: 'org.mockito', name: 'mockito-core', version: mockitoVersion
 
 }

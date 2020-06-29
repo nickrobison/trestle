@@ -75,4 +75,9 @@ dependencies {
   implementation group: 'org.wololo', name: 'jts2geojson', version: '0.14.3'
   implementation group: 'de.grundid.opendatalab', name: 'geojson-jackson', version: '1.14'
   implementation group: 'ru.vyarus', name: 'dropwizard-guicey'
+
+  // Test dependencies
+  testImplementation group: 'io.dropwizard', name: 'dropwizard-testing'
+  testImplementation group: 'org.mockito', name: 'mockito-core', version: mockitoVersion
+  testImplementation group: 'org.glassfish.jersey.test-framework.providers', name: 'jersey-test-framework-provider-grizzly2', version: '2.31'
 }
