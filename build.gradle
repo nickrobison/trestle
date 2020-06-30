@@ -31,6 +31,8 @@ ext {
 }
 
 allprojects {
+    group = "com.nickrobison.trestle"
+    version = "0.9.2-SNAPSHOT"
     repositories {
         // This needs to go first, in order to get the jai core jars, which jcenter doesn't have.
         maven { url "https://repo.osgeo.org/repository/release/" }
@@ -41,9 +43,6 @@ allprojects {
 }
 
 subprojects {
-
-    group = "com.nickrobison.trestle"
-    version = "0.9.2-SNAPSHOT"
     apply plugin: 'java-library'
     apply plugin: 'jacoco'
     apply plugin: "io.spring.dependency-management"
