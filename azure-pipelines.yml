@@ -109,16 +109,27 @@ stages:
               organization: 'nickrobison-github'
               scannerMode: 'Other'
           - task: Gradle@2
+            displayName: Run tests
             inputs:
               gradleOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
               javaHomeOption: 'JDKVersion'
               jdkVersionOption: '1.11'
               tasks: 'build jacocoTestReport'
-              sonarQubeRunAnalysis: true
-              sqGradlePluginVersionChoice: 'build'
               jdkArchitectureOption: 'x64'
               publishJUnitResults: true
               testResultsFiles: '**/test-results/test/TEST-*.xml'
+          - task: Gradle@2
+              displayName: Run sonar
+              inputs:
+                gradleOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+                javaHomeOption: 'JDKVersion'
+                jdkVersionOption: '1.11'
+                tasks: 'assemble'
+                sonarQubeRunAnalysis: true
+                sqGradlePluginVersionChoice: 'build'
+                jdkArchitectureOption: 'x64'
+                publishJUnitResults: false
+                testResultsFiles: '**/test-results/test/TEST-*.xml'
 #          - task: Maven@3
 #            inputs:
 #              mavenPomFile: 'pom.xml'
