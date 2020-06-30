@@ -7,7 +7,7 @@
 plugins {
     id "java-library"
     id "jacoco"
-    id 'org.sonarqube' version '2.8' apply false
+    id 'org.sonarqube' version '3.0'
     id "dev.clojurephant.clojure" version "0.5.0" apply false
     id 'com.google.cloud.tools.jib' version '2.1.0' apply false
     id "io.spring.dependency-management" version "1.0.6.RELEASE" apply false
@@ -31,6 +31,8 @@ ext {
 }
 
 allprojects {
+    group = "com.nickrobison.trestle"
+    version = "0.9.2-SNAPSHOT"
     repositories {
         // This needs to go first, in order to get the jai core jars, which jcenter doesn't have.
         maven { url "https://repo.osgeo.org/repository/release/" }
@@ -41,13 +43,9 @@ allprojects {
 }
 
 subprojects {
-
-    group = "com.nickrobison.trestle"
-    version = "0.9.2-SNAPSHOT"
     apply plugin: 'java-library'
     apply plugin: 'jacoco'
     apply plugin: "io.spring.dependency-management"
-    apply plugin: "org.sonarqube"
 
     dependencyManagement {
         imports {
@@ -81,8 +79,8 @@ subprojects {
         testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: junitJupiterVersion
     }
     java {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
         withJavadocJar()
         withSourcesJar()
     }
