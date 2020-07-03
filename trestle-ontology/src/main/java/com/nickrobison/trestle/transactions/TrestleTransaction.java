@@ -3,6 +3,8 @@ package com.nickrobison.trestle.transactions;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 
+import java.util.Objects;
+
 /**
  * Created by nrobison on 10/3/16.
  */
@@ -39,10 +41,7 @@ public class TrestleTransaction {
      * @return - Long of transaction object
      */
     public Long getTransactionID() {
-        if (this.transactionID == null) {
-            return 0L;
-        }
-        return this.transactionID;
+        return Objects.requireNonNullElse(this.transactionID, 0L);
     }
 
     /**
@@ -67,7 +66,6 @@ public class TrestleTransaction {
 
     /**
      * Get the ontology RepositoryConnection to use for the remainder of the transaction
-     * For a {@link com.nickrobison.trestle.ontology.JenaOntology}, the connection will always be null
      *
      * @return - RepositoryConnection for current transaction
      */
@@ -93,7 +91,6 @@ public class TrestleTransaction {
     }
 
     @Override
-    @SuppressWarnings({"all"})
     public int hashCode() {
         int result = getTransactionID().hashCode();
         result = 31 * result + writeTransaction.hashCode();
