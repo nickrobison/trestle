@@ -17,22 +17,22 @@ public class TestRDF4JOntology extends RDF4JOntology {
 
     @Override
     protected void closeDatabase(boolean drop) {
-
+        // Not used
     }
 
     @Override
     public void openDatasetTransaction(boolean write) {
-
+        // Not used
     }
 
     @Override
     public void commitDatasetTransaction(boolean write) {
-
+        // Not used
     }
 
     @Override
     public void abortDatasetTransaction(boolean write) {
-
+        // Not used
     }
 
     @Override
@@ -42,12 +42,12 @@ public class TestRDF4JOntology extends RDF4JOntology {
 
     @Override
     public void runInference() {
-
+        // Not used
     }
 
     @Override
     public void initializeOntology() {
-
+        // Not used
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.nickrobison.trestle.ontology;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import com.nickrobison.trestle.common.exceptions.TrestleInvalidDataException;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
@@ -513,44 +514,50 @@ public abstract class RDF4JOntology extends TransactingOntology {
 
     @Override
     public Optional<Set<OWLLiteral>> getIndividualDataProperty(OWLNamedIndividual individual, IRI propertyIRI) {
-        return getIndividualDataProperty(individual, df.getOWLDataProperty(propertyIRI));
+        return Optional.of(new HashSet<>(getIndividualDataProperty(individual, df.getOWLDataProperty(propertyIRI)).toList().blockingGet()));
     }
 
     @Override
     public Optional<Set<OWLLiteral>> getIndividualDataProperty(IRI individualIRI, OWLDataProperty property) {
-        return getIndividualDataProperty(df.getOWLNamedIndividual(individualIRI), property);
+        return Optional.of(new HashSet<>(getIndividualDataProperty(df.getOWLNamedIndividual(individualIRI), property).toList().blockingGet()));
     }
 
     @Override
-    public Optional<Set<OWLLiteral>> getIndividualDataProperty(OWLNamedIndividual individual, OWLDataProperty
+    public Flowable<OWLLiteral> getIndividualDataProperty(OWLNamedIndividual individual, OWLDataProperty
             property) {
-        Set<OWLLiteral> properties = new HashSet<>();
         final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(getFullIRIString(individual));
         final org.eclipse.rdf4j.model.IRI propertyIRI = vf.createIRI(getFullIRIString(property));
         this.openTransaction(false);
         try {
             final RepositoryResult<Statement> statements = getThreadConnection().getStatements(individualIRI, propertyIRI, null);
-            try {
-                while (statements.hasNext()) {
-                    final Statement next = statements.next();
-                    final Value object = next.getObject();
-                    if (object instanceof Literal) {
-                        createOWLLiteral(Literal.class.cast(object)).ifPresent(properties::add);
-                    } else {
-                        logger.warn("{} on {} is not a literal", next.getPredicate(), individual);
-                    }
-                }
-            } finally {
-                statements.close();
-            }
-        } finally {
-            this.commitTransaction(false);
+            return Flowable.fromIterable(statements)
+                    .map(statement -> {
+                        final Value object = statement.getObject();
+                        return createOWLLiteral((Literal) object).orElseThrow(() -> new TrestleInvalidDataException("Cannot convert to literal", object));
+                    })
+                    .doOnComplete(() -> this.commitTransaction(false))
+                    .doOnError(error -> this.unlockAndAbort(false))
+                    .doFinally(statements::close);
+//            try {
+//                while (statements.hasNext()) {
+//                    final Statement next = statements.next();
+//
+//                }
+//            } finally {
+//                statements.close();
+//            }
+//        } finally {
+//            this.commitTransaction(false);
+//        }
+//
+//        if (properties.isEmpty()) {
+//            return Optional.empty();
+//        }
+        } catch (Exception e) {
+            this.unlockAndAbort(false);
+            throw e;
         }
-
-        if (properties.isEmpty()) {
-            return Optional.empty();
-        }
-        return Optional.of(properties);
+//        return Optional.of(properties);
     }
 
     @Override

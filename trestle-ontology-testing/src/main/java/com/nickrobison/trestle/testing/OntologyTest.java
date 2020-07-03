@@ -7,7 +7,7 @@ import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import io.reactivex.rxjava3.annotations.NonNull;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.*;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
@@ -17,8 +17,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -95,7 +95,7 @@ public abstract class OntologyTest {
     protected abstract void shutdownOntology();
 
     @Test
-    public void SimpleCreationTest() throws OWLOntologyStorageException, MissingOntologyEntity {
+    public void SimpleCreationTest() throws MissingOntologyEntity {
 
         final OWLNamedIndividual test_individual = df.getOWLNamedIndividual(IRI.create("trestle:", "test_individual"));
         final OWLClass owlClass = df.getOWLClass(IRI.create("trestle:", "GAUL"));
@@ -124,15 +124,13 @@ public abstract class OntologyTest {
         this.ontology.returnAndCommitTransaction(t1);
 
         final TrestleTransaction t2 = this.ontology.createandOpenNewTransaction(false);
-        Optional<Set<OWLLiteral>> individualProperty = ontology.getIndividualDataProperty(test_individual, trestle_property);
-        Assertions.assertTrue(individualProperty.isPresent(), "Should have values");
-        Assertions.assertEquals(1, individualProperty.get().size(), "Wrong number of values");
-        Assertions.assertEquals(42, individualProperty.get().stream().findFirst().get().parseInteger(), "Wrong property");
+        Set<OWLLiteral> individualProperty = new HashSet<>(ontology.getIndividualDataProperty(test_individual, trestle_property).toList().blockingGet());
+        Assertions.assertEquals(1, individualProperty.size(), "Wrong number of values");
+        Assertions.assertEquals(42, individualProperty.stream().findFirst().get().parseInteger(), "Wrong property");
 
-        individualProperty = ontology.getIndividualDataProperty(test_individual, test_new_property);
-        Assertions.assertTrue(individualProperty.isPresent(), "Should have values");
-        Assertions.assertEquals(1, individualProperty.get().size(), "Wrong number of values");
-        Assertions.assertEquals(owlLiteral, individualProperty.get().stream().findFirst().get(), "Wrong property literal");
+        individualProperty = new HashSet<>(ontology.getIndividualDataProperty(test_individual, test_new_property).toList().blockingGet());
+        Assertions.assertEquals(1, individualProperty.size(), "Wrong number of values");
+        Assertions.assertEquals(owlLiteral, individualProperty.stream().findFirst().get(), "Wrong property literal");
         this.ontology.returnAndCommitTransaction(t2);
 
 ////        Try to write a property value to an individual that doesn't exist

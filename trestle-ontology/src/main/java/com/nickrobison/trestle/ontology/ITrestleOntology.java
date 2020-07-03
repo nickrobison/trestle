@@ -353,7 +353,7 @@ public interface ITrestleOntology {
      * @param property   - OWLDataProperty to access
      * @return - Optional set of OWLLiteral if a property exists on that member
      */
-    Optional<Set<OWLLiteral>> getIndividualDataProperty(OWLNamedIndividual individual, OWLDataProperty property);
+    Flowable<OWLLiteral> getIndividualDataProperty(OWLNamedIndividual individual, OWLDataProperty property);
 
     /**
      * Get all the related facts for an individual, valid at a specific valid/database point
