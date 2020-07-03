@@ -6,6 +6,7 @@ import com.nickrobison.trestle.common.exceptions.TrestleInvalidDataException;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
+import com.nickrobison.trestle.ontology.utils.RDF4JLiteralFactory;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import io.reactivex.rxjava3.core.Flowable;
@@ -27,7 +28,6 @@ import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.Rio;
-import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
@@ -44,8 +44,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static com.nickrobison.trestle.ontology.utils.RDF4JLiteralFactory.createLiteral;
-import static com.nickrobison.trestle.ontology.utils.RDF4JLiteralFactory.createOWLLiteral;
 import static com.nickrobison.trestle.ontology.utils.SharedOntologyFunctions.filterIndividualDataProperties;
 import static com.nickrobison.trestle.ontology.utils.SharedOntologyFunctions.getDataPropertiesFromIndividualFacts;
 
@@ -56,7 +54,7 @@ import static com.nickrobison.trestle.ontology.utils.SharedOntologyFunctions.get
 public abstract class RDF4JOntology extends TransactingOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(RDF4JOntology.class);
-    protected static final SimpleValueFactory vf = SimpleValueFactory.getInstance();
+    protected final SimpleValueFactory vf;
     protected final String ontologyName;
     protected final RepositoryConnection adminConnection;
     protected final Repository repository;
@@ -64,19 +62,22 @@ public abstract class RDF4JOntology extends TransactingOntology {
     protected final DefaultPrefixManager pm;
     protected final OWLDataFactory df;
     protected final QueryBuilder qb;
+    protected final RDF4JLiteralFactory lf;
 
     protected ThreadLocal<@Nullable RepositoryConnection> tc = ThreadLocal.withInitial(() -> null);
 
 
-    protected RDF4JOntology(String ontologyName, Repository repository, OWLOntology ontology, DefaultPrefixManager pm) {
+    protected RDF4JOntology(String ontologyName, Repository repository, OWLOntology ontology, DefaultPrefixManager pm, RDF4JLiteralFactory factory) {
         super();
         this.ontologyName = ontologyName;
         this.repository = repository;
         this.adminConnection = repository.getConnection();
         this.ontology = ontology;
         this.pm = pm;
-        this.df = OWLManager.getOWLDataFactory();
+        this.df = factory.getDataFactory();
+        this.vf = factory.getValueFactory();
         this.qb = new QueryBuilder(QueryBuilder.Dialect.SESAME, this.pm);
+        this.lf = factory;
     }
 
     @Override
@@ -203,7 +204,7 @@ public abstract class RDF4JOntology extends TransactingOntology {
 
         this.openTransaction(true);
         try {
-            getThreadConnection().add(subjectIRI, propertyIRI, createLiteral(dataProperty.getObject()));
+            getThreadConnection().add(subjectIRI, propertyIRI, this.lf.createLiteral(dataProperty.getObject()));
         } finally {
             this.commitTransaction(true);
         }
@@ -277,7 +278,7 @@ public abstract class RDF4JOntology extends TransactingOntology {
         if (literal == null) {
             literalValue = null;
         } else {
-            literalValue = createLiteral(literal);
+            literalValue = this.lf.createLiteral(literal);
         }
 
         this.openTransaction(true);
@@ -407,7 +408,7 @@ public abstract class RDF4JOntology extends TransactingOntology {
                     final OWLDataProperty owlDataProperty = df.getOWLDataProperty(IRI.create(entry.getKey()));
                     return Flowable.fromIterable(entry.getValue())
                             .flatMap(literal -> {
-                                final Optional<OWLLiteral> owlLiteral = createOWLLiteral(literal);
+                                final Optional<OWLLiteral> owlLiteral = this.lf.createOWLLiteral(literal);
                                 if (owlLiteral.isPresent()) {
                                     return Flowable.just(df.getOWLDataPropertyAssertionAxiom(
                                             owlDataProperty,
@@ -533,7 +534,7 @@ public abstract class RDF4JOntology extends TransactingOntology {
             return Flowable.fromIterable(statements)
                     .map(statement -> {
                         final Value object = statement.getObject();
-                        return createOWLLiteral((Literal) object).orElseThrow(() -> new TrestleInvalidDataException("Cannot convert to literal", object));
+                        return this.lf.createOWLLiteral((Literal) object).orElseThrow(() -> new TrestleInvalidDataException("Cannot convert to literal", object));
                     })
                     .doOnComplete(() -> this.commitTransaction(false))
                     .doOnError(error -> this.unlockAndAbort(false))
@@ -613,7 +614,7 @@ public abstract class RDF4JOntology extends TransactingOntology {
                     final Value value = binding.getValue();
 //                FIXME(nrobison): This is broken, figure out how to get the correct subtypes
                     if (value instanceof Literal) {
-                        final Optional<OWLLiteral> owlLiteral = createOWLLiteral(Literal.class.cast(value));
+                        final Optional<OWLLiteral> owlLiteral = this.lf.createOWLLiteral(Literal.class.cast(value));
                         owlLiteral.ifPresent(owlLiteral1 -> results.addValue(varName, owlLiteral1));
                     } else {
                         results.addValue(varName, df.getOWLNamedIndividual(IRI.create(value.stringValue())));

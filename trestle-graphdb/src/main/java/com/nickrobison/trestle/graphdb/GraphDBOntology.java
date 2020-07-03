@@ -2,6 +2,7 @@ package com.nickrobison.trestle.graphdb;
 
 import com.nickrobison.trestle.ontology.RDF4JOntology;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
+import com.nickrobison.trestle.ontology.utils.RDF4JLiteralFactory;
 import com.nickrobison.trestle.ontology.utils.SharedOntologyFunctions;
 import com.ontotext.trree.config.OWLIMSailSchema;
 import com.typesafe.config.Config;
@@ -10,6 +11,7 @@ import org.apache.commons.io.FileUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.impl.TreeModel;
 import org.eclipse.rdf4j.model.util.Models;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -57,11 +59,11 @@ public class GraphDBOntology extends RDF4JOntology {
 //    private static Repository repository;
     private static final Config config = ConfigFactory.load().getConfig("trestle.ontology.graphdb");
 
-    GraphDBOntology(String ontologyName, @Nullable String connectionString, String username, String password, OWLOntology ont, DefaultPrefixManager pm) {
-        super(ontologyName, constructRepository(ontologyName, connectionString, username, password), ont, pm);
+    GraphDBOntology(String ontologyName, @Nullable String connectionString, String username, String password, OWLOntology ont, DefaultPrefixManager pm, RDF4JLiteralFactory factory) {
+        super(ontologyName, constructRepository(ontologyName, connectionString, username, password, factory), ont, pm, factory);
     }
 
-    private static Repository constructRepository(String ontologyName, @Nullable String connectionString, String username, String password) {
+    private static Repository constructRepository(String ontologyName, @Nullable String connectionString, String username, String password, RDF4JLiteralFactory factory) {
         logger.debug("Constructing GraphDB ontology with connection string {}", connectionString != null ? connectionString : "Null");
         if (connectionString == null) {
 //            Connect to local repository
@@ -75,14 +77,15 @@ public class GraphDBOntology extends RDF4JOntology {
         final Repository repository = repositoryManager.getRepository(ontologyName);
 //        If the repository doesn't exist, create it
         if (repository == null) {
-            return setupNewRepository(ontologyName);
+            return setupNewRepository(ontologyName, factory);
         }
         return repository;
     }
 
     @SuppressWarnings({"argument.type.incompatible"})
-    private static Repository setupNewRepository(String ontologyName) {
+    private static Repository setupNewRepository(String ontologyName, RDF4JLiteralFactory factory) {
         logger.info("Creating new Repository {}", ontologyName);
+        final SimpleValueFactory vf = factory.getValueFactory();
         final TreeModel graph = new TreeModel();
 
 //        Read configuration file
@@ -109,14 +112,14 @@ public class GraphDBOntology extends RDF4JOntology {
         }
 
         final Resource repositoryNode = Models.subject(graph.filter(null, RDF.TYPE, RepositoryConfigSchema.REPOSITORY)).orElse(null);
-        graph.add(repositoryNode, RepositoryConfigSchema.REPOSITORYID, RDF4JOntology.vf.createLiteral(ontologyName));
-        graph.add(repositoryNode, RDFS.LABEL, RDF4JOntology.vf.createLiteral(String.format("Trestle Ontology: %s", ontologyName)));
+        graph.add(repositoryNode, RepositoryConfigSchema.REPOSITORYID, vf.createLiteral(ontologyName));
+        graph.add(repositoryNode, RDFS.LABEL, vf.createLiteral(String.format("Trestle Ontology: %s", ontologyName)));
 
 //        Manually set some parameters
         final Resource configNode = (Resource) Models.object(graph.filter(null, SailRepositorySchema.SAILIMPL, null)).orElse(null);
 //        Set reasoner profile
-        final org.eclipse.rdf4j.model.IRI reasonerKey = RDF4JOntology.vf.createIRI(OWLIMSailSchema.NAMESPACE, "ruleset");
-        final Literal reasonerValue = RDF4JOntology.vf.createLiteral(config.getString("ruleset"));
+        final org.eclipse.rdf4j.model.IRI reasonerKey = vf.createIRI(OWLIMSailSchema.NAMESPACE, "ruleset");
+        final Literal reasonerValue = vf.createLiteral(config.getString("ruleset"));
         graph.remove(configNode, reasonerKey, null);
         graph.add(configNode, reasonerKey, reasonerValue);
 
@@ -229,11 +232,9 @@ public class GraphDBOntology extends RDF4JOntology {
         final TrestleResultSet results;
         this.openTransaction(false);
         final TupleQuery tupleQuery = this.getThreadConnection().prepareTupleQuery(QueryLanguage.SPARQL, queryString);
-        final TupleQueryResult resultSet = tupleQuery.evaluate();
-        try {
+        try (TupleQueryResult resultSet = tupleQuery.evaluate()) {
             results = buildResultSet(resultSet);
         } finally {
-            resultSet.close();
             this.commitTransaction(false);
         }
         return results;

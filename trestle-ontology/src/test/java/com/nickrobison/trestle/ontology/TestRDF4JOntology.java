@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.ontology;
 
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
+import com.nickrobison.trestle.ontology.utils.RDF4JLiteralFactory;
 import org.eclipse.rdf4j.repository.Repository;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
@@ -11,8 +12,8 @@ import org.semanticweb.owlapi.util.DefaultPrefixManager;
 public class TestRDF4JOntology extends RDF4JOntology {
 
 
-    protected TestRDF4JOntology(String ontologyName, Repository repository, OWLOntology ontology, DefaultPrefixManager pm) {
-        super(ontologyName, repository, ontology, pm);
+    protected TestRDF4JOntology(String ontologyName, Repository repository, OWLOntology ontology, DefaultPrefixManager pm, RDF4JLiteralFactory factory) {
+        super(ontologyName, repository, ontology, pm, factory);
     }
 
     @Override

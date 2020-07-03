@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
-import java.util.Optional;
+import java.util.HashSet;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * Created by nrobison on 1/10/17.
  */
+@SuppressWarnings("OptionalGetWithoutIsPresent")
 @Tag("integration")
 @Tag("GraphDB")
 public class GraphDBOntologyTest extends OntologyTest {
@@ -70,8 +71,8 @@ public class GraphDBOntologyTest extends OntologyTest {
         OWLClassAssertionAxiom owlClassAssertionAxiom = df.getOWLClassAssertionAxiom(owlCl, long_test);
         ontology.createIndividual(owlClassAssertionAxiom);
         ontology.writeIndividualDataProperty(df.getOWLDataPropertyAssertionAxiom(aLong, long_test, owlLiteral));
-        Optional<Set<OWLLiteral>> individualDataProperty = ontology.getIndividualDataProperty(long_test, aLong);
-        assertEquals(OWL2Datatype.XSD_LONG, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
+        Set<OWLLiteral> individualDataProperty = new HashSet<>(ontology.getIndividualDataProperty(long_test, aLong).toList().blockingGet());
+        assertEquals(OWL2Datatype.XSD_LONG, individualDataProperty.stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
 
 //        Big long
         aLong = df.getOWLDataProperty(IRI.create("trestle:", "long_big"));
@@ -79,9 +80,9 @@ public class GraphDBOntologyTest extends OntologyTest {
         owlClassAssertionAxiom = df.getOWLClassAssertionAxiom(owlCl, long_test);
         ontology.createIndividual(owlClassAssertionAxiom);
         ontology.writeIndividualDataProperty(df.getOWLDataPropertyAssertionAxiom(aLong, long_test, owlLiteral));
-        individualDataProperty = ontology.getIndividualDataProperty(long_test, aLong);
-        assertEquals(Long.toString(bigLong), individualDataProperty.get().stream().findFirst().get().getLiteral(), "Wrong long value");
-        assertEquals(OWL2Datatype.XSD_LONG, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
+        individualDataProperty = new HashSet<>(ontology.getIndividualDataProperty(long_test, aLong).toList().blockingGet());
+        assertEquals(Long.toString(bigLong), individualDataProperty.stream().findFirst().get().getLiteral(), "Wrong long value");
+        assertEquals(OWL2Datatype.XSD_LONG, individualDataProperty.stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
 
 //        Int
         aLong = df.getOWLDataProperty(IRI.create("trestle:", "int_small"));
@@ -89,9 +90,9 @@ public class GraphDBOntologyTest extends OntologyTest {
         owlClassAssertionAxiom = df.getOWLClassAssertionAxiom(owlCl, long_test);
         ontology.createIndividual(owlClassAssertionAxiom);
         ontology.writeIndividualDataProperty(df.getOWLDataPropertyAssertionAxiom(aLong, long_test, owlLiteral));
-        individualDataProperty = ontology.getIndividualDataProperty(long_test, aLong);
-        assertEquals(Integer.toString(smallInt), individualDataProperty.get().stream().findFirst().get().getLiteral(), "Wrong long value");
-        assertEquals(OWL2Datatype.XSD_INTEGER, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be int");
+        individualDataProperty = new HashSet<>(ontology.getIndividualDataProperty(long_test, aLong).toList().blockingGet());
+        assertEquals(Integer.toString(smallInt), individualDataProperty.stream().findFirst().get().getLiteral(), "Wrong long value");
+        assertEquals(OWL2Datatype.XSD_INTEGER, individualDataProperty.stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be int");
 
         //        Big Int
         aLong = df.getOWLDataProperty(IRI.create("trestle:", "int_big"));
@@ -99,9 +100,9 @@ public class GraphDBOntologyTest extends OntologyTest {
         owlClassAssertionAxiom = df.getOWLClassAssertionAxiom(owlCl, long_test);
         ontology.createIndividual(owlClassAssertionAxiom);
         ontology.writeIndividualDataProperty(df.getOWLDataPropertyAssertionAxiom(aLong, long_test, owlLiteral));
-        individualDataProperty = ontology.getIndividualDataProperty(long_test, aLong);
-        assertEquals(Integer.toString(bigInt), individualDataProperty.get().stream().findFirst().get().getLiteral(), "Wrong long value");
-        assertEquals(OWL2Datatype.XSD_INTEGER, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be int");
+        individualDataProperty = new HashSet<>(ontology.getIndividualDataProperty(long_test, aLong).toList().blockingGet());
+        assertEquals(Integer.toString(bigInt), individualDataProperty.stream().findFirst().get().getLiteral(), "Wrong long value");
+        assertEquals(OWL2Datatype.XSD_INTEGER, individualDataProperty.stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be int");
 
         //        Negative Int
         aLong = df.getOWLDataProperty(IRI.create("trestle:", "neg_int"));
@@ -109,9 +110,9 @@ public class GraphDBOntologyTest extends OntologyTest {
         owlClassAssertionAxiom = df.getOWLClassAssertionAxiom(owlCl, long_test);
         ontology.createIndividual(owlClassAssertionAxiom);
         ontology.writeIndividualDataProperty(df.getOWLDataPropertyAssertionAxiom(aLong, long_test, owlLiteral));
-        individualDataProperty = ontology.getIndividualDataProperty(long_test, aLong);
-        assertEquals(Integer.toString(negativeInt), individualDataProperty.get().stream().findFirst().get().getLiteral(), "Wrong long value");
-        assertEquals(OWL2Datatype.XSD_INTEGER, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
+        individualDataProperty = new HashSet<>(ontology.getIndividualDataProperty(long_test, aLong).toList().blockingGet());
+        assertEquals(Integer.toString(negativeInt), individualDataProperty.stream().findFirst().get().getLiteral(), "Wrong long value");
+        assertEquals(OWL2Datatype.XSD_INTEGER, individualDataProperty.stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
 
         //        Double
         aLong = df.getOWLDataProperty(IRI.create("trestle:", "float"));
@@ -119,9 +120,9 @@ public class GraphDBOntologyTest extends OntologyTest {
         owlClassAssertionAxiom = df.getOWLClassAssertionAxiom(owlCl, long_test);
         ontology.createIndividual(owlClassAssertionAxiom);
         ontology.writeIndividualDataProperty(df.getOWLDataPropertyAssertionAxiom(aLong, long_test, owlLiteral));
-        individualDataProperty = ontology.getIndividualDataProperty(long_test, aLong);
-        assertEquals(Double.toString(bigFloat), individualDataProperty.get().stream().findFirst().get().getLiteral(), "Wrong long value");
-        assertEquals(OWL2Datatype.XSD_DECIMAL, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
+        individualDataProperty = new HashSet<>(ontology.getIndividualDataProperty(long_test, aLong).toList().blockingGet());
+        assertEquals(Double.toString(bigFloat), individualDataProperty.stream().findFirst().get().getLiteral(), "Wrong long value");
+        assertEquals(OWL2Datatype.XSD_DECIMAL, individualDataProperty.stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
 
         //        Negative Long
         aLong = df.getOWLDataProperty(IRI.create("trestle:", "neg_long"));
@@ -129,17 +130,17 @@ public class GraphDBOntologyTest extends OntologyTest {
         owlClassAssertionAxiom = df.getOWLClassAssertionAxiom(owlCl, long_test);
         ontology.createIndividual(owlClassAssertionAxiom);
         ontology.writeIndividualDataProperty(df.getOWLDataPropertyAssertionAxiom(aLong, long_test, owlLiteral));
-        individualDataProperty = ontology.getIndividualDataProperty(long_test, aLong);
-        assertEquals(Long.toString(negativeLong), individualDataProperty.get().stream().findFirst().get().getLiteral(), "Wrong long value");
-        assertEquals(OWL2Datatype.XSD_LONG, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
+        individualDataProperty = new HashSet<>(ontology.getIndividualDataProperty(long_test, aLong).toList().blockingGet());
+        assertEquals(Long.toString(negativeLong), individualDataProperty.stream().findFirst().get().getLiteral(), "Wrong long value");
+        assertEquals(OWL2Datatype.XSD_LONG, individualDataProperty.stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
 
         aLong = df.getOWLDataProperty(IRI.create("trestle:", "neg_big_long"));
         owlLiteral = df.getOWLLiteral(Long.toString(negativeBigLong), OWL2Datatype.XSD_LONG);
         owlClassAssertionAxiom = df.getOWLClassAssertionAxiom(owlCl, long_test);
         ontology.createIndividual(owlClassAssertionAxiom);
         ontology.writeIndividualDataProperty(df.getOWLDataPropertyAssertionAxiom(aLong, long_test, owlLiteral));
-        individualDataProperty = ontology.getIndividualDataProperty(long_test, aLong);
-        assertEquals(Long.toString(negativeBigLong), individualDataProperty.get().stream().findFirst().get().getLiteral(), "Wrong long value");
-        assertEquals(OWL2Datatype.XSD_LONG, individualDataProperty.get().stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
+        individualDataProperty = new HashSet<>(ontology.getIndividualDataProperty(long_test, aLong).toList().blockingGet());
+        assertEquals(Long.toString(negativeBigLong), individualDataProperty.stream().findFirst().get().getLiteral(), "Wrong long value");
+        assertEquals(OWL2Datatype.XSD_LONG, individualDataProperty.stream().findFirst().get().getDatatype().getBuiltInDatatype(), "Should be long");
     }
 }

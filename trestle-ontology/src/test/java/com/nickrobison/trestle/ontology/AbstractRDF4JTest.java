@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.ontology;
 
+import com.nickrobison.trestle.ontology.utils.RDF4JLiteralFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -19,16 +20,20 @@ public class AbstractRDF4JTest {
     protected static RDF4JOntology ontology;
     protected static Repository repository;
     protected static OWLOntology owlOntology;
-    protected static final OWLDataFactory df = OWLManager.getOWLDataFactory();
     protected static RepositoryConnection connection;
-    protected static final SimpleValueFactory vf = SimpleValueFactory.getInstance();
+    protected static RDF4JLiteralFactory factory;
+    protected static OWLDataFactory df;
+    protected static SimpleValueFactory vf;
 
     @BeforeAll
     static void setup() {
         owlOntology = OntologyBuilder.loadOntology(Optional.empty(), Optional.empty());
         repository = Mockito.mock(Repository.class);
         connection = Mockito.mock(RepositoryConnection.class);
-        ontology = Mockito.spy(new TestRDF4JOntology("test-ontology", repository, owlOntology, OntologyBuilder.createDefaultPrefixManager()) {
+        factory = Mockito.spy(new RDF4JLiteralFactory(OWLManager.getOWLDataFactory(), SimpleValueFactory.getInstance()));
+        df = factory.getDataFactory();
+        vf = factory.getValueFactory();
+        ontology = Mockito.spy(new TestRDF4JOntology("test-ontology", repository, owlOntology, OntologyBuilder.createDefaultPrefixManager(), factory) {
             @Override
             protected RepositoryConnection getThreadConnection() {
                 return connection;
@@ -42,6 +47,6 @@ public class AbstractRDF4JTest {
 
     @AfterEach
     void reset() {
-        Mockito.reset(repository, connection, ontology);
+        Mockito.reset(repository, connection, ontology, factory);
     }
 }

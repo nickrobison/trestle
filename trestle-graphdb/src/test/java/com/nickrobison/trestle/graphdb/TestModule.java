@@ -6,10 +6,14 @@ import com.nickrobison.trestle.ontology.ConnectionProperties;
 import com.nickrobison.trestle.ontology.annotations.OntologyName;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
+import javax.inject.Singleton;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -70,5 +74,17 @@ public class TestModule extends AbstractModule {
         }
 
         return inputStream;
+    }
+
+    @Provides
+    @Singleton
+    public OWLDataFactory provideDataFactory() {
+        return OWLManager.getOWLDataFactory();
+    }
+
+    @Provides
+    @Singleton
+    public SimpleValueFactory literalFactory() {
+        return SimpleValueFactory.getInstance();
     }
 }
