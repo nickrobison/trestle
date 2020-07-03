@@ -21,7 +21,6 @@
         <module>trestle-tools</module>
         <module>trestle-graphdb</module>
         <module>trestle-ontology-testing</module>
-        <!--        <module>trestle-oracle</module>-->
     </modules>
     <packaging>pom</packaging>
 
@@ -29,7 +28,7 @@
         <trestle.basedir/>
         <data.dir>data</data.dir>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <excludeTags>oracle,virtuoso,local,load</excludeTags>
+        <excludeTags>local,load</excludeTags>
         <owl.version>5.1.14</owl.version>
         <jena.version>3.15.0</jena.version>
         <!--This needs to be locked to the version provided by GraphDB-->
@@ -214,63 +213,6 @@
                 <artifactId>jena-spatial</artifactId>
                 <version>3.12.0</version>
                 <optional>true</optional>
-            </dependency>
-            <!--Oracle Dependencies-->
-            <dependency>
-                <groupId>com.oracle</groupId>
-                <artifactId>ojdbc7</artifactId>
-                <version>12.1.0.2</version>
-            </dependency>
-            <dependency>
-                <groupId>oracle.spatial.rdf.client</groupId>
-                <artifactId>sdordf</artifactId>
-                <version>2017.01</version>
-            </dependency>
-            <dependency>
-                <groupId>oracle.spatial.rdf.client</groupId>
-                <artifactId>sdordfclient</artifactId>
-                <version>2017.01</version>
-            </dependency>
-            <dependency>
-                <groupId>oracle.spatial.geometry</groupId>
-                <artifactId>api</artifactId>
-                <version>1.0</version>
-                <type>jar</type>
-            </dependency>
-            <dependency>
-                <groupId>oracle.spatial.geometry</groupId>
-                <artifactId>type</artifactId>
-                <version>1.0</version>
-                <type>jar</type>
-            </dependency>
-            <dependency>
-                <groupId>oracle.spatial.geometry</groupId>
-                <artifactId>util</artifactId>
-                <version>1.0</version>
-                <type>jar</type>
-            </dependency>
-            <dependency>
-                <groupId>oracle.spatial.geometry</groupId>
-                <artifactId>topo</artifactId>
-                <version>1.0</version>
-            </dependency>
-            <dependency>
-                <groupId>oracle.spatial.geometry</groupId>
-                <artifactId>georaster</artifactId>
-                <version>1.0</version>
-                <type>jar</type>
-            </dependency>
-            <dependency>
-                <groupId>com.oracle</groupId>
-                <artifactId>xdb</artifactId>
-                <version>1.0</version>
-                <type>jar</type>
-            </dependency>
-            <dependency>
-                <groupId>com.oracle</groupId>
-                <artifactId>xmlparserv2</artifactId>
-                <version>1.0</version>
-                <type>jar</type>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson</groupId>
