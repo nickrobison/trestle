@@ -2,7 +2,6 @@ package com.nickrobison.trestle.ontology;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import com.nickrobison.trestle.common.exceptions.TrestleInvalidDataException;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
@@ -408,15 +407,11 @@ public abstract class RDF4JOntology extends TransactingOntology {
                     final OWLDataProperty owlDataProperty = df.getOWLDataProperty(IRI.create(entry.getKey()));
                     return Flowable.fromIterable(entry.getValue())
                             .flatMap(literal -> {
-                                final Optional<OWLLiteral> owlLiteral = this.lf.createOWLLiteral(literal);
-                                if (owlLiteral.isPresent()) {
-                                    return Flowable.just(df.getOWLDataPropertyAssertionAxiom(
-                                            owlDataProperty,
-                                            individual,
-                                            owlLiteral.get()));
-                                }
-                                // This seems bad?
-                                return Flowable.empty();
+                                final OWLLiteral owlLiteral = this.lf.createOWLLiteral(literal);
+                                return Flowable.just(df.getOWLDataPropertyAssertionAxiom(
+                                        owlDataProperty,
+                                        individual,
+                                        owlLiteral));
                             });
                 })
                 .doFinally(() -> {
@@ -534,7 +529,7 @@ public abstract class RDF4JOntology extends TransactingOntology {
             return Flowable.fromIterable(statements)
                     .map(statement -> {
                         final Value object = statement.getObject();
-                        return this.lf.createOWLLiteral((Literal) object).orElseThrow(() -> new TrestleInvalidDataException("Cannot convert to literal", object));
+                        return this.lf.createOWLLiteral((Literal) object);
                     })
                     .doOnComplete(() -> this.commitTransaction(false))
                     .doOnError(error -> this.unlockAndAbort(false))
@@ -614,8 +609,8 @@ public abstract class RDF4JOntology extends TransactingOntology {
                     final Value value = binding.getValue();
 //                FIXME(nrobison): This is broken, figure out how to get the correct subtypes
                     if (value instanceof Literal) {
-                        final Optional<OWLLiteral> owlLiteral = this.lf.createOWLLiteral(Literal.class.cast(value));
-                        owlLiteral.ifPresent(owlLiteral1 -> results.addValue(varName, owlLiteral1));
+                        final OWLLiteral owlLiteral = this.lf.createOWLLiteral(Literal.class.cast(value));
+                        results.addValue(varName, owlLiteral);
                     } else {
                         results.addValue(varName, df.getOWLNamedIndividual(IRI.create(value.stringValue())));
                     }

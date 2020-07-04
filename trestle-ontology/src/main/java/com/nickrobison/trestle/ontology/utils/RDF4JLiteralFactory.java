@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import java.util.Optional;
 
 /**
  * Created by nrobison on 1/11/17.
@@ -48,7 +47,7 @@ public class RDF4JLiteralFactory {
         }
     }
 
-    public Optional<OWLLiteral> createOWLLiteral(Literal literal) {
+    public OWLLiteral createOWLLiteral(Literal literal) {
         OWLDatatype owlDatatype;
         if (literal.getDatatype() == null) {
             logger.error("Literal has an emptyURI");
@@ -57,15 +56,10 @@ public class RDF4JLiteralFactory {
             final String numericString = literal.stringValue();
             owlDatatype = SharedLiteralUtils.parseNumericDatatype(numericString);
         } else if (literal.getLanguage().isPresent()) {
-            return Optional.of(df.getOWLLiteral(literal.stringValue(), literal.getLanguage().get()));
+            return df.getOWLLiteral(literal.stringValue(), literal.getLanguage().get());
         } else {
             owlDatatype = df.getOWLDatatype(org.semanticweb.owlapi.model.IRI.create(literal.getDatatype().toString()));
         }
-
-        if (owlDatatype.getIRI().toString().equals("nothing")) {
-            logger.error("Datatype {} doesn't exist", literal.getDatatype());
-            return Optional.empty();
-        }
-        return Optional.of(df.getOWLLiteral(literal.stringValue(), owlDatatype));
+        return df.getOWLLiteral(literal.stringValue(), owlDatatype);
     }
 }
