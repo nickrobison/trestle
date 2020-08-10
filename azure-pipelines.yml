@@ -25,12 +25,12 @@ stages:
           - checkout: self
             submodules: true
           - task: Cache@2
-            displayName: Cache Maven local repo
+            displayName: Cache Gradle local repo
             inputs:
               key: 'gradle | "$(Agent.OS)" | **/build.gradle'
               restoreKeys: |
-                maven | "$(Agent.OS)"
-                maven
+                gradle | "$(Agent.OS)"
+                gradle
               path: $(MAVEN_CACHE_FOLDER)
           - task: Gradle@2
             displayName: Build Java
@@ -170,8 +170,8 @@ stages:
             inputs:
               key: 'gradle | "$(Agent.OS)" | **/build.gradle'
               restoreKeys: |
-                maven | "$(Agent.OS)"
-                maven
+                gradle | "$(Agent.OS)"
+                gradle
               path: $(MAVEN_CACHE_FOLDER)
             displayName: Cache Maven local repo
           - task: Docker@2
