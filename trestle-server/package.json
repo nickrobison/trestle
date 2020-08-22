@@ -45,7 +45,7 @@
     "file-saver": "^2.0.2",
     "mapbox-gl": "^1.12.0",
     "moment": "^2.27.0",
-    "rxjs": "~6.6.0",
+    "rxjs": "~6.6.2",
     "sorted-array": "^2.0.4",
     "transitory": "^2.1.1",
     "tslib": "^2.0.0",
