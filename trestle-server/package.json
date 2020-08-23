@@ -70,7 +70,7 @@
     "@types/jest": "^26.0.10",
     "@types/mapbox-gl": "^1.11.1",
     "@types/node": "^14.6.0",
-    "@types/nodegit": "^0.26.6",
+    "@types/nodegit": "^0.26.7",
     "@types/wellknown": "^0.5.1",
     "browserstack-local": "^1.4.5",
     "chai": "^4.2.0",
