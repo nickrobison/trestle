@@ -62,7 +62,7 @@ dependencies {
   implementation group: 'io.dropwizard', name: 'dropwizard-migrations'
   implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind'
   implementation group: 'com.bedatadriven', name: 'jackson-datatype-jts', version: '2.4'
-  implementation(group: 'com.smoketurner', name: 'dropwizard-swagger', version: '2.0.0-1') {
+  implementation(group: 'com.smoketurner', name: 'dropwizard-swagger', version: '2.0.12-1') {
     // Swagger uses the 1.x version of javax.validation, but dropwizard needs 2.x now
     exclude group: "javax.validation", module: "validation-api"
   }
