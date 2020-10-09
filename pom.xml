@@ -38,7 +38,7 @@
         <jmh.version>1.23</jmh.version>
         <geotools.version>22.2</geotools.version>
         <metrics.version>4.1.9</metrics.version>
-        <httpcomponents.version>4.5.12</httpcomponents.version>
+        <httpcomponents.version>4.5.13</httpcomponents.version>
         <maven.enforcer.version>1.4.1</maven.enforcer.version>
         <caffeine.version>2.8.4</caffeine.version>
         <guice.version>4.2.3</guice.version>
