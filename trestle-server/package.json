@@ -31,7 +31,7 @@
     "@fortawesome/fontawesome-svg-core": "^1.2.30",
     "@fortawesome/free-regular-svg-icons": "^5.14.0",
     "@fortawesome/free-solid-svg-icons": "^5.14.0",
-    "@mapbox/geojson-extent": "^0.3.2",
+    "@mapbox/geojson-extent": "^1.0.0",
     "@ngrx/effects": "^10.0.0",
     "@ngrx/entity": "^10.0.0",
     "@ngrx/router-store": "^10.0.0",
