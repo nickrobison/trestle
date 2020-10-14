@@ -78,7 +78,7 @@
     "codelyzer": "^6.0.1",
     "cucumber": "^6.0.5",
     "jasmine-core": "~3.6.0",
-    "jasmine-spec-reporter": "~5.0.0",
+    "jasmine-spec-reporter": "~6.0.0",
     "jest": "^26.5.3",
     "jest-marbles": "^2.5.1",
     "node-fetch": "^2.6.1",
