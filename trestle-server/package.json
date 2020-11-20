@@ -69,7 +69,7 @@
     "@types/jasminewd2": "~2.0.3",
     "@types/jest": "^26.0.14",
     "@types/mapbox-gl": "^1.12.0",
-    "@types/node": "^14.11.1",
+    "@types/node": "^14.14.9",
     "@types/nodegit": "^0.26.10",
     "@types/wellknown": "^0.5.1",
     "browserstack-local": "^1.4.8",
