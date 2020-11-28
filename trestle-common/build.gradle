@@ -1,4 +1,4 @@
 dependencies {
-    implementation group: 'com.ibm.icu', name: 'icu4j', version: '67.1'
+    implementation group: 'com.ibm.icu', name: 'icu4j', version: '68.1'
     implementation group: 'org.apache.jena', name: 'jena-core', version: jenaVersion
 }
