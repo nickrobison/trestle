@@ -6,7 +6,7 @@ dependencies {
     implementation group: "com.fasterxml.jackson.dataformat", name: "jackson-dataformat-xml"
     implementation group: "com.fasterxml.jackson.datatype", name: "jackson-datatype-jsr310"
     implementation group: "org.locationtech.jts", name: "jts-core"
-    implementation group: 'com.fasterxml.woodstox', name: 'woodstox-core', version: '6.2.2'
+    implementation group: 'com.fasterxml.woodstox', name: 'woodstox-core', version: '6.2.3'
     testImplementation group: 'commons-io', name: 'commons-io'
 
 }
