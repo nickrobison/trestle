@@ -73,7 +73,7 @@ subprojects {
         compileOnly group: 'org.checkerframework', name: 'checker', version: checkerVersion
         implementation group: 'net.sourceforge.owlapi', name: 'owlapi-api', version: owlVersion
         implementation group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
-        implementation group: "com.typesafe", name: "config", version: "1.4.0"
+        implementation group: "com.typesafe", name: "config", version: "1.4.1"
         testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: junitJupiterVersion
         testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-params', version: junitJupiterVersion
         testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: junitJupiterVersion
