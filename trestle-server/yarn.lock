@@ -2202,10 +2202,10 @@
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.162.tgz#65d78c397e0d883f44afbf1f7ba9867022411470"
   integrity sha512-alvcho1kRUnnD1Gcl4J+hK0eencvzq9rmzvFPRmP5rPHx9VVsJj6bKLTATPVf9ktgv4ujzh7T+XWKp+jhuODig==
 
-"@types/mapbox-gl@^1.12.0":
-  version "1.12.0"
-  resolved "https://registry.yarnpkg.com/@types/mapbox-gl/-/mapbox-gl-1.12.0.tgz#425995a318187c090340e4477c038df247fb0a6f"
-  integrity sha512-9Atkrn54Vh8+svpdM9/lOXT9CiMsOukdO5gAGHfHYkhT19u7GbRN8utzrV+gRHMtagW+AGZyvQ/qUapjQOiqAw==
+"@types/mapbox-gl@^1.12.9":
+  version "1.12.9"
+  resolved "https://registry.yarnpkg.com/@types/mapbox-gl/-/mapbox-gl-1.12.9.tgz#b34b4dcd8fc32a6aff830db0f75ed4f6e44274f2"
+  integrity sha512-+RWus/Q27dr212Of9EIMvfhRHpdE28Nu4HN3/vLk9ZruQ1WhIvkFOQEUcgQuH6v+LnJ4VxglVSye6UqMtoCLtQ==
   dependencies:
     "@types/geojson" "*"
 
