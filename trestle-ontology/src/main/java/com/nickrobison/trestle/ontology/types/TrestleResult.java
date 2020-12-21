@@ -11,9 +11,7 @@ import java.util.Optional;
 
 /**
  * Created by nrobison on 1/10/17.
- */
-
-/**
+ * <p>
  * Single row from a {@link TrestleResultSet}, contains an internal {@link Map} of variable/value pairs
  * An empty Optional for a given varName indicates that that variable is unbound
  */
@@ -23,6 +21,10 @@ public class TrestleResult {
 
     public TrestleResult() {
         this.resultValues = new HashMap<>();
+    }
+
+    public TrestleResult(Map<String, @Nullable OWLObject> resultValues) {
+        this.resultValues = resultValues;
     }
 
     /**
@@ -48,7 +50,7 @@ public class TrestleResult {
             final OWLObject owlObject = resultValues.get(varName);
             if (owlObject != null) {
                 if (owlObject instanceof OWLLiteral) {
-                    return Optional.of(OWLLiteral.class.cast(owlObject));
+                    return Optional.of((OWLLiteral) owlObject);
                 }
                 throw new ClassCastException(String.format("OWLObject for variable %s is not an OWLLiteral", varName));
             }
@@ -79,8 +81,8 @@ public class TrestleResult {
     public Optional<OWLIndividual> getIndividual(String varName) {
         if (resultValues.containsKey(varName)) {
             final OWLObject owlObject = resultValues.get(varName);
-            if (owlObject != null && owlObject instanceof OWLIndividual) {
-                return Optional.of(OWLIndividual.class.cast(owlObject));
+            if (owlObject instanceof OWLIndividual) {
+                return Optional.of((OWLIndividual) owlObject);
             }
             throw new ClassCastException(String.format("OWLObject for variable %s is not an OWLIndividual", varName));
         }

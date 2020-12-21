@@ -5,9 +5,6 @@ import java.util.List;
 
 /**
  * Created by nrobison on 1/10/17.
- */
-
-/**
  * ResultSet returned from {@link com.nickrobison.trestle.ontology.ITrestleOntology}
  * Thread-safe and fully expanded, it allows us to
  */
@@ -20,6 +17,12 @@ public class TrestleResultSet {
     public TrestleResultSet(int rows, List<String> bindingNames) {
         this.rows = rows;
         this.results = new ArrayList<>();
+        this.bindingNames = bindingNames;
+    }
+
+    public TrestleResultSet(int rows, List<String> bindingNames, List<TrestleResult> results) {
+        this.rows = rows;
+        this.results = results;
         this.bindingNames = bindingNames;
     }
 

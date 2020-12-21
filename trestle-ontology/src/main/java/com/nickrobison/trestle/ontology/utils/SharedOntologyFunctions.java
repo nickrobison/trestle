@@ -1,8 +1,10 @@
 package com.nickrobison.trestle.ontology.utils;
 
-import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
-import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.OWLDataProperty;
+import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -46,20 +48,5 @@ public class SharedOntologyFunctions {
             propertyAxioms = individualProperties;
         }
         return propertyAxioms;
-    }
-
-    /**
-     * Given a TrestleResultSet representing all Facts from a given individual.
-     * Return as a Set of OWLDataPropertyAssertionAxioms
-     * @param df - OWLDataFactory to use
-     * @param resultSet - TrestleResultSet of Individual Facts
-     * @return - Set of OWLDataPropertyAssertionAxioms
-     */
-    public static Set<OWLDataPropertyAssertionAxiom> getDataPropertiesFromIndividualFacts(OWLDataFactory df, TrestleResultSet resultSet) {
-        return resultSet.getResults().stream().map(result -> df.getOWLDataPropertyAssertionAxiom(
-                df.getOWLDataProperty(IRI.create(result.getIndividual("property").orElseThrow(() -> new RuntimeException("Unable to get property")).toStringID())),
-                df.getOWLNamedIndividual(IRI.create(result.getIndividual("individual").orElseThrow(() -> new RuntimeException("Unable to get individual")).toStringID())),
-                result.getLiteral("object").orElseThrow(() -> new RuntimeException("Unable to get object"))))
-                .collect(Collectors.toSet());
     }
 }

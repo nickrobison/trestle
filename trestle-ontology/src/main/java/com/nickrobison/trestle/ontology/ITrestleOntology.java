@@ -363,17 +363,17 @@ public interface ITrestleOntology {
      * @param validTemporal    - Nullable {@link OffsetDateTime} representing valid-at temporal
      * @param databaseTemporal - Nullable {@link OffsetDateTime} representing database-at temporal
      * @param filterTemporals  - {@code true} remove temporals from the result set
-     * @return - {@link Set} of {@link OWLDataPropertyAssertionAxiom} which represent all asserted Facts on the individual
+     * @return - {@link Flowable} of {@link OWLDataPropertyAssertionAxiom} which represent all asserted Facts on the individual
      */
-    Set<OWLDataPropertyAssertionAxiom> getFactsForIndividual(OWLNamedIndividual individual, OffsetDateTime validTemporal, OffsetDateTime databaseTemporal, boolean filterTemporals);
+    Flowable<OWLDataPropertyAssertionAxiom> getFactsForIndividual(OWLNamedIndividual individual, OffsetDateTime validTemporal, OffsetDateTime databaseTemporal, boolean filterTemporals);
 
     /**
      * Get data properties for temporal from given individuals
      *
      * @param individual - Individual to retrieve temporal properties from
-     * @return - Set of OWLDataPropertyAssertionAxioms representing temporal properties
+     * @return -{@link Flowable} of {@link OWLDataPropertyAssertionAxiom} representing temporal properties
      */
-    Set<OWLDataPropertyAssertionAxiom> getTemporalsForIndividual(OWLNamedIndividual individual);
+    Flowable<OWLDataPropertyAssertionAxiom> getTemporalsForIndividual(OWLNamedIndividual individual);
 
     /**
      * Get the full IRI expanded from the DefaultPrefixManager

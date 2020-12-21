@@ -44,7 +44,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import static com.nickrobison.trestle.ontology.utils.SharedOntologyFunctions.filterIndividualDataProperties;
-import static com.nickrobison.trestle.ontology.utils.SharedOntologyFunctions.getDataPropertiesFromIndividualFacts;
+import static com.nickrobison.trestle.ontology.utils.ToDataPropertyAssertionAxiom.toDataPropertyAssertionAxiom;
 
 @NotThreadSafe
 // We have to suppress these warnings because Checker is garbage and won't allow us to mark a method has ensuring non-null. Because why would it?
@@ -418,50 +418,6 @@ public abstract class RDF4JOntology extends TransactingOntology {
                     result.close();
                     this.commitTransaction(false);
                 });
-//                    entry
-//                            .getValue().forEach(literal -> {
-//                        final Optional<OWLLiteral> owlLiteral = createOWLLiteral(literal);
-//                        owlLiteral.ifPresent(owlLiteral1 -> properties.add(df.getOWLDataPropertyAssertionAxiom(
-//                                owlDataProperty,
-//                                individual,
-//                                owlLiteral1)));
-//                    })
-//        try {
-//            final RepositoryResult<Statement> statements = getThreadConnection().getStatements(individualIRI, null, null);
-//            try {
-//
-//                while (statements.hasNext()) {
-//                    final Statement statement = statements.next();
-//                    if (!statement.getPredicate().getNamespace().contains("rdf-syntax")) {
-//                        final Value object = statement.getObject();
-//                        if (object instanceof Literal) {
-//                            statementLiterals.put(statement.getPredicate().toString(), Literal.class.cast(object));
-//                        }
-//                    }
-//                }
-//            } finally {
-//                statements.close();
-//            }
-//        } finally {
-//            this.commitTransaction(false);
-//        }
-//
-//        statementLiterals
-//                .asMap()
-//                .entrySet()
-//                .forEach(entry -> {
-//                    final OWLDataProperty owlDataProperty = df.getOWLDataProperty(IRI.create(entry.getKey()));
-//                    entry
-//                            .getValue().forEach(literal -> {
-//                        final Optional<OWLLiteral> owlLiteral = createOWLLiteral(literal);
-//                        owlLiteral.ifPresent(owlLiteral1 -> properties.add(df.getOWLDataPropertyAssertionAxiom(
-//                                owlDataProperty,
-//                                individual,
-//                                owlLiteral1)));
-//                    });
-//                });
-//
-//        return properties;
     }
 
     @Override
@@ -534,41 +490,31 @@ public abstract class RDF4JOntology extends TransactingOntology {
                     .doOnComplete(() -> this.commitTransaction(false))
                     .doOnError(error -> this.unlockAndAbort(false))
                     .doFinally(statements::close);
-//            try {
-//                while (statements.hasNext()) {
-//                    final Statement next = statements.next();
-//
-//                }
-//            } finally {
-//                statements.close();
-//            }
-//        } finally {
-//            this.commitTransaction(false);
-//        }
-//
-//        if (properties.isEmpty()) {
-//            return Optional.empty();
-//        }
         } catch (Exception e) {
             this.unlockAndAbort(false);
             throw e;
         }
-//        return Optional.of(properties);
     }
 
     @Override
-    public Set<OWLDataPropertyAssertionAxiom> getFactsForIndividual(OWLNamedIndividual individual, OffsetDateTime
+    public Flowable<OWLDataPropertyAssertionAxiom> getFactsForIndividual(OWLNamedIndividual individual, OffsetDateTime
             validTemporal, OffsetDateTime databaseTemporal, boolean filterTemporals) {
         final String objectQuery = qb.buildObjectFactRetrievalQuery(validTemporal, databaseTemporal, true, null, individual);
-        final TrestleResultSet resultSet = this.executeSPARQLResults(objectQuery);
-        return getDataPropertiesFromIndividualFacts(this.df, resultSet);
+        return dataPropertiesFromIndividual(individual, objectQuery);
     }
 
     @Override
-    public Set<OWLDataPropertyAssertionAxiom> getTemporalsForIndividual(OWLNamedIndividual individual) {
+    public Flowable<OWLDataPropertyAssertionAxiom> getTemporalsForIndividual(OWLNamedIndividual individual) {
         final String temporalQuery = this.qb.buildIndividualTemporalQuery(individual);
-        final TrestleResultSet resultSet = this.executeSPARQLResults(temporalQuery);
-        return getDataPropertiesFromIndividualFacts(this.df, resultSet);
+        return dataPropertiesFromIndividual(individual, temporalQuery);
+    }
+
+    private Flowable<OWLDataPropertyAssertionAxiom> dataPropertiesFromIndividual(OWLNamedIndividual individual, String query) {
+        this.openTransaction(false);
+        return Flowable.fromIterable(this.executeSPARQLResults(query).getResults())
+                .lift(toDataPropertyAssertionAxiom(this.df))
+                .doOnError(error -> this.unlockAndAbort(false))
+                .doOnComplete(() -> this.commitTransaction(false));
     }
 
     @Override
@@ -609,7 +555,7 @@ public abstract class RDF4JOntology extends TransactingOntology {
                     final Value value = binding.getValue();
 //                FIXME(nrobison): This is broken, figure out how to get the correct subtypes
                     if (value instanceof Literal) {
-                        final OWLLiteral owlLiteral = this.lf.createOWLLiteral(Literal.class.cast(value));
+                        final OWLLiteral owlLiteral = this.lf.createOWLLiteral((Literal) value);
                         results.addValue(varName, owlLiteral);
                     } else {
                         results.addValue(varName, df.getOWLNamedIndividual(IRI.create(value.stringValue())));
