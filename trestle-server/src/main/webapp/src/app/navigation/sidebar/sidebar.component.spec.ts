@@ -1,4 +1,4 @@
-import {async, ComponentFixture, TestBed} from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import {SidebarComponent} from './sidebar.component';
 import {MemoizedSelector} from '@ngrx/store';
@@ -17,7 +17,7 @@ describe('SidebarComponent', () => {
   let mockStore: MockStore;
   let mockUsernameSelector: MemoizedSelector<fromState.State, TrestleUser>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       imports: [MaterialModule, RouterTestingModule, NoopAnimationsModule],
       declarations: [SidebarComponent],

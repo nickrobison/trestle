@@ -1,4 +1,4 @@
-import {async, ComponentFixture, TestBed} from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import {UserDialogComponent} from './users.dialog.component';
 import {MaterialModule} from '../../material/material.module';
 import {UserModule} from '../../user/user.module';
@@ -22,7 +22,7 @@ describe('UsersDialogComponent', () => {
   let component: UserDialogComponent;
   let fixture: ComponentFixture<UserDialogComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       imports: [MaterialModule, UserModule, ReactiveFormsModule, SharedModule, HttpClientTestingModule, NoopAnimationsModule],
       providers: [{

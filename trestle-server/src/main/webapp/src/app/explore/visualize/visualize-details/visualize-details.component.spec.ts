@@ -1,4 +1,4 @@
-import {async, ComponentFixture, TestBed} from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import {VisualizeDetailsComponent} from './visualize-details.component';
 import {MaterialModule} from '../../../material/material.module';
@@ -20,7 +20,7 @@ describe('VisualizeDetailsComponent', () => {
   let component: VisualizeDetailsComponent;
   let fixture: ComponentFixture<VisualizeDetailsComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [VisualizeDetailsComponent, TrestleMapComponent, HistoryGraphComponent, IndividualGraphComponent, SpatialUnionComponent, EventGraphComponent],
       providers: [IndividualService, {
