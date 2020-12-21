@@ -1,4 +1,4 @@
-import {async, ComponentFixture, TestBed} from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import {VisualizeComponent} from './visualize.component';
 import {RouterTestingModule} from '@angular/router/testing';
@@ -17,7 +17,7 @@ describe('VisualizeComponent', () => {
   let component: VisualizeComponent;
   let fixture: ComponentFixture<VisualizeComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       imports: [RouterTestingModule, MaterialModule, UiModule, ReactiveFormsModule, FormsModule, HttpClientTestingModule, NoopAnimationsModule],
       providers: [{

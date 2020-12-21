@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { UserIconComponent } from './user-icon.component';
 import {MockStore, provideMockStore} from '@ngrx/store/testing';
@@ -17,7 +17,7 @@ describe('UserIconComponent', () => {
   let mockStore: MockStore;
   let mockUsernameSelector: MemoizedSelector<fromState.State, TrestleUser>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [ UserIconComponent ],
       imports: [FontAwesomeModule, MaterialModule],

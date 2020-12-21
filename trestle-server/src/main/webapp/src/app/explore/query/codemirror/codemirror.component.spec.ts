@@ -1,11 +1,11 @@
-import {async, ComponentFixture, TestBed} from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import {CodeMirrorComponent} from './codemirror.component';
 
 describe('CodeMirrorComponent', () => {
   let component: CodeMirrorComponent;
   let fixture: ComponentFixture<CodeMirrorComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [CodeMirrorComponent]
     })

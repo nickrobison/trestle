@@ -1,4 +1,4 @@
-import {async, ComponentFixture, TestBed} from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import {CompareComponent} from './compare.component';
 import {MaterialModule} from '../../material/material.module';
@@ -20,7 +20,7 @@ describe.skip('CompareComponent', () => {
   let component: CompareComponent;
   let fixture: ComponentFixture<CompareComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [CompareComponent, ExporterComponent],
       providers: [{

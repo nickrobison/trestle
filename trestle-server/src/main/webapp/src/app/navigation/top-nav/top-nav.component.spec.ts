@@ -1,4 +1,4 @@
-import {async, ComponentFixture, TestBed} from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import {TopNavComponent} from './top-nav.component';
 import {MockStore, provideMockStore} from '@ngrx/store/testing';
@@ -16,7 +16,7 @@ describe('TopNavComponent', () => {
   let mockStore: MockStore;
   let mockUsernameSelector: MemoizedSelector<fromState.State, TrestleUser>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [TopNavComponent, UserIconComponent],
       imports: [MaterialModule, FontAwesomeModule],

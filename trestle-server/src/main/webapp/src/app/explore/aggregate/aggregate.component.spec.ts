@@ -1,4 +1,4 @@
-import {async, ComponentFixture, TestBed} from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import {AggregateComponent} from './aggregate.component';
 import {SharedModule} from '../../shared/shared.module';
@@ -13,7 +13,7 @@ describe.skip('AggregateComponent', () => {
   let component: AggregateComponent;
   let fixture: ComponentFixture<AggregateComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [AggregateComponent],
       providers: [AggregationService, MapService],

@@ -1,4 +1,4 @@
-import {async, ComponentFixture, TestBed} from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import {SpatialUnionComponent} from './spatial-union.component';
 import {INDIVIDUAL_CACHE, IndividualService} from '../../shared/individual/individual.service';
@@ -13,7 +13,7 @@ describe('SpatialUnionComponent', () => {
   let component: SpatialUnionComponent;
   let fixture: ComponentFixture<SpatialUnionComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [SpatialUnionComponent, EventGraphComponent],
       providers: [IndividualService, {

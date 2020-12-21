@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { IndividualGraphComponent } from './individual-graph.component';
 import {MaterialModule} from '../../../material/material.module';
@@ -7,7 +7,7 @@ describe('IndividualGraphComponent', () => {
   let component: IndividualGraphComponent;
   let fixture: ComponentFixture<IndividualGraphComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [ IndividualGraphComponent ],
       imports: [MaterialModule]

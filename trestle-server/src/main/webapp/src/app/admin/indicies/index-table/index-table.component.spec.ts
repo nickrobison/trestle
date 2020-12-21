@@ -1,4 +1,4 @@
-import {async, ComponentFixture, TestBed} from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {IndexTableComponent} from './index-table.component';
 import {MaterialModule} from '../../../material/material.module';
@@ -7,7 +7,7 @@ describe('IndexTableComponent', () => {
   let component: IndexTableComponent;
   let fixture: ComponentFixture<IndexTableComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [IndexTableComponent],
       imports: [MaterialModule],

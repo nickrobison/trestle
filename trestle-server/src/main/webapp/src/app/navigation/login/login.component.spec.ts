@@ -1,4 +1,4 @@
-import {async, ComponentFixture, TestBed} from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import {LoginComponent} from './login.component';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
@@ -18,7 +18,7 @@ describe('LoginComponent', () => {
   let mockStore: MockStore;
   let mockUsernameSelector: MemoizedSelector<fromState.State, Error>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       imports: [FormsModule, ReactiveFormsModule, RouterTestingModule, HttpClientTestingModule, NoopAnimationsModule],
       providers: [AuthService, provideMockStore()],

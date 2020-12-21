@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { MetricsGraphComponent } from './metrics-graph.component';
 
@@ -6,7 +6,7 @@ describe('MetricsGraphComponent', () => {
   let component: MetricsGraphComponent;
   let fixture: ComponentFixture<MetricsGraphComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [ MetricsGraphComponent ]
     })
