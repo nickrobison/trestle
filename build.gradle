@@ -23,7 +23,7 @@ ext {
     checkerVersion = "3.3.0"
     commonsLangVersion = "3.10"
     esriVersion = '2.2.3'
-    geotoolsVersion = "23.1"
+    geotoolsVersion = "24.1"
     metricsVersion = "4.1.5"
     postgresVersion = '42.2.14'
     guiceVersion = "4.2.3"
