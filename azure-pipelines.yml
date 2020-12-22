@@ -3,14 +3,6 @@ pool:
 
 pr: none
 
-strategy:
-  matrix:
-    java-15:
-      jdkVersion: '1.15'
-    java-11:
-      jdkVersion: '1.11'
-
-
 variables:
   MAVEN_CACHE_FOLDER: $(Pipeline.Workspace)/.m2/repository
   YARN_CACHE_FOLDER: $(Pipeline.Workspace)/.yarn
@@ -29,14 +21,21 @@ stages:
     jobs:
       - job: Compile_Java
         displayName: Compile Java Sources
+        strategy:
+          matrix:
+            java-15:
+              jdkVersion: '1.15'
+            java-11:
+              jdkVersion: '1.11'
         steps:
           - checkout: self
             submodules: true
           - task: Cache@2
             displayName: Cache Gradle local repo
             inputs:
-              key: 'gradle | "$(Agent.OS)" | **/build.gradle'
+              key: 'gradle | "$(Agent.OS)" | "$(jdkVersion)" | **/build.gradle'
               restoreKeys: |
+                gradle | "$(Agent.OS)" | "$(jdkVersion)"
                 gradle | "$(Agent.OS)"
                 gradle
               path: $(MAVEN_CACHE_FOLDER)
@@ -90,6 +89,12 @@ stages:
     jobs:
       - job: Test_Java
         displayName: Test Java
+        strategy:
+          matrix:
+            java-15:
+              jdkVersion: '1.15'
+            java-11:
+              jdkVersion: '1.11'
         services:
           graphdb: graphdb
         steps:
@@ -103,10 +108,11 @@ stages:
               targetFolder: $(Build.SourcesDirectory)
           - task: Cache@2
             inputs:
-              key: 'gradle | "$(Agent.OS)" | **/build.gradle'
+              key: 'gradle | "$(Agent.OS)" | "$(jdkVersion)" | **/build.gradle'
               restoreKeys: |
-                maven | "$(Agent.OS)"
-                maven
+                gradle | "$(Agent.OS)" | "$(jdkVersion)"
+                gradle | "$(Agent.OS)"
+                gradle
               path: $(MAVEN_CACHE_FOLDER)
             displayName: Cache Maven local repo
           - task: SonarCloudPrepare@1
@@ -118,7 +124,7 @@ stages:
             inputs:
               gradleOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
               javaHomeOption: 'JDKVersion'
-              jdkVersionOption: '1.11'
+              jdkVersionOption: '$(jdkVersion)'
               tasks: 'build jacocoTestReport'
               sonarQubeRunAnalysis: true
               sqGradlePluginVersionChoice: 'build'
@@ -174,8 +180,9 @@ stages:
               targetFolder: $(Build.SourcesDirectory)/trestle-server/src/main/resources/build
           - task: Cache@2
             inputs:
-              key: 'gradle | "$(Agent.OS)" | **/build.gradle'
+              key: 'gradle | "$(Agent.OS)" | "$(jdkVersion)" | **/build.gradle'
               restoreKeys: |
+                gradle | "$(Agent.OS)" | "$(jdkVersion)"
                 gradle | "$(Agent.OS)"
                 gradle
               path: $(MAVEN_CACHE_FOLDER)
