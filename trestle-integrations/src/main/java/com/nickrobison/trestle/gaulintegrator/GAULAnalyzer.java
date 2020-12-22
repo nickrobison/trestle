@@ -25,9 +25,9 @@ import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
 import org.semanticweb.owlapi.model.IRI;
 import si.uom.SI;
-import tec.uom.se.quantity.Quantities;
-import tec.uom.se.unit.MetricPrefix;
+import tech.units.indriya.quantity.Quantities;
 
+import javax.measure.MetricPrefix;
 import javax.measure.Quantity;
 import javax.measure.Unit;
 import javax.measure.quantity.Area;
