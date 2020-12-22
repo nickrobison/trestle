@@ -1,7 +1,15 @@
 pool:
-  vmImage: 'ubuntu-16.04'
+  vmImage: 'ubuntu-latest'
 
 pr: none
+
+strategy:
+  matrix:
+    java-15:
+      jdkVersion: '1.15'
+    java-11:
+      jdkVersion: '1.11'
+
 
 variables:
   MAVEN_CACHE_FOLDER: $(Pipeline.Workspace)/.m2/repository
@@ -18,8 +26,6 @@ resources:
 stages:
   - stage: Build
     displayName: Build Source Code
-    pool:
-      vmImage: "ubuntu-latest"
     jobs:
       - job: Compile_Java
         displayName: Compile Java Sources
@@ -39,7 +45,7 @@ stages:
             inputs:
               gradleOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
               javaHomeOption: 'JDKVersion'
-              jdkVersionOption: '1.11'
+              jdkVersionOption: $(jdkVersion)
               tasks: 'assemble'
               jdkArchitectureOption: 'x64'
 #          - task: Maven@3
@@ -81,8 +87,6 @@ stages:
   - stage: Test
     displayName: Run tests
     dependsOn: Build
-    pool:
-      vmImage: "ubuntu-latest"
     jobs:
       - job: Test_Java
         displayName: Test Java
@@ -215,8 +219,6 @@ stages:
 #  - stage: Deploy
 #    displayName: Deploy resources
 #    dependsOn: Test
-#    pool:
-#      vmImage: "ubuntu-latest"
 ##    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
 #    condition: never()
 #    jobs:

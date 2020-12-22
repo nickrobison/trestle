@@ -25,7 +25,7 @@ jib {
     tags = ['latest']
   }
   from {
-    image = "openjdk:11-jdk-slim-buster"
+    image = "openjdk:15-jdk-slim-buster"
   }
   container {
     mainClass = mainClass
