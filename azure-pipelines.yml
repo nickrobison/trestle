@@ -23,8 +23,8 @@ stages:
         displayName: Compile Java Sources
         strategy:
           matrix:
-            java-15:
-              jdkVersion: '1.15'
+#            java-15:
+#              jdkVersion: '1.15'
             java-11:
               jdkVersion: '1.11'
         steps:
@@ -91,8 +91,8 @@ stages:
         displayName: Test Java
         strategy:
           matrix:
-            java-15:
-              jdkVersion: '1.15'
+#            java-15:
+#              jdkVersion: '1.15'
             java-11:
               jdkVersion: '1.11'
         services:
