@@ -114,7 +114,7 @@ stages:
                 gradle | "$(Agent.OS)"
                 gradle
               path: $(MAVEN_CACHE_FOLDER)
-            displayName: Cache Maven local repo
+            displayName: Cache Gradle local repo
           - task: SonarCloudPrepare@1
             inputs:
               SonarCloud: 'Sonar Cloud'
@@ -131,17 +131,6 @@ stages:
               jdkArchitectureOption: 'x64'
               publishJUnitResults: true
               testResultsFiles: '**/test-results/test/TEST-*.xml'
-#          - task: Maven@3
-#            inputs:
-#              mavenPomFile: 'pom.xml'
-#              mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
-#              javaHomeOption: 'JDKVersion'
-#              jdkVersionOption: '1.11'
-#              jdkArchitectureOption: 'x64'
-#              publishJUnitResults: true
-#              testResultsFiles: '**/TEST-*.xml'
-#              goals: 'test'
-#              sonarQubeRunAnalysis: true
           - task: SonarCloudPublish@1
             inputs:
               pollingTimeoutSec: '300'
@@ -186,7 +175,7 @@ stages:
                 gradle | "$(Agent.OS)"
                 gradle
               path: $(MAVEN_CACHE_FOLDER)
-            displayName: Cache Maven local repo
+            displayName: Cache Gradle local repo
           - task: Docker@2
             displayName: Login for Private Docker Images
             inputs:
@@ -199,15 +188,6 @@ stages:
               jdkVersionOption: '1.11'
               tasks: 'jibDockerBuild'
               jdkArchitectureOption: 'x64'
-#          - task: Maven@3
-#            displayName: Build Docker image
-#            inputs:
-#              mavenPomFile: 'pom.xml'
-#              mavenOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
-#              javaHomeOption: 'JDKVersion'
-#              jdkVersionOption: '1.11'
-#              jdkArchitectureOption: 'x64'
-#              goals: 'package -DskipTests' # Not sure why the skip has to be here
           - task: DockerCompose@0
             displayName: Run Stack
             inputs:
