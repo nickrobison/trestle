@@ -10,10 +10,10 @@ import {
   SimpleChange,
   ViewChild,
   ViewEncapsulation
-} from '@angular/core';
-import {BaseType, select, Selection} from 'd3-selection';
-import {ScaleOrdinal, scaleOrdinal} from 'd3-scale';
-import {schemeCategory10} from 'd3';
+} from "@angular/core";
+import {BaseType, select, Selection} from "d3-selection";
+import {ScaleOrdinal, scaleOrdinal} from "d3-scale";
+import {schemeCategory10} from "d3";
 import {
   forceCenter,
   forceLink,
@@ -23,10 +23,10 @@ import {
   SimulationLinkDatum,
   SimulationNodeDatum
 } from 'd3-force';
-import * as moment from 'moment';
-import {TrestleIndividual} from '../../../shared/individual/TrestleIndividual/trestle-individual';
-import {BehaviorSubject} from 'rxjs';
-import {MatSlideToggleChange} from '@angular/material/slide-toggle';
+import * as moment from "moment";
+import {TrestleIndividual} from "../../../shared/individual/TrestleIndividual/trestle-individual";
+import {BehaviorSubject} from "rxjs";
+import {MatSlideToggleChange} from "@angular/material/slide-toggle";
 
 export interface IIndividualConfig {
   data: TrestleIndividual;
