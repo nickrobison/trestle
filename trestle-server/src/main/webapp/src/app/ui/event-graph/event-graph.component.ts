@@ -1,9 +1,9 @@
-import {AfterViewInit, Component, ElementRef, Input, OnChanges, SimpleChanges, ViewChild} from '@angular/core';
-import {BaseType, event, select, Selection} from 'd3-selection';
-import {scaleLinear, scaleOrdinal, scaleTime} from 'd3-scale';
-import {schemeCategory10} from 'd3';
-import {axisBottom} from 'd3-axis';
-import {ID3Margin} from '../common';
+import {AfterViewInit, Component, ElementRef, Input, OnChanges, SimpleChanges, ViewChild} from "@angular/core";
+import {BaseType, select, Selection} from "d3-selection";
+import {scaleLinear, scaleOrdinal, scaleTime} from "d3-scale";
+import {schemeCategory10} from "d3";
+import {axisBottom} from "d3-axis";
+import {ID3Margin} from "../common";
 
 export interface IEventElement {
   id: string;
@@ -153,8 +153,6 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
       .attr('entity', (d) => d.entity)
       .style('fill', (d: IEventElement) => z(d.entity))
       .style('opacity', (d) => d.continuing ? 0.7 : 1.0)
-      // .on("mouseover", this.mouseOverHandler)
-      // .on("mouseout", this.mouseOutHandler)
       .merge(nodes);
 
     nodes
@@ -234,22 +232,6 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
     console.debug('Event Graph Initialized');
   }
 
-  private mouseOverHandler = (data: IEventElement): void => {
-    console.debug('Over event:', event);
-    this.tooltip
-      // .text("Hello!")
-      .html('Something')
-      .style('top', ((event as MouseEvent).pageY - 10) + 'px')
-      .style('left', ((event as MouseEvent).pageX + 10) + 'px')
-      .style('visibility', 'visible');
-  };
-
-  private mouseOutHandler = (data: IEventElement): void => {
-    console.debug('Out event:', event);
-    this.tooltip
-      .style('visibility', 'hidden');
-  };
-
   /**
    * Apply the filter function, if it exists, otherwise, return the entity as the label
    * @param {IEventElement} input
@@ -262,4 +244,6 @@ export class EventGraphComponent implements AfterViewInit, OnChanges {
       return input.entity;
     }
   };
+
+
 }
