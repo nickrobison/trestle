@@ -1619,12 +1619,12 @@
   resolved "https://registry.yarnpkg.com/@cucumber/tag-expressions/-/tag-expressions-2.0.4.tgz#ad4f43bb567e5046ada6e94ad681087c536dc123"
   integrity sha512-HiNncmg/gS34yNpMFAeoIyUHqLFFN92MXIj3rs+BKo7vn16SxvYsigDvd2PAHyjSIThsp9TO1XDtl0SLKVB58g==
 
-"@fortawesome/angular-fontawesome@^0.7.0":
-  version "0.7.0"
-  resolved "https://registry.yarnpkg.com/@fortawesome/angular-fontawesome/-/angular-fontawesome-0.7.0.tgz#af9ac19e035960e9c05615ae86aac3b737ad7b13"
-  integrity sha512-U+eHYbKuVYrrm9SnIfl+z+6KTiI4Pu+S2OKh34JIi7C1jHhDcrVeDZISP/cpswHY7LWWDOPYeKE+yuWFlL4aVw==
+"@fortawesome/angular-fontawesome@^0.8.1":
+  version "0.8.1"
+  resolved "https://registry.yarnpkg.com/@fortawesome/angular-fontawesome/-/angular-fontawesome-0.8.1.tgz#18fd226952e890c8e8744308493eddcc0afd7640"
+  integrity sha512-dNmtFb/LTYWLNRfkKgCFwxgtQslNZLwUC+u7lkVAcIcjirIG6J9Ff0evl+9zR4DXFAkP0PN4RKe14NVDP3rUWA==
   dependencies:
-    tslib "^2.0.0"
+    tslib "^2.0.3"
 
 "@fortawesome/fontawesome-common-types@^0.2.32":
   version "0.2.32"
