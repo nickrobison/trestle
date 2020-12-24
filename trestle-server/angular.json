@@ -90,7 +90,7 @@
           "options": {
             "main": "src/test.ts",
             "polyfills": "src/main/webapp/src/polyfills.ts",
-            "tsConfig": "tsconfig.spec.json",
+            "tsConfig": "../../../tsconfig.spec.json",
             "assets": [
               "src/main/webapp/src/favicon.ico",
               "src/main/webapp/src/assets"
