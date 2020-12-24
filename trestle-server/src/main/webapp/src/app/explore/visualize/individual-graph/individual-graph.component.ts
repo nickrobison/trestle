@@ -1,11 +1,28 @@
 /**
  * Created by nrobison on 3/16/17.
  */
-import {AfterViewInit, Component, ElementRef, Input, OnChanges, SimpleChange, ViewChild, ViewEncapsulation} from '@angular/core';
-import {BaseType, event, select, Selection} from 'd3-selection';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  Input,
+  OnChanges,
+  SimpleChange,
+  ViewChild,
+  ViewEncapsulation
+} from '@angular/core';
+import {BaseType, select, Selection} from 'd3-selection';
 import {ScaleOrdinal, scaleOrdinal} from 'd3-scale';
 import {schemeCategory10} from 'd3';
-import {forceCenter, forceLink, forceManyBody, forceSimulation, Simulation, SimulationLinkDatum, SimulationNodeDatum} from 'd3-force';
+import {
+  forceCenter,
+  forceLink,
+  forceManyBody,
+  forceSimulation,
+  Simulation,
+  SimulationLinkDatum,
+  SimulationNodeDatum
+} from 'd3-force';
 import * as moment from 'moment';
 import {TrestleIndividual} from '../../../shared/individual/TrestleIndividual/trestle-individual';
 import {BehaviorSubject} from 'rxjs';
@@ -207,14 +224,14 @@ export class IndividualGraphComponent implements AfterViewInit, OnChanges {
     console.debug('Clicked', d);
   };
 
-  private nodeMouseOver = (): void => {
+  private nodeMouseOver = (event: any): void => {
     select(event.currentTarget).select('circle')
       .transition()
       .duration(750)
       .attr('r', this.nodeSizeLarge);
   };
 
-  private nodeMouseOut = (): void => {
+  private nodeMouseOut = (event: any): void => {
     select(event.currentTarget)
       .select('circle')
       .transition()
