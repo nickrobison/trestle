@@ -7,6 +7,7 @@ import {BehaviorSubject, Subject} from "rxjs";
 import {TrestleIndividual} from "../../shared/individual/TrestleIndividual/trestle-individual";
 import extent from "@mapbox/geojson-extent";
 import {
+  FillExtrusionLayer,
   FillLayer,
   FillPaint,
   GeoJSONSource,
@@ -18,7 +19,6 @@ import {
   MapboxOptions,
   MapMouseEvent,
   RasterSource,
-  SymbolLayer,
   VectorSource,
   VideoSource
 } from "mapbox-gl";
@@ -53,7 +53,7 @@ export interface ITrestleMapSource {
 }
 
 export interface I3DMapSource extends ITrestleMapSource {
-  extrude: SymbolLayer;
+  extrude: FillExtrusionLayer;
 }
 
 interface GeoJSONDataSource extends GeoJSONSource {
