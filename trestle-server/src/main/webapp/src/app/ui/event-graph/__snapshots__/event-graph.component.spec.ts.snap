@@ -51,8 +51,6 @@ EventGraphComponent {
     "right": 30,
     "top": 20,
   },
-  "mouseOutHandler": [Function],
-  "mouseOverHandler": [Function],
   "svg": Selection {
     "_groups": Array [
       Array [
