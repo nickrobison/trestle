@@ -1,35 +1,37 @@
 /**
  * Created by nrobison on 6/11/17.
  */
-import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange} from '@angular/core';
-import {Feature, FeatureCollection, GeometryObject, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon} from 'geojson';
-import {BehaviorSubject, Subject} from 'rxjs';
-import {TrestleIndividual} from '../../shared/individual/TrestleIndividual/trestle-individual';
-import extent from '@mapbox/geojson-extent';
+import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange} from "@angular/core";
+import {Feature, FeatureCollection, GeometryObject} from "geojson";
+import {BehaviorSubject, Subject} from "rxjs";
+import {TrestleIndividual} from "../../shared/individual/TrestleIndividual/trestle-individual";
+import extent from "@mapbox/geojson-extent";
 import {
+  FillLayer,
   FillPaint,
   GeoJSONSource,
   GeoJSONSourceRaw,
   ImageSource,
-  Layer,
+  LineLayer,
   LngLatBounds,
   Map as MapboxMap,
+  MapboxOptions,
   MapMouseEvent,
   RasterSource,
+  SymbolLayer,
   VectorSource,
-  VideoSource,
-  MapboxOptions
-} from 'mapbox-gl';
+  VideoSource
+} from "mapbox-gl";
 
-export interface IMapFillLayer extends Layer {
+export interface IMapFillLayer extends FillLayer {
   type: 'fill';
 }
 
-export interface IMapLineLayer extends Layer {
+export interface IMapLineLayer extends LineLayer {
   type: 'line';
 }
 
-export interface IMapHoverLayer extends Layer {
+export interface IMapHoverLayer extends FillLayer {
   type: 'fill';
   filter: ['==', 'name', ''];
 }
@@ -51,16 +53,11 @@ export interface ITrestleMapSource {
 }
 
 export interface I3DMapSource extends ITrestleMapSource {
-  extrude: Layer;
+  extrude: SymbolLayer;
 }
 
 interface GeoJSONDataSource extends GeoJSONSource {
   _data: Feature<GeometryObject> | FeatureCollection<GeometryObject>;
-}
-
-interface MapDataChange {
-  previousValue: MapSource | null;
-  currentValue: MapSource | null;
 }
 
 export interface IMapAttributeChange {
@@ -100,7 +97,6 @@ export class TrestleMapComponent implements OnInit, OnChanges {
   @Output() public clicked: EventEmitter<string> = new EventEmitter();
   private centerMapOnLoad: BehaviorSubject<boolean>;
   private baseConfig: MapboxOptions;
-  private baseStyle: ITrestleMapLayers;
   private map: MapboxMap;
   private mapSources: Map<string, string[]>;
   // This has to be integers, in order to match against the numeric IDs
@@ -182,10 +178,6 @@ export class TrestleMapComponent implements OnInit, OnChanges {
       && !inputChanges.isFirstChange()
       && (inputChanges.currentValue !== inputChanges.previousValue)) {
       console.debug('New change, updating', inputChanges);
-      const mapChanges: MapDataChange = {
-        currentValue: inputChanges.currentValue,
-        previousValue: null
-      };
       if (inputChanges.previousValue != null && this.single) {
         // mapChanges.previousValue= inputChanges.previousValue;
         this.removeSource(inputChanges.previousValue);
@@ -273,7 +265,6 @@ export class TrestleMapComponent implements OnInit, OnChanges {
       //    If we're a source, turn off all the layers
       layers
         .forEach((layer) => {
-          const property = this.map.getLayoutProperty(layer, 'visibility');
           if (setVisible) {
             this.map.setLayoutProperty(layer, 'visibility', 'visible');
           } else {
@@ -489,7 +480,7 @@ export class TrestleMapComponent implements OnInit, OnChanges {
   }
 
   private removeSource(source: MapSource | string): void {
-    let sourceID = null;
+    let sourceID;
     if (typeof source === 'string') {
       sourceID = source;
     } else {
@@ -736,52 +727,8 @@ export class TrestleMapComponent implements OnInit, OnChanges {
     };
   }
 
-  private lockMap(): void {
-    this.map.dragPan.disable();
-    this.map.dragRotate.disable();
-    this.map.scrollZoom.disable();
-    this.map.keyboard.disable();
-    this.map.boxZoom.disable();
-    this.map.doubleClickZoom.disable();
-    this.map.touchZoomRotate.disable();
-  }
-
-  private unlockMap(): void {
-    this.map.dragPan.enable();
-    this.map.dragRotate.enable();
-    this.map.scrollZoom.enable();
-    this.map.keyboard.enable();
-    this.map.boxZoom.enable();
-    this.map.doubleClickZoom.enable();
-    this.map.touchZoomRotate.enable();
-  }
-
-  private static extractGeometryPoints(geom: GeometryObject): number[][] {
-    switch (geom.type) {
-      case 'Point': {
-        return [(geom as Point).coordinates];
-      }
-      case 'MultiPoint':
-        return (geom as MultiPoint).coordinates;
-      case 'LineString':
-        return (geom as LineString).coordinates;
-      case 'MultiLineString':
-        return (geom as MultiLineString).coordinates[0];
-      case 'Polygon':
-        return (geom as Polygon).coordinates[0];
-      case 'MultiPolygon':
-        return (geom as MultiPolygon).coordinates[0][0];
-      default:
-        throw new Error('Unable to get coordinates for object of type: ' + geom.type);
-    }
-  }
-
   private static is3D(x: any): x is I3DMapSource {
     return (x as I3DMapSource).extrude !== undefined;
-  }
-
-  private static isVector(x: any): x is VectorSource {
-    return (x as VectorSource).type === 'vector';
   }
 
   private static isGeoJSON(x: any): x is GeoJSONDataSource {
