@@ -22,7 +22,7 @@ import {
   Simulation,
   SimulationLinkDatum,
   SimulationNodeDatum
-} from 'd3-force';
+} from "d3-force";
 import * as moment from "moment";
 import {TrestleIndividual} from "../../../shared/individual/TrestleIndividual/trestle-individual";
 import {BehaviorSubject} from "rxjs";
