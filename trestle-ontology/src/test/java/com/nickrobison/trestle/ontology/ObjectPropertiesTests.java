@@ -82,11 +82,6 @@ public class ObjectPropertiesTests extends AbstractRDF4JTest {
     void testStatementException() {
 
         final OWLNamedIndividual individual = df.getOWLNamedIndividual(":test-individual");
-        final IRI individualIRI = vf.createIRI(individual.toStringID());
-        final IRI propertyIRI = vf.createIRI(":related-to");
-        final IRI objectIRI = vf.createIRI("http://hello");
-        final Statement stmt = vf.createStatement(individualIRI, propertyIRI, objectIRI);
-        final RepositoryResult<Object> result = MockStatementIterator.mockResult(stmt, null);
         Mockito.when(connection.getStatements(Mockito.any(IRI.class), Mockito.any(), Mockito.any())).thenThrow(RuntimeException.class);
         assertThrows(RuntimeException.class, () -> ontology.getIndividualObjectProperty(individual, df.getOWLObjectProperty(org.semanticweb.owlapi.model.IRI.create(":related-to"))), "Should throw exception");
         Mockito.verify(ontology, Mockito.times(1)).unlockAndAbort(Mockito.eq(false));
@@ -142,7 +137,6 @@ public class ObjectPropertiesTests extends AbstractRDF4JTest {
     @Test
     void writeIndividualObjectPropertyException() {
         final OWLNamedIndividual individual = df.getOWLNamedIndividual(":test-individual");
-        final IRI individualIRI = vf.createIRI(individual.toStringID());
         final IRI propertyIRI = vf.createIRI(":related-to");
         final IRI objectIRI = vf.createIRI("http://hello");
 
@@ -161,9 +155,6 @@ public class ObjectPropertiesTests extends AbstractRDF4JTest {
     @Test
     void removeIndividualObjectProperty() {
         final OWLNamedIndividual individual = df.getOWLNamedIndividual(":test-individual");
-        final IRI individualIRI = vf.createIRI(individual.toStringID());
-        final IRI propertyIRI = vf.createIRI(":related-to");
-        final IRI objectIRI = vf.createIRI("http://hello");
 
         ontology.removeIndividualObjectProperty(
                 individual,

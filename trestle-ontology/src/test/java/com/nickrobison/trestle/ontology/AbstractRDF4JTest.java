@@ -41,6 +41,7 @@ public class AbstractRDF4JTest {
 
             @Override
             public void commitTransaction(boolean write) {
+                // Not used for mocking
             }
         });
     }

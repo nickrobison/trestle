@@ -54,7 +54,6 @@ public class LiteralFactoryTests {
 
     @Test
     void testLiteralExceptions() {
-        final SimpleValueFactory vf = factory.getValueFactory();
         // Null URI
         final Literal nullLiteral = Mockito.mock(Literal.class);
         Mockito.when(nullLiteral.getDatatype()).thenReturn(null);

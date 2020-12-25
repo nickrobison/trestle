@@ -181,7 +181,6 @@ public class IndividualTests extends AbstractRDF4JTest {
     @Test
     void getInstancesException() {
         final OWLNamedIndividual individual1 = df.getOWLNamedIndividual(":test-individual");
-        final OWLNamedIndividual individual2 = df.getOWLNamedIndividual(":test-individual-2");
 
         final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(individual1.toStringID());
         final Statement stmt = vf.createStatement(individualIRI, individualIRI, individualIRI);

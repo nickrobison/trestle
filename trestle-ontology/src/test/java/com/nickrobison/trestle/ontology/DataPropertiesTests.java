@@ -90,18 +90,8 @@ public class DataPropertiesTests extends AbstractRDF4JTest {
     }
 
     @Test
-    void testMalformedDataProperty() {
-        // TODO: Add this
-    }
-
-    @Test
     void testStatementException() {
         final OWLNamedIndividual individual = df.getOWLNamedIndividual(":test-individual");
-        final IRI individualIRI = vf.createIRI(individual.toStringID());
-        final IRI propertyIRI = vf.createIRI(":related-to");
-        final Literal literal = vf.createLiteral(10);
-        final Statement stmt = vf.createStatement(individualIRI, propertyIRI, literal);
-        final RepositoryResult<Object> result = MockStatementIterator.mockResult(stmt, null);
         Mockito.when(connection.getStatements(Mockito.any(IRI.class), Mockito.any(), Mockito.any())).thenThrow(RuntimeException.class);
         assertThrows(RuntimeException.class, () -> ontology.getIndividualObjectProperty(individual, df.getOWLObjectProperty(org.semanticweb.owlapi.model.IRI.create(":related-to"))), "Should throw exception");
         Mockito.verify(ontology, Mockito.times(1)).unlockAndAbort(Mockito.eq(false));
@@ -240,9 +230,7 @@ public class DataPropertiesTests extends AbstractRDF4JTest {
     @Test
     void writeIndividualDataProperty() {
         final OWLNamedIndividual individual = df.getOWLNamedIndividual(":test-individual");
-        final IRI individualIRI = vf.createIRI(individual.toStringID());
         final IRI propertyIRI = vf.createIRI(":size");
-        final Literal dataLiteral = vf.createLiteral(10);
 
         ontology.writeIndividualDataProperty(
                 individual.getIRI(),

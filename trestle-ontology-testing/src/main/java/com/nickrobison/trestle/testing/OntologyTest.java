@@ -23,7 +23,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.StaticIRI.collectionOfIRI;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Created by nrobison on 12/1/16.
@@ -80,7 +80,7 @@ public abstract class OntologyTest {
                 .doOnComplete(() -> this.ontology.returnAndCommitTransaction(t1)).blockingAwait();
 
         final @NonNull List<OWLDataPropertyAssertionAxiom> allDataPropertiesForIndividual = ontology.getAllDataPropertiesForIndividual(typedIndividual).toList().blockingGet();
-        Assertions.assertEquals(3, allDataPropertiesForIndividual.size(), "Should have the 4 literals");
+        assertEquals(3, allDataPropertiesForIndividual.size(), "Should have the 4 literals");
 
 //        Check sparql
         String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
@@ -92,15 +92,15 @@ public abstract class OntologyTest {
                 "FILTER(?property = 'Test String'@fr)}";
 
         final List<TrestleResult> trestleResultSet = ontology.executeSPARQLResults(queryString).toList().blockingGet();
-        Assertions.assertEquals(1, trestleResultSet.size(), "Should only have the french version");
-        Assertions.assertEquals("Test String", trestleResultSet.get(0).getLiteral("property").get().getLiteral(), "Should have the correct string");
-        Assertions.assertEquals("fr", trestleResultSet.get(0).getLiteral("property").get().getLang(), "Should be french language");
+        assertEquals(1, trestleResultSet.size(), "Should only have the french version");
+        assertEquals("Test String", trestleResultSet.get(0).getLiteral("property").get().getLiteral(), "Should have the correct string");
+        assertEquals("fr", trestleResultSet.get(0).getLiteral("property").get().getLang(), "Should be french language");
     }
 
     protected abstract void shutdownOntology();
 
     @Test
-    public void SimpleCreationTest() {
+    public void testSimpleCreation() {
 
         final OWLNamedIndividual test_individual = df.getOWLNamedIndividual(IRI.create("trestle:", "test_individual"));
         final OWLClass owlClass = df.getOWLClass(IRI.create("trestle:", "GAUL"));
@@ -114,10 +114,10 @@ public abstract class OntologyTest {
 
 //        Check if the ontology has what we want
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-        Assertions.assertFalse(ontology.containsResource(test_individual).blockingGet(), "Shouldn't have the individual");
-        Assertions.assertTrue(ontology.containsResource(owlClass).blockingGet(), "Should have the class");
-        Assertions.assertTrue(ontology.containsResource(trestle_property).blockingGet(), "Should have the ADM_0 Code");
-        Assertions.assertFalse(ontology.containsResource(test_new_property).blockingGet(), "Shouldn't have test property");
+        assertFalse(ontology.containsResource(test_individual).blockingGet(), "Shouldn't have the individual");
+        assertTrue(ontology.containsResource(owlClass).blockingGet(), "Should have the class");
+        assertTrue(ontology.containsResource(trestle_property).blockingGet(), "Should have the ADM_0 Code");
+        assertFalse(ontology.containsResource(test_new_property).blockingGet(), "Shouldn't have test property");
         this.ontology.returnAndCommitTransaction(trestleTransaction);
 
 
@@ -132,12 +132,12 @@ public abstract class OntologyTest {
 
         final TrestleTransaction t2 = this.ontology.createandOpenNewTransaction(false);
         List<OWLLiteral> individualProperty = ontology.getIndividualDataProperty(test_individual, trestle_property).toList().blockingGet();
-        Assertions.assertEquals(1, individualProperty.size(), "Wrong number of values");
-        Assertions.assertEquals(42, individualProperty.get(0).parseInteger(), "Wrong property");
+        assertEquals(1, individualProperty.size(), "Wrong number of values");
+        assertEquals(42, individualProperty.get(0).parseInteger(), "Wrong property");
 
         individualProperty = ontology.getIndividualDataProperty(test_individual, test_new_property).toList().blockingGet();
-        Assertions.assertEquals(1, individualProperty.size(), "Wrong number of values");
-        Assertions.assertEquals(owlLiteral, individualProperty.get(0), "Wrong property literal");
+        assertEquals(1, individualProperty.size(), "Wrong number of values");
+        assertEquals(owlLiteral, individualProperty.get(0), "Wrong property literal");
         this.ontology.returnAndCommitTransaction(t2);
 
 ////        Try to write a property value to an individual that doesn't exist
@@ -195,14 +195,14 @@ public abstract class OntologyTest {
                 }).blockingAwait();
 
         final @NonNull List<OWLDataPropertyAssertionAxiom> abortedProperties = ontology.getAllDataPropertiesForIndividual(test_individual).toList().blockingGet();
-        Assertions.assertEquals(dataProperties.size(), abortedProperties.size(), "Should only have based data properties after aborting previous transaction");
+        assertEquals(dataProperties.size(), abortedProperties.size(), "Should only have based data properties after aborting previous transaction");
 
         final TrestleTransaction t3 = this.ontology.createandOpenNewTransaction(true);
         ontology.writeIndividualDataProperty(owlDataPropertyAssertionAxiom1)
-        .doOnComplete(() -> this.ontology.returnAndCommitTransaction(t3)).blockingAwait();
+                .doOnComplete(() -> this.ontology.returnAndCommitTransaction(t3)).blockingAwait();
         this.ontology.returnAndCommitTransaction(t3);
         final @NonNull List<OWLDataPropertyAssertionAxiom> committedProperties = ontology.getAllDataPropertiesForIndividual(test_individual).toList().blockingGet();
-        Assertions.assertTrue(committedProperties.size() > dataProperties.size(), "Should only have based data properties after aborting previous transaction");
+        assertTrue(committedProperties.size() > dataProperties.size(), "Should only have based data properties after aborting previous transaction");
     }
 
     @Test
@@ -225,7 +225,7 @@ public abstract class OntologyTest {
                 "FILTER(!isURI(?object) && !isBlank(?object) && ?object = 41374) }";
 
         final List<TrestleResult> resultSet = ontology.executeSPARQLResults(queryString).toList().blockingGet();
-        Assertions.assertEquals(2, resultSet.size(), "Wrong number of relations");
+        assertEquals(2, resultSet.size(), "Wrong number of relations");
 
 //        Test for spatial/temporal object relations and that they're inferred correctly.
         queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
@@ -242,8 +242,8 @@ public abstract class OntologyTest {
                         df.getOWLNamedIndividual(IRI.create(solution.unwrapIndividual("m").toStringID())),
                         df.getOWLNamedIndividual(IRI.create(solution.unwrapIndividual("o").toStringID()))))
                 .collect(Collectors.toSet());
-        Assertions.assertAll(() -> Assertions.assertEquals(14, temporalRelations.size(), "Wrong number of temporal relations for municipal1"),
-                () -> Assertions.assertTrue(temporalRelations
+        assertAll(() -> assertEquals(14, temporalRelations.size(), "Wrong number of temporal relations for municipal1"),
+                () -> assertTrue(temporalRelations
                         .stream()
                         .anyMatch(relation -> relation.getObject().equals(df.getOWLNamedIndividual(IRI.create("http://nickrobison.com/dissertation/trestle.owl#municipal2:1990:2013")))), "municipal1 is not related to municipal2")
         );
@@ -266,7 +266,7 @@ public abstract class OntologyTest {
 
 //        Try to read test objects
         final @NonNull List<OWLObjectPropertyAssertionAxiom> collectionMembers = ontology.getIndividualObjectProperty(df.getOWLNamedIndividual("trestle:", "Cidade_de_maputo_collection"), df.getOWLObjectProperty(collectionOfIRI)).toList().blockingGet();
-        Assertions.assertAll(() -> Assertions.assertTrue(collectionMembers.size() > 0),
-                () -> Assertions.assertEquals(df.getOWLNamedIndividual(IRI.create("trestle:", "maputo:2013:3000")), collectionMembers.stream().findFirst().get().getSubject(), "Should have maputo object"));
+        assertAll(() -> assertTrue(collectionMembers.size() > 0),
+                () -> assertEquals(df.getOWLNamedIndividual(IRI.create("trestle:", "maputo:2013:3000")), collectionMembers.stream().findFirst().get().getSubject(), "Should have maputo object"));
     }
 }

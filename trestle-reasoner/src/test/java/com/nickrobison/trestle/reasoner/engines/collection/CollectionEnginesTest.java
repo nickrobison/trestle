@@ -73,6 +73,7 @@ public class CollectionEnginesTest extends AbstractReasonerTest {
                 () -> assertFalse(this.reasoner.collectionsAreAdjacent(SECOND_COLLECTION, "third:collection", 0.5), "Second and third should not be adjacent"));
     }
 
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
     @Test
     public void testObjectRemoval() {
         //        Add all to collections
