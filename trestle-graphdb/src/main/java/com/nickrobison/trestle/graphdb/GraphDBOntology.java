@@ -1,12 +1,15 @@
 package com.nickrobison.trestle.graphdb;
 
 import com.nickrobison.trestle.ontology.RDF4JOntology;
+import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.ontology.utils.RDF4JLiteralFactory;
 import com.nickrobison.trestle.ontology.utils.SharedOntologyFunctions;
 import com.ontotext.trree.config.OWLIMSailSchema;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import org.apache.commons.io.FileUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.rdf4j.model.Literal;
@@ -151,11 +154,6 @@ public class GraphDBOntology extends RDF4JOntology {
 //    }
 
     @Override
-    public boolean isConsistent() {
-        return false;
-    }
-
-    @Override
     public void initializeOntology() {
         logger.info("Initializing new ontology {}", this.ontologyName);
         logger.info("Removing all statements from repository");
@@ -212,32 +210,28 @@ public class GraphDBOntology extends RDF4JOntology {
     }
 
     @Override
-    public void runInference() {
-    }
-
-    @Override
-    public void executeUpdateSPARQL(String queryString) {
+    public Completable executeUpdateSPARQL(String queryString) {
         this.openTransaction(true);
-        try {
+        return Completable.fromRunnable(() -> {
             final Update update = this.getThreadConnection().prepareUpdate(QueryLanguage.SPARQL, queryString);
             update.execute();
-        } finally {
-            this.commitTransaction(true);
-        }
+        })
+                .doOnError(error -> this.unlockAndAbort(true))
+                .doOnComplete(() -> this.commitTransaction(true));
     }
 
     @Override
     @SuppressWarnings({"return.type.incompatible"})
-    public TrestleResultSet executeSPARQLResults(String queryString) {
+    public Flowable<TrestleResult> executeSPARQLResults(String queryString) {
         final TrestleResultSet results;
         this.openTransaction(false);
         final TupleQuery tupleQuery = this.getThreadConnection().prepareTupleQuery(QueryLanguage.SPARQL, queryString);
-        try (TupleQueryResult resultSet = tupleQuery.evaluate()) {
-            results = buildResultSet(resultSet);
-        } finally {
-            this.commitTransaction(false);
-        }
-        return results;
+        TupleQueryResult resultSet = tupleQuery.evaluate();
+        return Flowable.fromIterable(resultSet)
+                .map(this::buildResult)
+                .doOnError(error -> this.unlockAndAbort(false))
+                .doOnComplete(() -> this.commitTransaction(false))
+                .doFinally(resultSet::close);
     }
 
     @Override

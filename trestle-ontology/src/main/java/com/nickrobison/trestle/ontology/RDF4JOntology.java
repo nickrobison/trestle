@@ -1,7 +1,6 @@
 package com.nickrobison.trestle.ontology;
 
 import com.nickrobison.trestle.ontology.types.TrestleResult;
-import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.ontology.utils.RDF4JLiteralFactory;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
@@ -19,7 +18,6 @@ import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
 import org.eclipse.rdf4j.query.Binding;
 import org.eclipse.rdf4j.query.BindingSet;
-import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
@@ -193,8 +191,6 @@ public abstract class RDF4JOntology extends TransactingOntology {
 
     @Override
     public Completable writeIndividualDataProperty(OWLDataPropertyAssertionAxiom dataProperty) {
-
-
         this.openTransaction(true);
         return Completable.fromRunnable(() -> {
             final org.eclipse.rdf4j.model.IRI subjectIRI = vf.createIRI(getFullIRIString(dataProperty.getSubject().asOWLNamedIndividual()));
@@ -505,14 +501,16 @@ public abstract class RDF4JOntology extends TransactingOntology {
         return getFullIRI(owlNamedObject).toString();
     }
 
-    protected TrestleResultSet buildResultSet(TupleQueryResult resultSet) {
-        final TrestleResultSet trestleResultSet = new TrestleResultSet(0, resultSet.getBindingNames());
-        while (resultSet.hasNext()) {
-            final BindingSet next = resultSet.next();
+    /**
+     * Convert an RDF4J {@link BindingSet} to our custom {@link TrestleResult}
+     * @param bindingSet - {@link BindingSet} to convert
+     * @return - {@link TrestleResult}
+     */
+    protected TrestleResult buildResult(BindingSet bindingSet) {
             final TrestleResult results = new TrestleResult();
-            final Set<String> varNames = next.getBindingNames();
+            final Set<String> varNames = bindingSet.getBindingNames();
             varNames.forEach(varName -> {
-                final Binding binding = next.getBinding(varName);
+                final Binding binding = bindingSet.getBinding(varName);
 //                If the binding is null, value is unbound, so skip over it
                 if (binding != null) {
                     final Value value = binding.getValue();
@@ -527,9 +525,7 @@ public abstract class RDF4JOntology extends TransactingOntology {
                     results.addValue(varName, null);
                 }
             });
-            trestleResultSet.addResult(results);
-        }
-        return trestleResultSet;
+            return results;
     }
 
     /**
