@@ -1,7 +1,6 @@
 package com.nickrobison.trestle.ontology;
 
 import org.eclipse.rdf4j.repository.RepositoryResult;
-import org.mockito.Mockito;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -16,7 +15,7 @@ import static org.mockito.Mockito.when;
 public class MockStatementIterator {
 
     public static <T> RepositoryResult<T> mockResult(T... values) {
-        final RepositoryResult<T> result = Mockito.mock(RepositoryResult.class);
+        final RepositoryResult<T> result = mock(RepositoryResult.class);
         Iterator<T> mockIterator = mock(Iterator.class);
         when(result.iterator()).thenAnswer(answer -> mockIterator);
         if (values.length == 0) {

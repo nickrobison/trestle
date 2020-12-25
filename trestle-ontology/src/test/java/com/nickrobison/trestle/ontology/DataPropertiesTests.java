@@ -248,9 +248,7 @@ public class DataPropertiesTests extends AbstractRDF4JTest {
     void writeIndividualDataPropertyException() {
 
         final OWLNamedIndividual individual = df.getOWLNamedIndividual(":test-individual");
-        final IRI individualIRI = vf.createIRI(individual.toStringID());
         final IRI propertyIRI = vf.createIRI(":size");
-        final Literal dataLiteral = vf.createLiteral(10);
 
         Mockito.doThrow(RepositoryException.class).when(connection).add(Mockito.any(IRI.class), Mockito.any(), Mockito.any());
         ontology.writeIndividualDataProperty(

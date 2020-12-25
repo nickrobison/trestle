@@ -170,9 +170,6 @@ public class ObjectPropertiesTests extends AbstractRDF4JTest {
     @Test
     void removeIndividualObjectPropertyException() {
         final OWLNamedIndividual individual = df.getOWLNamedIndividual(":test-individual");
-        final IRI individualIRI = vf.createIRI(individual.toStringID());
-        final IRI propertyIRI = vf.createIRI(":related-to");
-        final IRI objectIRI = vf.createIRI("http://hello");
 
         Mockito.doThrow(RepositoryException.class).when(connection).remove(Mockito.any(IRI.class), Mockito.any(), Mockito.any());
         ontology.removeIndividualObjectProperty(

@@ -2,7 +2,6 @@ package com.nickrobison.trestle.graphdb;
 
 import com.nickrobison.trestle.ontology.RDF4JOntology;
 import com.nickrobison.trestle.ontology.types.TrestleResult;
-import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.ontology.utils.RDF4JLiteralFactory;
 import com.nickrobison.trestle.ontology.utils.SharedOntologyFunctions;
 import com.ontotext.trree.config.OWLIMSailSchema;
@@ -223,7 +222,6 @@ public class GraphDBOntology extends RDF4JOntology {
     @Override
     @SuppressWarnings({"return.type.incompatible"})
     public Flowable<TrestleResult> executeSPARQLResults(String queryString) {
-        final TrestleResultSet results;
         this.openTransaction(false);
         final TupleQuery tupleQuery = this.getThreadConnection().prepareTupleQuery(QueryLanguage.SPARQL, queryString);
         TupleQueryResult resultSet = tupleQuery.evaluate();
