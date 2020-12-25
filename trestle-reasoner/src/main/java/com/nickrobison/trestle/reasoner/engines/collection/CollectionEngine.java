@@ -7,7 +7,7 @@ import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.ReasonerPrefix;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
-import com.nickrobison.trestle.ontology.types.TrestleResultSet;
+import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectWriter;
@@ -87,7 +87,7 @@ public class CollectionEngine implements ITrestleCollectionEngine {
 
     @Override
     public List<String> getCollections() {
-        return this.ontology.getInstances(df.getOWLClass(trestleCollectionIRI), true)
+        return this.ontology.getInstances(df.getOWLClass(trestleCollectionIRI), true).toList().blockingGet()
                 .stream()
                 .map(OWLIndividual::toStringID)
                 .collect(Collectors.toList());
@@ -112,8 +112,8 @@ public class CollectionEngine implements ITrestleCollectionEngine {
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         try {
-            final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(collectionQuery);
-            resultSet.getResults()
+            final List<TrestleResult> resultSet = this.ontology.executeSPARQLResults(collectionQuery).toList().blockingGet();
+            resultSet
                     .forEach(result -> collectionIndividuals.put(result.getIndividual("collection").orElseThrow(() -> new RuntimeException("collection is null")).toStringID(), result.getIndividual("individual").orElseThrow(() -> new RuntimeException("individual is null")).toStringID()));
 
             if (collectionIndividuals.keySet().size() == 0) {
@@ -163,8 +163,8 @@ public class CollectionEngine implements ITrestleCollectionEngine {
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         try {
-            final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(queryString);
-            final Set<String> intersectedCollectionURIs = resultSet.getResults()
+            final List<TrestleResult> resultSet = this.ontology.executeSPARQLResults(queryString).toList().blockingGet();
+            final Set<String> intersectedCollectionURIs = resultSet
                     .stream()
                     .map(result -> result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID())
                     .collect(Collectors.toSet());
@@ -195,8 +195,7 @@ public class CollectionEngine implements ITrestleCollectionEngine {
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         try {
-            Set<String> individualIRIs = this.ontology.executeSPARQLResults(retrievalStatement)
-                    .getResults()
+            Set<String> individualIRIs = this.ontology.executeSPARQLResults(retrievalStatement).toList().blockingGet()
                     .stream()
                     .map(result -> result.getIndividual("m"))
                     .filter(Optional::isPresent)
@@ -292,9 +291,8 @@ public class CollectionEngine implements ITrestleCollectionEngine {
                         relationIndividual,
                         collectionIndividual
                 ));
-            } catch (MissingOntologyEntity missingOntologyEntity) {
+            } catch (Exception e) { // I think this can actually be removed, not sure it's ever called
 //            If the collection doesn't exist, create it.
-                logger.debug("Missing collection {}, creating", missingOntologyEntity.getIndividual());
                 ontology.createIndividual(df.getOWLClassAssertionAxiom(df.getOWLClass(trestleCollectionIRI), collectionIndividual));
 //            Try again
                 ontology.writeIndividualObjectProperty(df.getOWLObjectPropertyAssertionAxiom(
@@ -318,7 +316,7 @@ public class CollectionEngine implements ITrestleCollectionEngine {
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
         try {
 //            Get all the relations
-            final Optional<List<OWLObjectPropertyAssertionAxiom>> relationProperties = this.ontology.getIndividualObjectProperty(collectionIndividual, relatedByIRI);
+            final Optional<List<OWLObjectPropertyAssertionAxiom>> relationProperties = Optional.of(this.ontology.getIndividualObjectProperty(collectionIndividual, relatedByIRI).toList().blockingGet());
             //                Remove each of the relations
             relationProperties.ifPresent(owlObjectPropertyAssertionAxioms -> owlObjectPropertyAssertionAxioms
                     .forEach(relation -> {
@@ -356,7 +354,7 @@ public class CollectionEngine implements ITrestleCollectionEngine {
             try {
                 logger.debug("Removing {}, if empty", collectionIndividual);
 //                Get related by relations and see if we need if any are left
-                final Optional<List<OWLObjectPropertyAssertionAxiom>> relatedProperties = this.ontology.getIndividualObjectProperty(collection, relatedByIRI);
+                final Optional<List<OWLObjectPropertyAssertionAxiom>> relatedProperties = Optional.of(this.ontology.getIndividualObjectProperty(collection, relatedByIRI).toList().blockingGet());
 
                 if (!relatedProperties.isPresent()) {
                     logger.debug("{} is empty, removing", collectionIndividual);
@@ -379,9 +377,8 @@ public class CollectionEngine implements ITrestleCollectionEngine {
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         try {
-            final TrestleResultSet trestleResultSet = this.ontology.executeSPARQLResults(adjacentQuery);
+            final List<TrestleResult> trestleResultSet = this.ontology.executeSPARQLResults(adjacentQuery).toList().blockingGet();
             return trestleResultSet
-                    .getResults()
                     .stream()
                     .map(result -> result.unwrapIndividual("collection"))
                     .anyMatch(collection -> collection.equals(matchingIndividual));

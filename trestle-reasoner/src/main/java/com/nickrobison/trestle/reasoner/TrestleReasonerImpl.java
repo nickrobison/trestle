@@ -10,7 +10,7 @@ import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.ReasonerPrefix;
 import com.nickrobison.trestle.ontology.annotations.OntologyName;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
-import com.nickrobison.trestle.ontology.types.TrestleResultSet;
+import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
@@ -48,6 +48,7 @@ import com.nickrobison.trestle.types.relations.CollectionRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import io.reactivex.rxjava3.functions.Supplier;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -139,8 +140,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             this.ontology.initializeOntology();
         } else {
 //            If we're not starting fresh, then we might need to update the indexes and inferencer
-            logger.info("Updating inference model");
-            ontology.runInference();
+            logger.debug("Not initializing ontology");
         }
         logger.info("Ontology {} ready", injector.getInstance(Key.get(String.class, OntologyName.class)));
 
@@ -285,9 +285,9 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public TrestleResultSet executeSPARQLSelect(String queryString) {
+    public List<TrestleResult> executeSPARQLSelect(String queryString) {
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-        final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(queryString);
+        final List<TrestleResult> resultSet = this.ontology.executeSPARQLResults(queryString).toList().blockingGet();
         this.ontology.returnAndCommitTransaction(trestleTransaction);
         return resultSet;
     }
@@ -295,7 +295,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @Override
     public Set<OWLNamedIndividual> getInstances(Class inputClass) {
         final OWLClass owlClass = trestleParser.classParser.getObjectClass(inputClass);
-        return this.ontology.getInstances(owlClass, true);
+        return this.ontology.getInstances(owlClass, true).collect((Supplier<HashSet<OWLNamedIndividual>>) HashSet::new, HashSet::add).blockingGet();
     }
 
     @Override
@@ -584,9 +584,9 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         // TODO(nickrobison): TRESTLE-733: Make better with RxJava
         final List<CompletableFuture<Void>> completableFutures = Arrays.stream(inputObject)
                 .map(object -> CompletableFuture.supplyAsync(() -> trestleParser.classParser.getIndividual(object), trestleThreadPool))
-                .map(idFuture -> idFuture.thenApply(ontology::getAllObjectPropertiesForIndividual))
+                .map(idFuture -> idFuture.thenApply(individual -> this.ontology.getAllObjectPropertiesForIndividual(individual).collect((Supplier<HashSet<OWLObjectPropertyAssertionAxiom>>) HashSet::new, HashSet::add).blockingGet()))
                 .map(propertyFutures -> propertyFutures.thenCompose(this::removeRelatedObjects))
-                .map(removedFuture -> removedFuture.thenAccept(ontology::removeIndividual))
+                .map(removedFuture -> removedFuture.thenAccept(individual -> this.ontology.removeIndividual(individual).blockingAwait()))
                 .collect(Collectors.toList());
         final CompletableFuture<List<Void>> listCompletableFuture = sequenceCompletableFutures(completableFutures);
         try {
@@ -620,8 +620,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             objectProperties
                     .stream()
                     .filter(property -> property.getProperty().getNamedProperty().getIRI().equals(hasTemporalIRI))
-                    .map(object -> ontology.getIndividualObjectProperty(object.getObject().asOWLNamedIndividual(), temporalOfIRI))
-                    .filter(Optional::isPresent)
+                    .map(object -> Optional.of(ontology.getIndividualObjectProperty(object.getObject().asOWLNamedIndividual(), temporalOfIRI).toList().blockingGet()))
                     .filter(properties -> properties.orElseThrow(RuntimeException::new).size() <= 1)
                     .map(properties -> properties.orElseThrow(RuntimeException::new).stream().findAny())
                     .filter(Optional::isPresent)
@@ -631,8 +630,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             objectProperties
                     .stream()
                     .filter(property -> property.getProperty().getNamedProperty().getIRI().equals(databaseTimeIRI))
-                    .map(object -> ontology.getIndividualObjectProperty(object.getObject().asOWLNamedIndividual(), databaseTimeOfIRI))
-                    .filter(Optional::isPresent)
+                    .map(object -> Optional.of(ontology.getIndividualObjectProperty(object.getObject().asOWLNamedIndividual(), databaseTimeOfIRI).toList().blockingGet()))
                     .filter(properties -> properties.orElseThrow(RuntimeException::new).size() <= 1)
                     .map(properties -> properties.orElseThrow(RuntimeException::new).stream().findAny())
                     .filter(Optional::isPresent)
@@ -803,8 +801,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
 
         try {
-            final List<String> results = ontology.executeSPARQLResults(query)
-                    .getResults()
+            final List<String> results = ontology.executeSPARQLResults(query).toList().blockingGet()
                     .stream()
                     .map(result -> result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID())
                     .collect(Collectors.toList());
@@ -872,9 +869,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     public Set<String> getAvailableDatasets() {
 
         final String datasetQuery = qb.buildDatasetQuery();
-        final TrestleResultSet resultSet = ontology.executeSPARQLResults(datasetQuery);
+        final List<TrestleResult> resultSet = ontology.executeSPARQLResults(datasetQuery).toList().blockingGet();
         Set<OWLClass> datasetsInOntology = resultSet
-                .getResults()
                 .stream()
                 .map(result -> df.getOWLClass(result.getIndividual("dataset").orElseThrow(() -> new RuntimeException("dataset is null")).toStringID()))
                 .collect(Collectors.toSet());
@@ -907,7 +903,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     @Override
     public List<String> getDatasetMembers(Class<?> clazz) {
         final OWLClass objectClass = this.trestleParser.classParser.getObjectClass(clazz);
-        return this.ontology.getInstances(objectClass, true)
+        return this.ontology.getInstances(objectClass, true).toList().blockingGet()
                 .stream()
                 .map(OWLIndividual::toStringID)
                 .collect(Collectors.toList());

@@ -95,7 +95,6 @@ public abstract class OntologyTest {
         Assertions.assertEquals(1, trestleResultSet.size(), "Should only have the french version");
         Assertions.assertEquals("Test String", trestleResultSet.get(0).getLiteral("property").get().getLiteral(), "Should have the correct string");
         Assertions.assertEquals("fr", trestleResultSet.get(0).getLiteral("property").get().getLang(), "Should be french language");
-
     }
 
     protected abstract void shutdownOntology();

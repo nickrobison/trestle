@@ -23,6 +23,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.time.OffsetDateTime;
 import java.time.temporal.Temporal;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -66,7 +67,7 @@ public class ObjectEngineUtils {
     public Temporal getAdjustedQueryTemporal(String individual, OffsetDateTime atTemporal, @Nullable TrestleTransaction trestleTransaction) {
         final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
         try {
-            final Set<OWLDataPropertyAssertionAxiom> temporalsForIndividual = this.ontology.getTemporalsForIndividual(df.getOWLNamedIndividual(IRI.create(individual)));
+            final Set<OWLDataPropertyAssertionAxiom> temporalsForIndividual = new HashSet<>(this.ontology.getTemporalsForIndividual(df.getOWLNamedIndividual(IRI.create(individual))).toList().blockingGet());
             final Optional<TemporalObject> individualExistsTemporal = TemporalObjectBuilder.buildTemporalFromProperties(temporalsForIndividual, null, BLANK_TEMPORAL_ID);
             final TemporalObject temporalObject = individualExistsTemporal.orElseThrow(() -> new RuntimeException(String.format("Unable to get exists temporals for %s", individual)));
             final int compared = temporalObject.compareTo(atTemporal);
@@ -113,7 +114,7 @@ public class ObjectEngineUtils {
      */
     @Timed
     public boolean checkExists(IRI individualIRI) {
-        return ontology.containsResource(individualIRI);
+        return ontology.containsResource(individualIRI).blockingGet();
     }
 
 

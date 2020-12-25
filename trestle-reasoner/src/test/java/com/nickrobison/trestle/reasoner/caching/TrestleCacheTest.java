@@ -7,11 +7,11 @@ import com.nickrobison.trestle.reasoner.TestClasses;
 import com.nickrobison.trestle.reasoner.engines.merge.ExistenceStrategy;
 import com.nickrobison.trestle.reasoner.engines.merge.MergeStrategy;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +51,6 @@ public class TrestleCacheTest extends AbstractReasonerTest {
 //        Try to load some data then read it back out.
 //        final TestClasses.OffsetDateTimeTest offsetDateTimeTest = new TestClasses.OffsetDateTimeTest(5515, OffsetDateTime.now(), OffsetDateTime.now().plusYears(5));
         reasoner.writeTrestleObject(jtsGeometryTest);
-        reasoner.getUnderlyingOntology().runInference();
 
         Instant firstStart = Instant.now();
         TestClasses.JTSGeometryTest first = reasoner.readTrestleObject(TestClasses.JTSGeometryTest.class, jtsGeometryTest.getCode().toString(), LocalDate.of(1989, 7, 1), null);
@@ -68,7 +67,6 @@ public class TrestleCacheTest extends AbstractReasonerTest {
 //        Update one of the facts, which should invalidate the cache
         logger.info("Updating one of the facts");
         reasoner.addFactToTrestleObject(TestClasses.JTSGeometryTest.class, jtsGeometryTest.getCode().toString(), "geom", jtsGeom2, LocalDate.of(1989, 10, 1), null, null);
-        reasoner.getUnderlyingOntology().runInference();
         firstStart = Instant.now();
         first = reasoner.readTrestleObject(TestClasses.JTSGeometryTest.class, jtsGeometryTest.getCode().toString(), LocalDate.of(1989, 10, 20), null);
         firstEnd = Instant.now();

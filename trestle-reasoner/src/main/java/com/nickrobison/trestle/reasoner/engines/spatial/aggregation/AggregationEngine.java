@@ -103,14 +103,13 @@ public class AggregationEngine {
                 final Instant start = Instant.now();
                 try {
                     logger.debug("Performing aggregation restriction query");
-                    return this.ontology.executeSPARQLResults(intersectionQuery);
+                    return this.ontology.executeSPARQLResults(intersectionQuery).toList().blockingGet();
                 } finally {
                     logger.debug("Finished, took {} ms", Duration.between(start, Instant.now()).toMillis());
                     this.ontology.returnAndCommitTransaction(tt);
                 }
             }, this.aggregationPool)
                     .thenApply(resultSet -> resultSet
-                            .getResults()
                             .stream()
                             .map(result -> result.unwrapIndividual("m"))
                             .map(AsOWLNamedIndividual::asOWLNamedIndividual)

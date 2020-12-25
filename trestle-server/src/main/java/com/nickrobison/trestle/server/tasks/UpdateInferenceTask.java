@@ -33,6 +33,6 @@ public class UpdateInferenceTask extends Task {
   @Override
   public void execute(Map<String, List<String>> map, PrintWriter printWriter) {
     logger.info("Updating inference");
-    this.reasoner.getUnderlyingOntology().runInference();
+    // TODO: Remove this
   }
 }

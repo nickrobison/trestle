@@ -62,8 +62,6 @@ public class SpatialProjectionTest extends AbstractReasonerTest {
                     }
                 });
 
-        this.reasoner.getUnderlyingOntology().runInference();
-
         //        Try to intersect with a WGS 84 point
         final String polygonWKT = "POLYGON((-122.374781 47.690612, -122.325515 47.690612, -122.325515 47.668884, -122.374781 47.668884, -122.374781 47.690612))";
         final List<TestClasses.KCProjectionTestClass> kcObjects = this.reasoner.spatialIntersect(TestClasses.KCProjectionTestClass.class
