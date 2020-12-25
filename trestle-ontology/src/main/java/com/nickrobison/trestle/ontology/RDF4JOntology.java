@@ -1,14 +1,13 @@
 package com.nickrobison.trestle.ontology;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
-import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.ontology.utils.RDF4JLiteralFactory;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.rdf4j.model.Literal;
@@ -38,12 +37,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.time.OffsetDateTime;
+import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
-import static com.nickrobison.trestle.ontology.utils.SharedOntologyFunctions.filterIndividualDataProperties;
 import static com.nickrobison.trestle.ontology.utils.ToDataPropertyAssertionAxiom.toDataPropertyAssertionAxiom;
 
 @NotThreadSafe
@@ -85,16 +82,14 @@ public abstract class RDF4JOntology extends TransactingOntology {
     }
 
     @Override
-    public Optional<List<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(OWLNamedIndividual individual, IRI propertyIRI) {
-        return Optional.of(this.getIndividualObjectProperty(individual, df.getOWLObjectProperty(propertyIRI)).toList().blockingGet());
+    public Flowable<OWLObjectPropertyAssertionAxiom> getIndividualObjectProperty(OWLNamedIndividual individual, IRI propertyIRI) {
+        return this.getIndividualObjectProperty(individual, df.getOWLObjectProperty(propertyIRI));
     }
 
     @Override
-    public Optional<List<OWLObjectPropertyAssertionAxiom>> getIndividualObjectProperty(IRI individualIRI, IRI objectPropertyIRI) {
-        return Optional.of(this.getIndividualObjectProperty(df.getOWLNamedIndividual(individualIRI),
-                df.getOWLObjectProperty(objectPropertyIRI))
-                .toList()
-                .blockingGet());
+    public Flowable<OWLObjectPropertyAssertionAxiom> getIndividualObjectProperty(IRI individualIRI, IRI objectPropertyIRI) {
+        return this.getIndividualObjectProperty(df.getOWLNamedIndividual(individualIRI),
+                df.getOWLObjectProperty(objectPropertyIRI));
     }
 
     @Override
@@ -123,66 +118,66 @@ public abstract class RDF4JOntology extends TransactingOntology {
     }
 
     @Override
-    public void createIndividual(OWLClassAssertionAxiom owlClassAssertionAxiom) {
-        this.openTransaction(true);
-        logger.debug("Trying to create individual {}", owlClassAssertionAxiom.getIndividual());
-        final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(getFullIRIString(owlClassAssertionAxiom.getIndividual().asOWLNamedIndividual()));
-        final org.eclipse.rdf4j.model.IRI classIRI = vf.createIRI(getFullIRIString(owlClassAssertionAxiom.getClassExpression().asOWLClass()));
-        try {
-            getThreadConnection().add(individualIRI, RDF.TYPE, classIRI);
-        } finally {
-            this.commitTransaction(true);
-        }
+    public Completable createIndividual(OWLNamedIndividual individual, OWLClass owlClass) {
+        return this.createIndividual(df.getOWLClassAssertionAxiom(owlClass, individual));
     }
 
     @Override
-    public void createIndividual(OWLNamedIndividual individual, OWLClass owlClass) {
-        this.createIndividual(df.getOWLClassAssertionAxiom(owlClass, individual));
-    }
-
-    @Override
-    public void createIndividual(IRI individualIRI, IRI classIRI) {
-        this.createIndividual(
+    public Completable createIndividual(IRI individualIRI, IRI classIRI) {
+        return this.createIndividual(
                 df.getOWLClassAssertionAxiom(
                         df.getOWLClass(classIRI),
                         df.getOWLNamedIndividual(individualIRI)));
     }
 
     @Override
-    public void associateOWLClass(OWLClass subClass, OWLClass superClass) {
-        associateOWLClass(df.getOWLSubClassOfAxiom(subClass, superClass));
+    public Completable createIndividual(OWLClassAssertionAxiom owlClassAssertionAxiom) {
+        this.openTransaction(true);
+        return Completable.fromRunnable(() -> {
+            logger.debug("Trying to create individual {}", owlClassAssertionAxiom.getIndividual());
+            final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(getFullIRIString(owlClassAssertionAxiom.getIndividual().asOWLNamedIndividual()));
+            final org.eclipse.rdf4j.model.IRI classIRI = vf.createIRI(getFullIRIString(owlClassAssertionAxiom.getClassExpression().asOWLClass()));
+            getThreadConnection().add(individualIRI, RDF.TYPE, classIRI);
+        })
+                .doOnError(error -> this.unlockAndAbort(true))
+                .doOnComplete(() -> this.commitTransaction(true));
     }
 
     @Override
-    public void associateOWLClass(OWLSubClassOfAxiom subClassOfAxiom) {
-        final org.eclipse.rdf4j.model.IRI subClassIRI = vf.createIRI(getFullIRIString(subClassOfAxiom.getSubClass().asOWLClass()));
-        final org.eclipse.rdf4j.model.IRI superClassIRI = vf.createIRI(getFullIRIString(subClassOfAxiom.getSuperClass().asOWLClass()));
+    public Completable associateOWLClass(OWLClass subClass, OWLClass superClass) {
+        return associateOWLClass(df.getOWLSubClassOfAxiom(subClass, superClass));
+    }
+
+    @Override
+    public Completable associateOWLClass(OWLSubClassOfAxiom subClassOfAxiom) {
         this.openTransaction(true);
-        try {
+        return Completable.fromRunnable(() -> {
+            final org.eclipse.rdf4j.model.IRI subClassIRI = vf.createIRI(getFullIRIString(subClassOfAxiom.getSubClass().asOWLClass()));
+            final org.eclipse.rdf4j.model.IRI superClassIRI = vf.createIRI(getFullIRIString(subClassOfAxiom.getSuperClass().asOWLClass()));
             getThreadConnection().add(subClassIRI, RDFS.SUBCLASSOF, superClassIRI);
-        } finally {
-            this.commitTransaction(true);
-        }
+        })
+                .doOnError(error -> this.unlockAndAbort(true))
+                .doOnComplete(() -> this.commitTransaction(true));
     }
 
     @Override
-    public void createProperty(OWLProperty property) {
-        final org.eclipse.rdf4j.model.IRI propertyIRI = vf.createIRI(getFullIRIString(property));
+    public Completable createProperty(OWLProperty property) {
         this.openTransaction(true);
-        try {
+        return Completable.fromRunnable(() -> {
+            final org.eclipse.rdf4j.model.IRI propertyIRI = vf.createIRI(getFullIRIString(property));
             if (property.isOWLDataProperty()) {
                 getThreadConnection().add(propertyIRI, RDF.TYPE, OWL.DATATYPEPROPERTY);
             } else if (property.isOWLObjectProperty()) {
                 getThreadConnection().add(propertyIRI, RDF.TYPE, OWL.OBJECTPROPERTY);
             }
-        } finally {
-            this.commitTransaction(true);
-        }
+        })
+                .doOnError(error -> this.unlockAndAbort(true))
+                .doOnComplete(() -> this.commitTransaction(true));
     }
 
     @Override
-    public void writeIndividualDataProperty(IRI individualIRI, IRI dataPropertyIRI, String owlLiteralString, IRI owlLiteralIRI) throws MissingOntologyEntity {
-        writeIndividualDataProperty(
+    public Completable writeIndividualDataProperty(IRI individualIRI, IRI dataPropertyIRI, String owlLiteralString, IRI owlLiteralIRI) {
+        return writeIndividualDataProperty(
                 df.getOWLDataPropertyAssertionAxiom(
                         df.getOWLDataProperty(dataPropertyIRI),
                         df.getOWLNamedIndividual(individualIRI),
@@ -192,65 +187,64 @@ public abstract class RDF4JOntology extends TransactingOntology {
     }
 
     @Override
-    public void writeIndividualDataProperty(OWLNamedIndividual individual, OWLDataProperty property, OWLLiteral value) throws MissingOntologyEntity {
-        writeIndividualDataProperty(df.getOWLDataPropertyAssertionAxiom(property, individual, value));
+    public Completable writeIndividualDataProperty(OWLNamedIndividual individual, OWLDataProperty property, OWLLiteral value) {
+        return writeIndividualDataProperty(df.getOWLDataPropertyAssertionAxiom(property, individual, value));
     }
 
     @Override
-    public void writeIndividualDataProperty(OWLDataPropertyAssertionAxiom dataProperty) throws MissingOntologyEntity {
-        final org.eclipse.rdf4j.model.IRI subjectIRI = vf.createIRI(getFullIRIString(dataProperty.getSubject().asOWLNamedIndividual()));
-        final org.eclipse.rdf4j.model.IRI propertyIRI = vf.createIRI(getFullIRIString(dataProperty.getProperty().asOWLDataProperty()));
+    public Completable writeIndividualDataProperty(OWLDataPropertyAssertionAxiom dataProperty) {
+
 
         this.openTransaction(true);
-        try {
+        return Completable.fromRunnable(() -> {
+            final org.eclipse.rdf4j.model.IRI subjectIRI = vf.createIRI(getFullIRIString(dataProperty.getSubject().asOWLNamedIndividual()));
+            final org.eclipse.rdf4j.model.IRI propertyIRI = vf.createIRI(getFullIRIString(dataProperty.getProperty().asOWLDataProperty()));
             getThreadConnection().add(subjectIRI, propertyIRI, this.lf.createLiteral(dataProperty.getObject()));
-        } finally {
-            this.commitTransaction(true);
-        }
+        })
+                .doOnComplete(() -> this.commitTransaction(true))
+                .doOnError(error -> this.unlockAndAbort(true));
     }
 
     @Override
-    public void writeIndividualObjectProperty(OWLNamedIndividual owlSubject, IRI propertyIRI, OWLNamedIndividual owlObject) throws MissingOntologyEntity {
-        writeIndividualObjectProperty(df.getOWLObjectPropertyAssertionAxiom(
+    public Completable writeIndividualObjectProperty(OWLNamedIndividual owlSubject, IRI propertyIRI, OWLNamedIndividual owlObject) {
+        return writeIndividualObjectProperty(df.getOWLObjectPropertyAssertionAxiom(
                 df.getOWLObjectProperty(propertyIRI),
                 owlSubject,
                 owlObject));
     }
 
     @Override
-    public void writeIndividualObjectProperty(IRI owlSubject, IRI owlProperty, IRI owlObject) throws MissingOntologyEntity {
-        writeIndividualObjectProperty(df.getOWLObjectPropertyAssertionAxiom(
+    public Completable writeIndividualObjectProperty(IRI owlSubject, IRI owlProperty, IRI owlObject) {
+        return writeIndividualObjectProperty(df.getOWLObjectPropertyAssertionAxiom(
                 df.getOWLObjectProperty(owlProperty),
                 df.getOWLNamedIndividual(owlSubject),
                 df.getOWLNamedIndividual(owlObject)));
     }
 
     @Override
-    public void writeIndividualObjectProperty(OWLObjectPropertyAssertionAxiom property) throws MissingOntologyEntity {
+    public Completable writeIndividualObjectProperty(OWLObjectPropertyAssertionAxiom property) {
         final org.eclipse.rdf4j.model.IRI subjectIRI = vf.createIRI(getFullIRIString(property.getSubject().asOWLNamedIndividual()));
         final org.eclipse.rdf4j.model.IRI objectIRI = vf.createIRI(getFullIRIString(property.getObject().asOWLNamedIndividual()));
         final org.eclipse.rdf4j.model.IRI propertyIRI = vf.createIRI(getFullIRIString(property.getProperty().asOWLObjectProperty()));
         this.openTransaction(true);
-        try {
-            getThreadConnection().add(subjectIRI, propertyIRI, objectIRI);
-        } finally {
-            this.commitTransaction(true);
-        }
+        return Completable.fromRunnable(() -> getThreadConnection().add(subjectIRI, propertyIRI, objectIRI))
+                .doOnError(error -> this.unlockAndAbort(true))
+                .doOnComplete(() -> this.commitTransaction(true));
     }
 
     @Override
-    public void removeIndividual(OWLNamedIndividual individual) {
-        final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(getFullIRIString(individual));
+    public Completable removeIndividual(OWLNamedIndividual individual) {
         this.openTransaction(true);
-        try {
+        return Completable.fromRunnable(() -> {
+            final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(getFullIRIString(individual));
             getThreadConnection().remove(individualIRI, null, null);
-        } finally {
-            this.commitTransaction(true);
-        }
+        })
+                .doOnError(error -> this.unlockAndAbort(true))
+                .doOnComplete(() -> this.commitTransaction(true));
     }
 
     @Override
-    public void removeIndividualObjectProperty(OWLNamedIndividual subject, OWLObjectProperty property, @Nullable OWLNamedIndividual object) {
+    public Completable removeIndividualObjectProperty(OWLNamedIndividual subject, OWLObjectProperty property, @Nullable OWLNamedIndividual object) {
         final org.eclipse.rdf4j.model.IRI subjectIRI = vf.createIRI(getFullIRIString(subject));
         final org.eclipse.rdf4j.model.IRI propertyIRI = vf.createIRI(getFullIRIString(property.getNamedProperty()));
 
@@ -261,15 +255,13 @@ public abstract class RDF4JOntology extends TransactingOntology {
             objectIRI = vf.createIRI(getFullIRIString(object));
         }
         this.openTransaction(true);
-        try {
-            getThreadConnection().remove(subjectIRI, propertyIRI, objectIRI);
-        } finally {
-            this.commitTransaction(true);
-        }
+        return Completable.fromRunnable(() -> getThreadConnection().remove(subjectIRI, propertyIRI, objectIRI))
+                .doOnError(error -> this.unlockAndAbort(true))
+                .doOnComplete(() -> this.commitTransaction(true));
     }
 
     @Override
-    public void removeIndividualDataProperty(OWLNamedIndividual individual, OWLDataProperty property, @Nullable OWLLiteral literal) {
+    public Completable removeIndividualDataProperty(OWLNamedIndividual individual, OWLDataProperty property, @Nullable OWLLiteral literal) {
         final org.eclipse.rdf4j.model.IRI subjectIRI = vf.createIRI(getFullIRIString(individual));
         final org.eclipse.rdf4j.model.IRI propertyIRI = vf.createIRI(getFullIRIString(property));
 
@@ -281,32 +273,27 @@ public abstract class RDF4JOntology extends TransactingOntology {
         }
 
         this.openTransaction(true);
-        try {
-            getThreadConnection().remove(subjectIRI, propertyIRI, literalValue);
-        } finally {
-            this.commitTransaction(true);
-        }
-
+        return Completable.fromRunnable(() -> getThreadConnection().remove(subjectIRI, propertyIRI, literalValue))
+                .doOnComplete(() -> this.commitTransaction(true))
+                .doOnError(error -> this.unlockAndAbort(true));
     }
 
     @Override
-    public boolean containsResource(IRI individualIRI) {
+    public Single<Boolean> containsResource(IRI individualIRI) {
         return containsResource(df.getOWLNamedIndividual(individualIRI));
     }
 
     @Override
-    public boolean containsResource(OWLNamedObject individual) {
+    public Single<Boolean> containsResource(OWLNamedObject individual) {
         final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(getFullIRIString(individual));
         this.openTransaction(false);
-        try {
-            return getThreadConnection().hasStatement(individualIRI, null, null, false);
-        } finally {
-            this.commitTransaction(false);
-        }
+        return Single.fromCallable(() -> getThreadConnection().hasStatement(individualIRI, null, null, false))
+                .doOnError(error -> this.unlockAndAbort(false))
+                .doOnSuccess(contains -> this.commitTransaction(false));
     }
 
     @Override
-    public void writeOntology(IRI path, boolean validate) throws OWLOntologyStorageException {
+    public void writeOntology(IRI path, boolean validate) {
         final OutputStream fso;
         try {
             fso = Files.newOutputStream(new File(path.toURI()).toPath());
@@ -344,48 +331,37 @@ public abstract class RDF4JOntology extends TransactingOntology {
     }
 
     @Override
-    public Set<OWLNamedIndividual> getInstances(OWLClass owlClass, boolean inferred) {
+    public Flowable<OWLNamedIndividual> getInstances(OWLClass owlClass, boolean inferred) {
         Set<OWLNamedIndividual> instances = new HashSet<>();
         final org.eclipse.rdf4j.model.IRI classIRI = vf.createIRI(getFullIRIString(owlClass));
         this.openTransaction(false);
-        try {
-            final RepositoryResult<Statement> statements = getThreadConnection().getStatements(null, RDF.TYPE, classIRI);
-            try {
-                while (statements.hasNext()) {
-                    final Statement next = statements.next();
-                    instances.add(df.getOWLNamedIndividual(IRI.create(next.getSubject().stringValue())));
-                }
-            } finally {
-                statements.close();
-            }
-        } finally {
-            this.commitTransaction(false);
-        }
-        return instances;
+        final RepositoryResult<Statement> statements = getThreadConnection().getStatements(null, RDF.TYPE, classIRI);
+        return Flowable.fromIterable(statements)
+                .map(statement -> df.getOWLNamedIndividual(IRI.create(statement.getSubject().stringValue())))
+                .doOnError(error -> this.unlockAndAbort(false))
+                .doOnComplete(() -> this.commitTransaction(false))
+                .doFinally(statements::close);
     }
 
     @Override
-    public Set<OWLDataPropertyAssertionAxiom> getDataPropertiesForIndividual(IRI individualIRI, List<OWLDataProperty> properties) {
+    public Flowable<OWLDataPropertyAssertionAxiom> getDataPropertiesForIndividual(IRI individualIRI, Collection<OWLDataProperty> properties) {
         return this.getDataPropertiesForIndividual(df.getOWLNamedIndividual(individualIRI), properties);
     }
 
     @Override
-    public Set<OWLDataPropertyAssertionAxiom> getDataPropertiesForIndividual(OWLNamedIndividual individual, List<OWLDataProperty> properties) {
-
-        final Set<OWLDataPropertyAssertionAxiom> allDataPropertiesForIndividual = new HashSet<>(getAllDataPropertiesForIndividual(individual).toList().blockingGet());
-        logger.debug("Requested {} properties, returned {}", properties.size(), allDataPropertiesForIndividual.size());
-        return filterIndividualDataProperties(properties, allDataPropertiesForIndividual);
+    public Flowable<OWLDataPropertyAssertionAxiom> getDataPropertiesForIndividual(OWLNamedIndividual individual, Collection<OWLDataProperty> properties) {
+        Set<OWLDataProperty> requestedProperties = new HashSet<>(properties);
+        return getAllDataPropertiesForIndividual(individual)
+                .filter(property -> requestedProperties.contains(property.getProperty().asOWLDataProperty()));
     }
 
     @Override
-    public Set<OWLDataPropertyAssertionAxiom> getAllDataPropertiesForIndividual(IRI individualIRI) {
-        return new HashSet<>(this.getAllDataPropertiesForIndividual(df.getOWLNamedIndividual(individualIRI)).toList().blockingGet());
+    public Flowable<OWLDataPropertyAssertionAxiom> getAllDataPropertiesForIndividual(IRI individualIRI) {
+        return this.getAllDataPropertiesForIndividual(df.getOWLNamedIndividual(individualIRI));
     }
 
     @Override
     public Flowable<OWLDataPropertyAssertionAxiom> getAllDataPropertiesForIndividual(OWLNamedIndividual individual) {
-        Set<OWLDataPropertyAssertionAxiom> properties = new HashSet<>();
-        Multimap<String, Literal> statementLiterals = ArrayListMultimap.create();
         final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(getFullIRIString(individual));
 
         this.openTransaction(false);
@@ -396,9 +372,7 @@ public abstract class RDF4JOntology extends TransactingOntology {
                     final Value object = statement.getObject();
                     return object instanceof Literal;
                 })
-                .toMultimap(statement -> {
-                    return statement.getPredicate().toString();
-                }, statement -> {
+                .toMultimap(statement -> statement.getPredicate().toString(), statement -> {
                     final Value object = statement.getObject();
                     return (Literal) object;
                 })
@@ -421,57 +395,46 @@ public abstract class RDF4JOntology extends TransactingOntology {
     }
 
     @Override
-    public Set<OWLObjectPropertyAssertionAxiom> getAllObjectPropertiesForIndividual(IRI individual) {
+    public Flowable<OWLObjectPropertyAssertionAxiom> getAllObjectPropertiesForIndividual(IRI individual) {
         return getAllObjectPropertiesForIndividual(df.getOWLNamedIndividual(individual));
     }
 
     @Override
-    public Set<OWLObjectPropertyAssertionAxiom> getAllObjectPropertiesForIndividual(OWLNamedIndividual individual) {
+    public Flowable<OWLObjectPropertyAssertionAxiom> getAllObjectPropertiesForIndividual(OWLNamedIndividual individual) {
         Set<OWLObjectPropertyAssertionAxiom> properties = new HashSet<>();
         final org.eclipse.rdf4j.model.IRI individualIRI = vf.createIRI(getFullIRIString(individual));
         this.openTransaction(false);
+
+
         try {
             final RepositoryResult<Statement> statements = getThreadConnection().getStatements(individualIRI, null, null);
-            try {
-                while (statements.hasNext()) {
-                    final Statement statement = statements.next();
-
-                    if (!statement.getPredicate().getNamespace().contains("rdf-syntax")) {
+            return Flowable.fromIterable(statements)
+                    .map(statement -> {
                         final Value object = statement.getObject();
-//                        FIXME(nrobison): Implement this
-                        if (object instanceof Literal) {
-                            final OWLObjectProperty owlObjectProperty = df.getOWLObjectProperty(IRI.create(statement.getPredicate().toString()));
-                            final OWLNamedIndividual objectIndividual = df.getOWLNamedIndividual(IRI.create(statement.getObject().stringValue()));
-                            properties.add(df.getOWLObjectPropertyAssertionAxiom(
-                                    owlObjectProperty,
-                                    individual,
-                                    objectIndividual));
-                        }
-                    }
-                }
-            } finally {
-                statements.close();
-            }
-        } finally {
-            this.commitTransaction(false);
+                        final OWLObjectProperty property = df.getOWLObjectProperty(statement.getPredicate().toString());
+                        final OWLNamedIndividual propertyObject = df.getOWLNamedIndividual(object.stringValue());
+                        return df.getOWLObjectPropertyAssertionAxiom(
+                                property,
+                                individual,
+                                propertyObject);
+                    })
+                    .doOnComplete(() -> this.commitTransaction(false))
+                    .doOnError(error -> this.unlockAndAbort(false))
+                    .doFinally(statements::close);
+        } catch (Exception e) {
+            this.unlockAndAbort(false);
+            throw e;
         }
-        return properties;
     }
 
     @Override
-    public Optional<OWLNamedIndividual> getIndividual(OWLNamedIndividual individual) {
-        logger.error("Get Individual unimplemented on SesameOntology");
-        return Optional.empty();
+    public Flowable<OWLLiteral> getIndividualDataProperty(OWLNamedIndividual individual, IRI propertyIRI) {
+        return getIndividualDataProperty(individual, df.getOWLDataProperty(propertyIRI));
     }
 
     @Override
-    public Optional<Set<OWLLiteral>> getIndividualDataProperty(OWLNamedIndividual individual, IRI propertyIRI) {
-        return Optional.of(new HashSet<>(getIndividualDataProperty(individual, df.getOWLDataProperty(propertyIRI)).toList().blockingGet()));
-    }
-
-    @Override
-    public Optional<Set<OWLLiteral>> getIndividualDataProperty(IRI individualIRI, OWLDataProperty property) {
-        return Optional.of(new HashSet<>(getIndividualDataProperty(df.getOWLNamedIndividual(individualIRI), property).toList().blockingGet()));
+    public Flowable<OWLLiteral> getIndividualDataProperty(IRI individualIRI, OWLDataProperty property) {
+        return getIndividualDataProperty(df.getOWLNamedIndividual(individualIRI), property);
     }
 
     @Override
@@ -511,7 +474,7 @@ public abstract class RDF4JOntology extends TransactingOntology {
 
     private Flowable<OWLDataPropertyAssertionAxiom> dataPropertiesFromIndividual(OWLNamedIndividual individual, String query) {
         this.openTransaction(false);
-        return Flowable.fromIterable(this.executeSPARQLResults(query).getResults())
+        return this.executeSPARQLResults(query)
                 .lift(toDataPropertyAssertionAxiom(this.df))
                 .doOnError(error -> this.unlockAndAbort(false))
                 .doOnComplete(() -> this.commitTransaction(false));
@@ -610,8 +573,10 @@ public abstract class RDF4JOntology extends TransactingOntology {
     protected void resetThreadConnection() {
         logger.trace("Resetting thread connection");
         @Nullable final RepositoryConnection connection = getThreadConnection();
+        if (connection != null) {
+            connection.close();
+        }
         this.tc.set(null);
-        connection.close();
     }
 
     @Override

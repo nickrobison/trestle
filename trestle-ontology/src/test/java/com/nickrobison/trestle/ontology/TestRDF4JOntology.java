@@ -1,7 +1,9 @@
 package com.nickrobison.trestle.ontology;
 
-import com.nickrobison.trestle.ontology.types.TrestleResultSet;
+import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.ontology.utils.RDF4JLiteralFactory;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import org.eclipse.rdf4j.repository.Repository;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
@@ -37,27 +39,17 @@ public class TestRDF4JOntology extends RDF4JOntology {
     }
 
     @Override
-    public boolean isConsistent() {
-        return false;
-    }
-
-    @Override
-    public void runInference() {
-        // Not used
-    }
-
-    @Override
     public void initializeOntology() {
         // Not used
     }
 
     @Override
-    public TrestleResultSet executeSPARQLResults(String queryString) {
+    public Flowable<TrestleResult> executeSPARQLResults(String queryString) {
         return null;
     }
 
     @Override
-    public void executeUpdateSPARQL(String queryString) {
-
+    public Completable executeUpdateSPARQL(String queryString) {
+        return null;
     }
 }
