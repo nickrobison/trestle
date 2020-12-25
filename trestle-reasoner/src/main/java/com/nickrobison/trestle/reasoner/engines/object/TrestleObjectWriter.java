@@ -207,7 +207,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
 //            Add the event
             this.eventEngine.addSplitMergeEvent(type, subjectIndividual, objectIndividuals, eventTemporal);
 //            Write the strength
-            this.ontology.writeIndividualDataProperty(eventIndividual, df.getOWLDataProperty(relationStrengthIRI), df.getOWLLiteral(strength));
+            this.ontology.writeIndividualDataProperty(eventIndividual, df.getOWLDataProperty(relationStrengthIRI), df.getOWLLiteral(strength)).blockingAwait();
             this.ontology.returnAndCommitTransaction(trestleTransaction);
         } catch (TrestleEventException e) {
             logger.error("Unable add Event", e);
@@ -234,10 +234,10 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
 
 //        Write the overlap
         final OWLClassAssertionAxiom overlapClassAssertion = df.getOWLClassAssertionAxiom(df.getOWLClass(trestleOverlapIRI), overlapIndividual);
-        this.ontology.createIndividual(overlapClassAssertion);
+        this.ontology.createIndividual(overlapClassAssertion).blockingAwait();
 //        Write the overlap intersection
         final OWLDataPropertyAssertionAxiom sOverlapAssertion = df.getOWLDataPropertyAssertionAxiom(df.getOWLDataProperty(sOverlapIRI), overlapIndividual, df.getOWLLiteral(wkt, df.getOWLDatatype(WKTDatatypeIRI)));
-        this.ontology.writeIndividualDataProperty(sOverlapAssertion);
+        this.ontology.writeIndividualDataProperty(sOverlapAssertion).blockingAwait();
 
 //        Write the subject relation
         final OWLObjectProperty overlapProperty = df.getOWLObjectProperty(overlapOfIRI);
@@ -262,11 +262,11 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
         final OWLClassAssertionAxiom overlapClassAssertion = df.getOWLClassAssertionAxiom(df.getOWLClass(trestleOverlapIRI), overlapIndividual);
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
         try {
-            this.ontology.createIndividual(overlapClassAssertion);
+            this.ontology.createIndividual(overlapClassAssertion).blockingAwait();
 
             //        Write the overlap intersection
             final OWLDataPropertyAssertionAxiom sOverlapAssertion = df.getOWLDataPropertyAssertionAxiom(df.getOWLDataProperty(tOverlapIRI), overlapIndividual, df.getOWLLiteral(temporalOverlap));
-            this.ontology.writeIndividualDataProperty(sOverlapAssertion);
+            this.ontology.writeIndividualDataProperty(sOverlapAssertion).blockingAwait();
             //        Write the subject relation
             final OWLObjectProperty overlapProperty = df.getOWLObjectProperty(overlapOfIRI);
             this.writeIndirectObjectProperty(overlapIndividual, subject, overlapProperty);
@@ -340,7 +340,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
                     logger.trace("Setting DBTo: {} for {}", dTemporal.getIdTemporal(), mergeScript.getFactsToVersion());
                     final String temporalUpdateQuery = this.qb.buildUpdateUnboundedTemporal(TemporalParser.parseTemporalToOntologyDateTime(dTemporal.getIdTemporal(), ZoneOffset.UTC), mergeScript.getFactsToVersionAsArray());
                     final Timer.Context temporalTimer = this.metrician.registerTimer("trestle-merge-temporal-timer").time();
-                    this.ontology.executeUpdateSPARQL(temporalUpdateQuery);
+                    this.ontology.executeUpdateSPARQL(temporalUpdateQuery).blockingAwait();
                     temporalTimer.stop();
 //                Write new versions of all the previously valid facts
                     mergeScript
@@ -354,7 +354,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
 //                    Write new individual existence axioms, if they exist
                     if (!mergeScript.getIndividualExistenceAxioms().isEmpty()) {
                         final String updateExistenceQuery = this.qb.updateObjectProperties(mergeScript.getIndividualExistenceAxioms(), trestleObjectIRI);
-                        this.ontology.executeUpdateSPARQL(updateExistenceQuery);
+                        this.ontology.executeUpdateSPARQL(updateExistenceQuery).blockingAwait();
 
 //                                Update object events
                         this.eventEngine.adjustObjectEvents(mergeScript.getIndividualExistenceAxioms());
@@ -368,9 +368,9 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
 //        Write the class
             final OWLClass owlClass = this.classParser.getObjectClass(inputObject);
             try {
-                ontology.associateOWLClass(owlClass, DATASET_CLASS);
+                ontology.associateOWLClass(owlClass, DATASET_CLASS).blockingAwait();
 //        Write the individual
-                ontology.createIndividual(owlNamedIndividual, owlClass);
+                ontology.createIndividual(owlNamedIndividual, owlClass).blockingAwait();
                 writeTemporal(objectTemporal, owlNamedIndividual);
 
 //        Write the data facts
@@ -490,7 +490,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
 
             final MergeScript newFactMergeScript = this.mergeEngine.mergeFacts(owlNamedIndividual, validTemporal, Collections.singletonList(newFactAxiom), validFactResultSet, validTemporal.getIdTemporal(), databaseTemporal.getIdTemporal(), existsTemporal);
             final String update = this.qb.buildUpdateUnboundedTemporal(parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC), newFactMergeScript.getFactsToVersionAsArray());
-            this.ontology.executeUpdateSPARQL(update);
+            this.ontology.executeUpdateSPARQL(update).blockingAwait();
 
 //        Write the new versions
             newFactMergeScript
@@ -504,7 +504,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
             final List<OWLDataPropertyAssertionAxiom> individualExistenceAxioms = newFactMergeScript.getIndividualExistenceAxioms();
             if (!individualExistenceAxioms.isEmpty()) {
                 final String updateExistenceQuery = this.qb.updateObjectProperties(individualExistenceAxioms, trestleObjectIRI);
-                this.ontology.executeUpdateSPARQL(updateExistenceQuery);
+                this.ontology.executeUpdateSPARQL(updateExistenceQuery).blockingAwait();
 
 //                    Update events
                 this.eventEngine.adjustObjectEvents(individualExistenceAxioms);
@@ -545,15 +545,15 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
                     parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC));
 
             final OWLNamedIndividual propertyIndividual = df.getOWLNamedIndividual(factIdentifier);
-            ontology.createIndividual(propertyIndividual, factClass);
+            ontology.createIndividual(propertyIndividual, factClass).blockingAwait();
             try {
 //                Write the property
                 logger.trace("Writing fact {} with value {} valid: {}, database: {}", factIdentifier, property.getObject(), validTemporal, databaseTemporal);
-                ontology.writeIndividualDataProperty(propertyIndividual, property.getProperty().asOWLDataProperty(), property.getObject());
+                ontology.writeIndividualDataProperty(propertyIndividual, property.getProperty().asOWLDataProperty(), property.getObject()).blockingAwait();
 //                Write the valid validTemporal
                 writeTemporal(validTemporal, propertyIndividual);
 //                Write the relation back to the root individual
-                ontology.writeIndividualObjectProperty(propertyIndividual, factOfIRI, rootIndividual);
+                ontology.writeIndividualObjectProperty(propertyIndividual, factOfIRI, rootIndividual).blockingAwait();
 //                Write the database time
                 writeTemporal(databaseTemporal, propertyIndividual);
 
@@ -561,7 +561,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
                 if (this.classParser.isFactRelated(clazz, property.getProperty().asOWLDataProperty().getIRI().getShortForm())) {
 
                     final String contributesToQuery = this.qb.buildContributesToQuery(rootIndividual, property);
-                    this.ontology.executeUpdateSPARQL(contributesToQuery);
+                    this.ontology.executeUpdateSPARQL(contributesToQuery).blockingAwait();
                 }
 
             } catch (MissingOntologyEntity missingOntologyEntity) {
@@ -589,7 +589,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
                         individual.getIRI(),
                         temporalValidFromIRI,
                         parseTemporalToOntologyDateTime(temporal.asInterval().getFromTime(), temporal.asInterval().getStartTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-                        dateTimeDatatypeIRI);
+                        dateTimeDatatypeIRI).blockingAwait();
 
 //                Write to, if exists
                 final Optional<Temporal> toTime = temporal.asInterval().getToTime();
@@ -598,7 +598,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
                             individual.getIRI(),
                             temporalValidToIRI,
                             parseTemporalToOntologyDateTime(toTime.get(), temporal.asInterval().getEndTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-                            dateTimeDatatypeIRI);
+                            dateTimeDatatypeIRI).blockingAwait();
                 }
             } else if (scope == TemporalScope.DATABASE) {
                 //                Write from
@@ -606,7 +606,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
                         individual.getIRI(),
                         temporalDatabaseFromIRI,
                         parseTemporalToOntologyDateTime(temporal.asInterval().getFromTime(), temporal.asInterval().getStartTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-                        dateTimeDatatypeIRI);
+                        dateTimeDatatypeIRI).blockingAwait();
 
 //                Write to, if exists
                 final Optional<Temporal> toTime = temporal.asInterval().getToTime();
@@ -615,7 +615,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
                             individual.getIRI(),
                             temporalDatabaseToIRI,
                             parseTemporalToOntologyDateTime(toTime.get(), temporal.asInterval().getEndTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-                            dateTimeDatatypeIRI);
+                            dateTimeDatatypeIRI).blockingAwait();
                 }
             } else {
 //                Write from
@@ -623,7 +623,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
                         individual.getIRI(),
                         StaticIRI.temporalExistsFromIRI,
                         parseTemporalToOntologyDateTime(temporal.asInterval().getFromTime(), temporal.asInterval().getStartTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-                        dateTimeDatatypeIRI);
+                        dateTimeDatatypeIRI).blockingAwait();
 
 //                Write to, if exists
                 final Optional<Temporal> toTime = temporal.asInterval().getToTime();
@@ -632,7 +632,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
                             individual.getIRI(),
                             StaticIRI.temporalExistsToIRI,
                             parseTemporalToOntologyDateTime(toTime.get(), temporal.asInterval().getEndTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-                            dateTimeDatatypeIRI);
+                            dateTimeDatatypeIRI).blockingAwait();
                 }
             }
         } else {
@@ -642,7 +642,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
                         individual.getIRI(),
                         StaticIRI.temporalValidAtIRI,
                         parseTemporalToOntologyDateTime(temporal.asPoint().getPointTime(), temporal.asPoint().getTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-                        dateTimeDatatypeIRI);
+                        dateTimeDatatypeIRI).blockingAwait();
             } else if (scope == TemporalScope.DATABASE) {
                 logger.warn("Database time cannot be a point {}", individual);
             } else {
@@ -650,7 +650,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
                         individual.getIRI(),
                         StaticIRI.temporalExistsAtIRI,
                         parseTemporalToOntologyDateTime(temporal.asPoint().getPointTime(), temporal.asPoint().getTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-                        dateTimeDatatypeIRI);
+                        dateTimeDatatypeIRI).blockingAwait();
             }
         }
     }
@@ -682,7 +682,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
         final OWLNamedIndividual objectIndividual = this.classParser.getIndividual(object);
         final OWLObjectPropertyAssertionAxiom owlObjectPropertyAssertionAxiom = df.getOWLObjectPropertyAssertionAxiom(property, subject, objectIndividual);
         try {
-            this.ontology.writeIndividualObjectProperty(owlObjectPropertyAssertionAxiom);
+            this.ontology.writeIndividualObjectProperty(owlObjectPropertyAssertionAxiom).blockingAwait();
         } catch (Exception e) { // I don't think this is ever called
             logger.error("Exception while writing property, trying to write object", e);
             this.writeTrestleObject(object);
@@ -706,7 +706,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
                 objectIndividual);
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
         try {
-            ontology.writeIndividualObjectProperty(objectRelationshipAssertion);
+            ontology.writeIndividualObjectProperty(objectRelationshipAssertion).blockingAwait();
         } catch (Exception e) {
             logger.debug("Individual does not exist, creating", e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);

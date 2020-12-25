@@ -88,8 +88,8 @@ public class CollectionEnginesTest extends AbstractReasonerTest {
         final List<OWLObjectPropertyAssertionAxiom> relationRelations = ontology.getIndividualObjectProperty(IRI.create(OVERRIDE_PREFIX, "100113"), hasRelationIRI).toList().blockingGet();
 //        Make sure the Object doesn't have the relationship
         assertAll(() -> assertTrue(thirdCollection.isPresent(), "Should have results"),
-                () -> assertTrue(thirdCollection.isEmpty(), "Should not any members"),
-                () -> assertFalse(relationRelations.isEmpty(), "Object should not have relationship relations"));
+                () -> assertTrue(thirdCollection.get().isEmpty(), "Should not any members"),
+                () -> assertTrue(relationRelations.isEmpty(), "Object should not have relationship relations"));
 
 //        Verify first collection
         this.reasoner.removeObjectFromCollection(FIRST_COLLECTION, second, true);

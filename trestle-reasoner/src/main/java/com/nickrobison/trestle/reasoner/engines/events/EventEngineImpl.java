@@ -71,7 +71,7 @@ public class EventEngineImpl implements TrestleEventEngine {
             }
 //            Write the properties
             final String updateQuery = this.qb.updateObjectProperties(eventAxioms, trestleEventIRI);
-            this.ontology.executeUpdateSPARQL(updateQuery);
+            this.ontology.executeUpdateSPARQL(updateQuery).blockingAwait();
         });
     }
 
@@ -100,7 +100,7 @@ public class EventEngineImpl implements TrestleEventEngine {
             addTemporalEvent(TrestleEventType.MERGED, subject, eventTemporal);
 //            Add the components to the event
             for (OWLNamedIndividual object : objects) {
-                this.ontology.writeIndividualObjectProperty(object, componentOfIRI, eventName);
+                this.ontology.writeIndividualObjectProperty(object, componentOfIRI, eventName).blockingAwait();
             }
         } catch (Exception e) {
             logger.error("Missing Individual {}", subject.getIRI(), e);
@@ -120,7 +120,7 @@ public class EventEngineImpl implements TrestleEventEngine {
             addTemporalEvent(TrestleEventType.SPLIT, subject, eventTemporal);
 //            Add the components to the event
             for (OWLNamedIndividual object : objects) {
-                this.ontology.writeIndividualObjectProperty(object, componentOfIRI, eventName);
+                this.ontology.writeIndividualObjectProperty(object, componentOfIRI, eventName).blockingAwait();
             }
         } catch (Exception e) {
             logger.error("Missing Individual {}", subject.getIRI(), e);
@@ -146,10 +146,10 @@ public class EventEngineImpl implements TrestleEventEngine {
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
         try {
 //            Create the new event
-            this.ontology.createIndividual(classAxiom);
+            this.ontology.createIndividual(classAxiom).blockingAwait();
 //            Add the data property
-            this.ontology.writeIndividualDataProperty(existsAtAxiom);
-            this.ontology.writeIndividualObjectProperty(objectAssertion);
+            this.ontology.writeIndividualDataProperty(existsAtAxiom).blockingAwait();
+            this.ontology.writeIndividualObjectProperty(objectAssertion).blockingAwait();
 //            Write the object relation
         } catch (Exception e) {
             logger.error("Missing ontology entity", e);

@@ -274,14 +274,14 @@ public class CollectionEngine implements ITrestleCollectionEngine {
 //                break;
 //        }
 //        Write the collection properties
-            ontology.createIndividual(df.getOWLClassAssertionAxiom(relationClass, relationIndividual));
+            ontology.createIndividual(df.getOWLClassAssertionAxiom(relationClass, relationIndividual)).blockingAwait();
             ontology.writeIndividualObjectProperty(df.getOWLObjectPropertyAssertionAxiom(
                     df.getOWLObjectProperty(relationOfIRI),
                     relationIndividual,
-                    individual));
+                    individual)).blockingAwait();
             ontology.writeIndividualDataProperty(relationIndividual,
                     df.getOWLDataProperty(relationStrengthIRI),
-                    df.getOWLLiteral(strength));
+                    df.getOWLLiteral(strength)).blockingAwait();
 
 //        Write the relation to the collection
 //            TODO(nrobison): This is gross, catching exceptions is really expensive.
@@ -290,15 +290,15 @@ public class CollectionEngine implements ITrestleCollectionEngine {
                         df.getOWLObjectProperty(relatedToIRI),
                         relationIndividual,
                         collectionIndividual
-                ));
+                )).blockingAwait();
             } catch (Exception e) { // I think this can actually be removed, not sure it's ever called
 //            If the collection doesn't exist, create it.
-                ontology.createIndividual(df.getOWLClassAssertionAxiom(df.getOWLClass(trestleCollectionIRI), collectionIndividual));
+                ontology.createIndividual(df.getOWLClassAssertionAxiom(df.getOWLClass(trestleCollectionIRI), collectionIndividual)).blockingAwait();
 //            Try again
                 ontology.writeIndividualObjectProperty(df.getOWLObjectPropertyAssertionAxiom(
                         df.getOWLObjectProperty(relatedToIRI),
                         relationIndividual,
-                        collectionIndividual));
+                        collectionIndividual)).blockingAwait();
             }
         } catch (MissingOntologyEntity | TrestleClassException e) {
             logger.error("Problem adding individual {} to collection {}", individual, collectionIndividual, e);
@@ -325,7 +325,7 @@ public class CollectionEngine implements ITrestleCollectionEngine {
                     }));
 
 //            Remove the collection
-            this.ontology.removeIndividual(collectionIndividual);
+            this.ontology.removeIndividual(collectionIndividual).blockingAwait();
             this.ontology.returnAndCommitTransaction(trestleTransaction);
         } catch (Exception e) {
             this.ontology.returnAndAbortTransaction(trestleTransaction);
@@ -358,7 +358,7 @@ public class CollectionEngine implements ITrestleCollectionEngine {
 
                 if (!relatedProperties.isPresent()) {
                     logger.debug("{} is empty, removing", collectionIndividual);
-                    this.ontology.removeIndividual(collectionIndividual);
+                    this.ontology.removeIndividual(collectionIndividual).blockingAwait();
                 }
                 this.ontology.returnAndCommitTransaction(emptyTransaction);
             } catch (Exception e) {
@@ -400,12 +400,12 @@ public class CollectionEngine implements ITrestleCollectionEngine {
 
         try {
 //            Remove the from and two relations
-            this.ontology.removeIndividualObjectProperty(relation, df.getOWLObjectProperty(relatedToIRI), collection);
-            this.ontology.removeIndividualObjectProperty(relation, df.getOWLObjectProperty(relationOfIRI), null);
+            this.ontology.removeIndividualObjectProperty(relation, df.getOWLObjectProperty(relatedToIRI), collection).blockingAwait();
+            this.ontology.removeIndividualObjectProperty(relation, df.getOWLObjectProperty(relationOfIRI), null).blockingAwait();
 //            Remove the strength
-            this.ontology.removeIndividualDataProperty(relation, df.getOWLDataProperty(relationStrengthIRI), null);
+            this.ontology.removeIndividualDataProperty(relation, df.getOWLDataProperty(relationStrengthIRI), null).blockingAwait();
 //            Remove the individual
-            this.ontology.removeIndividual(relation);
+            this.ontology.removeIndividual(relation).blockingAwait();
             this.ontology.returnAndCommitTransaction(removeTransaction);
         } catch (Exception e) {
             this.ontology.returnAndAbortTransaction(removeTransaction);
