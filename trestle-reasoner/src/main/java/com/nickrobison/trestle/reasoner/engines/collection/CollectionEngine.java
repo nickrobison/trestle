@@ -356,7 +356,8 @@ public class CollectionEngine implements ITrestleCollectionEngine {
 //                Get related by relations and see if we need if any are left
                 final Optional<List<OWLObjectPropertyAssertionAxiom>> relatedProperties = Optional.of(this.ontology.getIndividualObjectProperty(collection, relatedByIRI).toList().blockingGet());
 
-                if (!relatedProperties.isPresent()) {
+                //noinspection ConstantConditions - We will remove this soon
+                if (relatedProperties.isEmpty()) {
                     logger.debug("{} is empty, removing", collectionIndividual);
                     this.ontology.removeIndividual(collectionIndividual).blockingAwait();
                 }

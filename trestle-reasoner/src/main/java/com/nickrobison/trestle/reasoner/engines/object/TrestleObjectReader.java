@@ -464,6 +464,7 @@ public class TrestleObjectReader implements ITrestleObjectReader {
         try {
 
             final Optional<List<OWLObjectPropertyAssertionAxiom>> objectProperties = Optional.of(this.ontology.getIndividualObjectProperty(individualIRI, relation.getIRI()).toList().blockingGet());
+            //noinspection ConstantConditions - Will remove this soon
             if (objectProperties.isPresent()) {
                 final List<T> properties = objectProperties
                         .get()

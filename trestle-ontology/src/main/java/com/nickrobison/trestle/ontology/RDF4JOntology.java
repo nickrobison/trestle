@@ -572,7 +572,7 @@ public abstract class RDF4JOntology extends TransactingOntology {
         if (connection != null) {
             connection.close();
         }
-        this.tc.set(null);
+        this.tc.remove();
     }
 
     @Override
