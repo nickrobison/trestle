@@ -1,10 +1,10 @@
 package com.nickrobison.trestle.gaulintegrator;
 
 import com.esri.mapreduce.PolygonFeatureInputFormat;
+import com.nickrobison.trestle.datasets.GAULObject;
 import com.nickrobison.trestle.gaulintegrator.sorting.GAULMapperADM2CodeComparator;
 import com.nickrobison.trestle.gaulintegrator.sorting.GAULPartitioner;
 import com.nickrobison.trestle.gaulintegrator.sorting.NaturalKeyGroupingComparator;
-import com.nickrobison.trestle.datasets.GAULObject;
 import com.nickrobison.trestle.reasoner.TrestleBuilder;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import org.apache.hadoop.conf.Configuration;
@@ -103,8 +103,6 @@ public class IntegrationRunner extends Configured implements Tool {
 
 //        Add the cache files
         job.waitForCompletion(true);
-
-        reasoner.getUnderlyingOntology().runInference();
         reasoner.shutdown(false);
 
         if (job.isSuccessful()) {

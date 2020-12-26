@@ -3,6 +3,7 @@ package com.nickrobison.trestle.reasoner;
 import com.nickrobison.metrician.Metrician;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
+import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
 import com.nickrobison.trestle.reasoner.engines.collection.ITrestleCollectionEngine;
@@ -137,7 +138,7 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      * @param queryString - Query String
      * @return - {@link TrestleResultSet}
      */
-    TrestleResultSet executeSPARQLSelect(String queryString);
+    List<TrestleResult> executeSPARQLSelect(String queryString);
 
     Set<OWLNamedIndividual> getInstances(Class inputClass);
 

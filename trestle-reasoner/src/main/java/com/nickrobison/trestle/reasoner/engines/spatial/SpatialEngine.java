@@ -163,14 +163,13 @@ public class SpatialEngine implements ITrestleSpatialEngine {
             final CompletableFuture<List<TrestleIndividual>> individualList = CompletableFuture.supplyAsync(() -> {
                 final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
                 try {
-                    return this.ontology.executeSPARQLResults(intersectQuery);
+                    return this.ontology.executeSPARQLResults(intersectQuery).toList().blockingGet();
                 } finally {
                     this.ontology.returnAndCommitTransaction(tt);
                 }
             }, this.spatialPool)
 //                From the results, get all the individuals
-                    .thenApply(trestleResultSet -> trestleResultSet
-                            .getResults()
+                    .thenApply(results -> results
                             .stream()
                             .map(result -> result.unwrapIndividual("m"))
                             .collect(Collectors.toSet()))
@@ -294,12 +293,12 @@ public class SpatialEngine implements ITrestleSpatialEngine {
                 final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
                 logger.debug("Transaction opened");
                 try {
-                    return this.ontology.executeSPARQLResults(spatialIntersection);
+                    return this.ontology.executeSPARQLResults(spatialIntersection).toList().blockingGet();
                 } finally {
                     this.ontology.returnAndCommitTransaction(tt);
                 }
             }, this.spatialPool)
-                    .thenApply(resultSet -> resultSet.getResults()
+                    .thenApply(results -> results
                             .stream()
                             .map(result -> IRI.create(result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID()))
                             .collect(Collectors.toSet()))

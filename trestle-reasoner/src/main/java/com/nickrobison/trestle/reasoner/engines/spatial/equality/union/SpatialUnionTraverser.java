@@ -5,7 +5,6 @@ import com.codahale.metrics.annotation.Timed;
 import com.nickrobison.trestle.common.TemporalUtils;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.types.TrestleResult;
-import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.parser.TemporalParser;
@@ -13,6 +12,7 @@ import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
+import io.reactivex.rxjava3.functions.Supplier;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.OWLDataFactory;
@@ -93,7 +93,7 @@ public class SpatialUnionTraverser {
             Set<STObjectWrapper> stObjects = new HashSet<>(subjects.size());
             for (OWLNamedIndividual subject : subjects) {
                 //        Get the existence temporals for the object
-                final Set<OWLDataPropertyAssertionAxiom> individualExistenceProperties = this.ontology.getAllDataPropertiesForIndividual(subject);
+                final Set<OWLDataPropertyAssertionAxiom> individualExistenceProperties = this.ontology.getAllDataPropertiesForIndividual(subject).collect((Supplier<HashSet<OWLDataPropertyAssertionAxiom>>) HashSet::new, HashSet::add).blockingGet();
                 final Optional<TemporalObject> temporals = TemporalObjectBuilder.buildTemporalFromProperties(individualExistenceProperties, temporalType, null, null);
                 final STObjectWrapper stObject = new STObjectWrapper(subject, trestleObjectIRI, temporals.orElseThrow(() -> new IllegalStateException(TEMPORALS_ERROR)));
                 stObjects.add(stObject);
@@ -181,9 +181,8 @@ public class SpatialUnionTraverser {
         logger.trace("Executing equality query for {}", inputObject.getIndividual());
         Set<STObjectWrapper> equivalentObjects = new HashSet<>();
         final String equivalenceQuery = this.qb.buildSTEquivalenceQuery(inputObject.getIndividual());
-        final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(equivalenceQuery);
+        final List<TrestleResult> resultSet = this.ontology.executeSPARQLResults(equivalenceQuery).toList().blockingGet();
         final Set<STObjectWrapper> queryObjects = resultSet
-                .getResults()
                 .stream()
 //                Build the STObjectWrapper
                 .map(SpatialUnionTraverser::extractSTObjectWrapperFromResults)
@@ -234,8 +233,8 @@ public class SpatialUnionTraverser {
     @Timed
     private boolean isCompleteUnion(STObjectWrapper union, Set<STObjectWrapper> seenObjects) {
         final String unionQuery = this.qb.buildSTUnionComponentQuery(union.getIndividual());
-        final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(unionQuery);
-        final Optional<STObjectWrapper> hasUnseenObjects = resultSet.getResults()
+        final List<TrestleResult> resultSet = this.ontology.executeSPARQLResults(unionQuery).toList().blockingGet();
+        final Optional<STObjectWrapper> hasUnseenObjects = resultSet
                 .stream()
                 .map(SpatialUnionTraverser::extractSTObjectWrapperFromResults)
                 .filter(object -> !seenObjects.contains(object))

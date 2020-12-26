@@ -1,15 +1,19 @@
 package com.nickrobison.trestle.graphdb;
 
-import com.nickrobison.trestle.ontology.SesameOntology;
-import com.nickrobison.trestle.ontology.types.TrestleResultSet;
+import com.nickrobison.trestle.ontology.RDF4JOntology;
+import com.nickrobison.trestle.ontology.types.TrestleResult;
+import com.nickrobison.trestle.ontology.utils.RDF4JLiteralFactory;
 import com.nickrobison.trestle.ontology.utils.SharedOntologyFunctions;
 import com.ontotext.trree.config.OWLIMSailSchema;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import org.apache.commons.io.FileUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.impl.TreeModel;
 import org.eclipse.rdf4j.model.util.Models;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -46,7 +50,7 @@ import java.util.MissingResourceException;
  */
 
 @SuppressWarnings({"initialization.fields.uninitialized"})
-public class GraphDBOntology extends SesameOntology {
+public class GraphDBOntology extends RDF4JOntology {
 
     private static final Logger logger = LoggerFactory.getLogger(GraphDBOntology.class);
     private static final String DATA_DIRECTORY = "target/data";
@@ -57,11 +61,11 @@ public class GraphDBOntology extends SesameOntology {
 //    private static Repository repository;
     private static final Config config = ConfigFactory.load().getConfig("trestle.ontology.graphdb");
 
-    GraphDBOntology(String ontologyName, @Nullable String connectionString, String username, String password, OWLOntology ont, DefaultPrefixManager pm) {
-        super(ontologyName, constructRepository(ontologyName, connectionString, username, password), ont, pm);
+    GraphDBOntology(String ontologyName, @Nullable String connectionString, String username, String password, OWLOntology ont, DefaultPrefixManager pm, RDF4JLiteralFactory factory) {
+        super(ontologyName, constructRepository(ontologyName, connectionString, username, password, factory), ont, pm, factory);
     }
 
-    private static Repository constructRepository(String ontologyName, @Nullable String connectionString, String username, String password) {
+    private static Repository constructRepository(String ontologyName, @Nullable String connectionString, String username, String password, RDF4JLiteralFactory factory) {
         logger.debug("Constructing GraphDB ontology with connection string {}", connectionString != null ? connectionString : "Null");
         if (connectionString == null) {
 //            Connect to local repository
@@ -75,14 +79,15 @@ public class GraphDBOntology extends SesameOntology {
         final Repository repository = repositoryManager.getRepository(ontologyName);
 //        If the repository doesn't exist, create it
         if (repository == null) {
-            return setupNewRepository(ontologyName);
+            return setupNewRepository(ontologyName, factory);
         }
         return repository;
     }
 
     @SuppressWarnings({"argument.type.incompatible"})
-    private static Repository setupNewRepository(String ontologyName) {
+    private static Repository setupNewRepository(String ontologyName, RDF4JLiteralFactory factory) {
         logger.info("Creating new Repository {}", ontologyName);
+        final SimpleValueFactory vf = factory.getValueFactory();
         final TreeModel graph = new TreeModel();
 
 //        Read configuration file
@@ -109,14 +114,14 @@ public class GraphDBOntology extends SesameOntology {
         }
 
         final Resource repositoryNode = Models.subject(graph.filter(null, RDF.TYPE, RepositoryConfigSchema.REPOSITORY)).orElse(null);
-        graph.add(repositoryNode, RepositoryConfigSchema.REPOSITORYID, SesameOntology.vf.createLiteral(ontologyName));
-        graph.add(repositoryNode, RDFS.LABEL, SesameOntology.vf.createLiteral(String.format("Trestle Ontology: %s", ontologyName)));
+        graph.add(repositoryNode, RepositoryConfigSchema.REPOSITORYID, vf.createLiteral(ontologyName));
+        graph.add(repositoryNode, RDFS.LABEL, vf.createLiteral(String.format("Trestle Ontology: %s", ontologyName)));
 
 //        Manually set some parameters
         final Resource configNode = (Resource) Models.object(graph.filter(null, SailRepositorySchema.SAILIMPL, null)).orElse(null);
 //        Set reasoner profile
-        final org.eclipse.rdf4j.model.IRI reasonerKey = SesameOntology.vf.createIRI(OWLIMSailSchema.NAMESPACE, "ruleset");
-        final Literal reasonerValue = SesameOntology.vf.createLiteral(config.getString("ruleset"));
+        final org.eclipse.rdf4j.model.IRI reasonerKey = vf.createIRI(OWLIMSailSchema.NAMESPACE, "ruleset");
+        final Literal reasonerValue = vf.createLiteral(config.getString("ruleset"));
         graph.remove(configNode, reasonerKey, null);
         graph.add(configNode, reasonerKey, reasonerValue);
 
@@ -146,11 +151,6 @@ public class GraphDBOntology extends SesameOntology {
 //        return ModelFactory.createModelForGraph(dataset.getDefaultGraph());
 //
 //    }
-
-    @Override
-    public boolean isConsistent() {
-        return false;
-    }
 
     @Override
     public void initializeOntology() {
@@ -209,34 +209,27 @@ public class GraphDBOntology extends SesameOntology {
     }
 
     @Override
-    public void runInference() {
-    }
-
-    @Override
-    public void executeUpdateSPARQL(String queryString) {
+    public Completable executeUpdateSPARQL(String queryString) {
         this.openTransaction(true);
-        try {
+        return Completable.fromRunnable(() -> {
             final Update update = this.getThreadConnection().prepareUpdate(QueryLanguage.SPARQL, queryString);
             update.execute();
-        } finally {
-            this.commitTransaction(true);
-        }
+        })
+                .doOnError(error -> this.unlockAndAbort(true))
+                .doOnComplete(() -> this.commitTransaction(true));
     }
 
     @Override
     @SuppressWarnings({"return.type.incompatible"})
-    public TrestleResultSet executeSPARQLResults(String queryString) {
-        final TrestleResultSet results;
+    public Flowable<TrestleResult> executeSPARQLResults(String queryString) {
         this.openTransaction(false);
         final TupleQuery tupleQuery = this.getThreadConnection().prepareTupleQuery(QueryLanguage.SPARQL, queryString);
-        final TupleQueryResult resultSet = tupleQuery.evaluate();
-        try {
-            results = buildResultSet(resultSet);
-        } finally {
-            resultSet.close();
-            this.commitTransaction(false);
-        }
-        return results;
+        TupleQueryResult resultSet = tupleQuery.evaluate();
+        return Flowable.fromIterable(resultSet)
+                .map(this::buildResult)
+                .doOnError(error -> this.unlockAndAbort(false))
+                .doOnComplete(() -> this.commitTransaction(false))
+                .doFinally(resultSet::close);
     }
 
     @Override

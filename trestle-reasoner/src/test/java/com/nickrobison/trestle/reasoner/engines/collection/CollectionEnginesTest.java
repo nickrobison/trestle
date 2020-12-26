@@ -6,6 +6,7 @@ import com.nickrobison.trestle.reasoner.AbstractReasonerTest;
 import com.nickrobison.trestle.reasoner.TestClasses;
 import com.nickrobison.trestle.types.relations.CollectionRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
+import io.reactivex.rxjava3.functions.Supplier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
@@ -18,6 +19,7 @@ import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLObjectPropertyAssertionAxiom;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -71,6 +73,7 @@ public class CollectionEnginesTest extends AbstractReasonerTest {
                 () -> assertFalse(this.reasoner.collectionsAreAdjacent(SECOND_COLLECTION, "third:collection", 0.5), "Second and third should not be adjacent"));
     }
 
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
     @Test
     public void testObjectRemoval() {
         //        Add all to collections
@@ -83,11 +86,11 @@ public class CollectionEnginesTest extends AbstractReasonerTest {
 //        Verify that it's gone
         final ITrestleOntology ontology = this.reasoner.getUnderlyingOntology();
         final Optional<List<TestClasses.JTSGeometryTest>> thirdCollection = this.reasoner.getCollectionMembers(TestClasses.JTSGeometryTest.class, THIRD_COLLECTION, 0.1, null, null);
-        final Optional<List<OWLObjectPropertyAssertionAxiom>> relationRelations = ontology.getIndividualObjectProperty(IRI.create(OVERRIDE_PREFIX, "100113"), hasRelationIRI);
+        final List<OWLObjectPropertyAssertionAxiom> relationRelations = ontology.getIndividualObjectProperty(IRI.create(OVERRIDE_PREFIX, "100113"), hasRelationIRI).toList().blockingGet();
 //        Make sure the Object doesn't have the relationship
         assertAll(() -> assertTrue(thirdCollection.isPresent(), "Should have results"),
                 () -> assertTrue(thirdCollection.get().isEmpty(), "Should not any members"),
-                () -> assertFalse(relationRelations.isPresent(), "Object should not have relationship relations"));
+                () -> assertTrue(relationRelations.isEmpty(), "Object should not have relationship relations"));
 
 //        Verify first collection
         this.reasoner.removeObjectFromCollection(FIRST_COLLECTION, second, true);
@@ -95,15 +98,15 @@ public class CollectionEnginesTest extends AbstractReasonerTest {
         assertTrue(firstCollection.isPresent(), "First collection should be there.");
 
 //        First object should have relations
-        final Optional<List<OWLObjectPropertyAssertionAxiom>> firstRelations = ontology.getIndividualObjectProperty(df.getOWLNamedIndividual(IRI.create(OVERRIDE_PREFIX, "100111")), hasRelationIRI);
-        assertTrue(firstRelations.isPresent(), "First object should still have relation");
-        final Optional<List<OWLObjectPropertyAssertionAxiom>> secondRelations = ontology.getIndividualObjectProperty(df.getOWLNamedIndividual(IRI.create(OVERRIDE_PREFIX, "100112")), hasRelationIRI);
-        assertFalse(secondRelations.isPresent(), "Second object should not have relations");
+        final List<OWLObjectPropertyAssertionAxiom> firstRelations = ontology.getIndividualObjectProperty(df.getOWLNamedIndividual(IRI.create(OVERRIDE_PREFIX, "100111")), hasRelationIRI).toList().blockingGet();
+        assertFalse(firstRelations.isEmpty(), "First object should still have relation");
+        final List<OWLObjectPropertyAssertionAxiom> secondRelations = ontology.getIndividualObjectProperty(df.getOWLNamedIndividual(IRI.create(OVERRIDE_PREFIX, "100112")), hasRelationIRI).toList().blockingGet();
+        assertTrue(secondRelations.isEmpty(), "Second object should not have relations");
 
 //        Try to remove, but leave collection
         this.reasoner.removeObjectFromCollection(FIRST_COLLECTION, first, false);
-        final Optional<List<OWLObjectPropertyAssertionAxiom>> firstEmptyRelations = ontology.getIndividualObjectProperty(df.getOWLNamedIndividual(IRI.create(OVERRIDE_PREFIX, "100111")), hasRelationIRI);
-        assertFalse(firstEmptyRelations.isPresent(), "First object should not have relations");
+        final List<OWLObjectPropertyAssertionAxiom> firstEmptyRelations = ontology.getIndividualObjectProperty(df.getOWLNamedIndividual(IRI.create(OVERRIDE_PREFIX, "100111")), hasRelationIRI).toList().blockingGet();
+        assertTrue(firstEmptyRelations.isEmpty(), "First object should not have relations");
         firstCollection = this.reasoner.getCollectionMembers(TestClasses.JTSGeometryTest.class, FIRST_COLLECTION, 0.1, null, null);
         assertTrue(firstCollection.isPresent(), "First collection should still exist");
         assertTrue(firstCollection.get().isEmpty(), "Should have nothing in it");
@@ -121,7 +124,7 @@ public class CollectionEnginesTest extends AbstractReasonerTest {
         this.reasoner.removeCollection(FIRST_COLLECTION);
 
 //        Test that there are no relations left
-        final Set<OWLNamedIndividual> relations = this.reasoner.getUnderlyingOntology().getInstances(df.getOWLClass(trestleRelationIRI), true);
+        final Set<OWLNamedIndividual> relations = this.reasoner.getUnderlyingOntology().getInstances(df.getOWLClass(trestleRelationIRI), true).collect((Supplier<HashSet<OWLNamedIndividual>>) HashSet::new, HashSet::add).blockingGet();
         assertEquals(1, relations.size(), "Should only have the demo relation");
     }
 

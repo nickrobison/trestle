@@ -7,7 +7,7 @@ import com.nickrobison.trestle.iri.IRIBuilder;
 import com.nickrobison.trestle.iri.TrestleIRI;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.ReasonerPrefix;
-import com.nickrobison.trestle.ontology.types.TrestleResultSet;
+import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
 import com.nickrobison.trestle.reasoner.exceptions.MissingConstructorException;
@@ -222,14 +222,14 @@ public class TrestleObjectReader implements ITrestleObjectReader {
         if (dataProperties.isPresent()) {
 //            Facts
             final Instant individualRetrievalStart = Instant.now();
-            TrestleResultSet resultSet = ontology.executeSPARQLResults(factQuery);
-            if (resultSet.getResults().isEmpty()) {
+            List<TrestleResult> resultSet = ontology.executeSPARQLResults(factQuery).toList().blockingGet();
+            if (resultSet.isEmpty()) {
                 throw new NoValidStateException(individualIRI, validAtTemporal, dbAtTemporal);
             }
             final Instant individualRetrievalEnd = Instant.now();
-            logger.debug("Retrieving {} facts took {} ms", resultSet.getResults().size(), Duration.between(individualRetrievalStart, individualRetrievalEnd).toMillis());
+            logger.debug("Retrieving {} facts took {} ms", resultSet.size(), Duration.between(individualRetrievalStart, individualRetrievalEnd).toMillis());
 
-            final List<TrestleFact<@NonNull Object>> facts = resultSet.getResults()
+            final List<TrestleFact<@NonNull Object>> facts = resultSet
                     .stream()
                     .map(result -> {
                         final OWLDataPropertyAssertionAxiom assertion = df.getOWLDataPropertyAssertionAxiom(
@@ -249,7 +249,7 @@ public class TrestleObjectReader implements ITrestleObjectReader {
                     .collect(Collectors.toList());
 
 //            Get the temporals
-            final Set<OWLDataPropertyAssertionAxiom> temporalProperties = ontology.getTemporalsForIndividual(df.getOWLNamedIndividual(individualIRI));
+            final Set<OWLDataPropertyAssertionAxiom> temporalProperties = new HashSet<>(ontology.getTemporalsForIndividual(df.getOWLNamedIndividual(individualIRI)).toList().blockingGet());
             final Optional<TemporalObject> temporals = TemporalObjectBuilder.buildTemporalFromProperties(temporalProperties, baseTemporalType, clazz);
 
             logger.debug("In the arguments future");
@@ -346,9 +346,8 @@ public class TrestleObjectReader implements ITrestleObjectReader {
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         try {
             final String headerQuery = this.qb.buildObjectHeaderQuery(objectClass, df.getOWLNamedIndividual(individualIRI));
-            final TrestleResultSet trestleResultSet = this.ontology.executeSPARQLResults(headerQuery);
+            final List<TrestleResult> trestleResultSet = this.ontology.executeSPARQLResults(headerQuery).toList().blockingGet();
             return trestleResultSet
-                    .getResults()
                     .stream()
                     .map(result -> {
                         final Optional<OWLLiteral> existsToLiteral = result.getLiteral("et");
@@ -408,8 +407,8 @@ public class TrestleObjectReader implements ITrestleObjectReader {
         final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(false);
         try {
             final String historyQuery = this.qb.buildFactHistoryQuery(individual, factName, start, end, db);
-            final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(historyQuery);
-            final List<Object> results = resultSet.getResults()
+            final List<TrestleResult> resultSet = this.ontology.executeSPARQLResults(historyQuery).toList().blockingGet();
+            final List<Object> results = resultSet
                     .stream()
                     .map(result -> result.unwrapLiteral("value"))
                     .map(literal -> this.handleLiteral(clazz, datatype, literal))
@@ -442,8 +441,7 @@ public class TrestleObjectReader implements ITrestleObjectReader {
 
         final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(false);
         try {
-            final List<Object> results = this.ontology.executeSPARQLResults(factValueQuery)
-                    .getResults()
+            final List<Object> results = this.ontology.executeSPARQLResults(factValueQuery).toList().blockingGet()
                     .stream()
                     .map(result -> result.unwrapLiteral("o"))
                     .map(literal -> this.handleLiteral(clazz, datatype, literal))
@@ -465,7 +463,8 @@ public class TrestleObjectReader implements ITrestleObjectReader {
 
         try {
 
-            final Optional<List<OWLObjectPropertyAssertionAxiom>> objectProperties = this.ontology.getIndividualObjectProperty(individualIRI, relation.getIRI());
+            final Optional<List<OWLObjectPropertyAssertionAxiom>> objectProperties = Optional.of(this.ontology.getIndividualObjectProperty(individualIRI, relation.getIRI()).toList().blockingGet());
+            //noinspection ConstantConditions - Will remove this soon
             if (objectProperties.isPresent()) {
                 final List<T> properties = objectProperties
                         .get()

@@ -13,15 +13,15 @@ import com.nickrobison.trestle.reasoner.engines.temporal.TemporalComparisonRepor
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.types.relations.CollectionRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
-import org.locationtech.jts.geom.GeometryCollection;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.PrecisionModel;
-import org.locationtech.jts.io.WKBReader;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.locationtech.jts.geom.GeometryCollection;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.PrecisionModel;
+import org.locationtech.jts.io.WKBReader;
 import org.semanticweb.owlapi.model.IRI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -114,11 +114,6 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
             final Queue<MapperOutput> inputRecords = inputRecordsOptional.get();
             final GAULObject newGAULObject = inputRecords.poll().toObject();
             logger.warn("Processing {}-{}-{} for union and intersections", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
-//            Manually run the inferencer, for now
-            final Instant infStart = Instant.now();
-            reasoner.getUnderlyingOntology().runInference();
-            final Instant infStop = Instant.now();
-            logger.debug("Updating inference took {} ms", Duration.between(infStart, infStop).toMillis());
 
 //            List of objects to compare to given object
             final List<GAULObject> matchedObjects = new ArrayList<>();

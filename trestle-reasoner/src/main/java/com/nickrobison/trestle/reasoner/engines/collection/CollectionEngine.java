@@ -7,7 +7,7 @@ import com.nickrobison.trestle.common.exceptions.UnsupportedFeatureException;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.ReasonerPrefix;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
-import com.nickrobison.trestle.ontology.types.TrestleResultSet;
+import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectWriter;
@@ -87,7 +87,7 @@ public class CollectionEngine implements ITrestleCollectionEngine {
 
     @Override
     public List<String> getCollections() {
-        return this.ontology.getInstances(df.getOWLClass(trestleCollectionIRI), true)
+        return this.ontology.getInstances(df.getOWLClass(trestleCollectionIRI), true).toList().blockingGet()
                 .stream()
                 .map(OWLIndividual::toStringID)
                 .collect(Collectors.toList());
@@ -112,8 +112,8 @@ public class CollectionEngine implements ITrestleCollectionEngine {
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         try {
-            final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(collectionQuery);
-            resultSet.getResults()
+            final List<TrestleResult> resultSet = this.ontology.executeSPARQLResults(collectionQuery).toList().blockingGet();
+            resultSet
                     .forEach(result -> collectionIndividuals.put(result.getIndividual("collection").orElseThrow(() -> new RuntimeException("collection is null")).toStringID(), result.getIndividual("individual").orElseThrow(() -> new RuntimeException("individual is null")).toStringID()));
 
             if (collectionIndividuals.keySet().size() == 0) {
@@ -163,8 +163,8 @@ public class CollectionEngine implements ITrestleCollectionEngine {
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         try {
-            final TrestleResultSet resultSet = this.ontology.executeSPARQLResults(queryString);
-            final Set<String> intersectedCollectionURIs = resultSet.getResults()
+            final List<TrestleResult> resultSet = this.ontology.executeSPARQLResults(queryString).toList().blockingGet();
+            final Set<String> intersectedCollectionURIs = resultSet
                     .stream()
                     .map(result -> result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID())
                     .collect(Collectors.toSet());
@@ -195,8 +195,7 @@ public class CollectionEngine implements ITrestleCollectionEngine {
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         try {
-            Set<String> individualIRIs = this.ontology.executeSPARQLResults(retrievalStatement)
-                    .getResults()
+            Set<String> individualIRIs = this.ontology.executeSPARQLResults(retrievalStatement).toList().blockingGet()
                     .stream()
                     .map(result -> result.getIndividual("m"))
                     .filter(Optional::isPresent)
@@ -275,14 +274,14 @@ public class CollectionEngine implements ITrestleCollectionEngine {
 //                break;
 //        }
 //        Write the collection properties
-            ontology.createIndividual(df.getOWLClassAssertionAxiom(relationClass, relationIndividual));
+            ontology.createIndividual(df.getOWLClassAssertionAxiom(relationClass, relationIndividual)).blockingAwait();
             ontology.writeIndividualObjectProperty(df.getOWLObjectPropertyAssertionAxiom(
                     df.getOWLObjectProperty(relationOfIRI),
                     relationIndividual,
-                    individual));
+                    individual)).blockingAwait();
             ontology.writeIndividualDataProperty(relationIndividual,
                     df.getOWLDataProperty(relationStrengthIRI),
-                    df.getOWLLiteral(strength));
+                    df.getOWLLiteral(strength)).blockingAwait();
 
 //        Write the relation to the collection
 //            TODO(nrobison): This is gross, catching exceptions is really expensive.
@@ -291,16 +290,15 @@ public class CollectionEngine implements ITrestleCollectionEngine {
                         df.getOWLObjectProperty(relatedToIRI),
                         relationIndividual,
                         collectionIndividual
-                ));
-            } catch (MissingOntologyEntity missingOntologyEntity) {
+                )).blockingAwait();
+            } catch (Exception e) { // I think this can actually be removed, not sure it's ever called
 //            If the collection doesn't exist, create it.
-                logger.debug("Missing collection {}, creating", missingOntologyEntity.getIndividual());
-                ontology.createIndividual(df.getOWLClassAssertionAxiom(df.getOWLClass(trestleCollectionIRI), collectionIndividual));
+                ontology.createIndividual(df.getOWLClassAssertionAxiom(df.getOWLClass(trestleCollectionIRI), collectionIndividual)).blockingAwait();
 //            Try again
                 ontology.writeIndividualObjectProperty(df.getOWLObjectPropertyAssertionAxiom(
                         df.getOWLObjectProperty(relatedToIRI),
                         relationIndividual,
-                        collectionIndividual));
+                        collectionIndividual)).blockingAwait();
             }
         } catch (MissingOntologyEntity | TrestleClassException e) {
             logger.error("Problem adding individual {} to collection {}", individual, collectionIndividual, e);
@@ -318,7 +316,7 @@ public class CollectionEngine implements ITrestleCollectionEngine {
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
         try {
 //            Get all the relations
-            final Optional<List<OWLObjectPropertyAssertionAxiom>> relationProperties = this.ontology.getIndividualObjectProperty(collectionIndividual, relatedByIRI);
+            final Optional<List<OWLObjectPropertyAssertionAxiom>> relationProperties = Optional.of(this.ontology.getIndividualObjectProperty(collectionIndividual, relatedByIRI).toList().blockingGet());
             //                Remove each of the relations
             relationProperties.ifPresent(owlObjectPropertyAssertionAxioms -> owlObjectPropertyAssertionAxioms
                     .forEach(relation -> {
@@ -327,7 +325,7 @@ public class CollectionEngine implements ITrestleCollectionEngine {
                     }));
 
 //            Remove the collection
-            this.ontology.removeIndividual(collectionIndividual);
+            this.ontology.removeIndividual(collectionIndividual).blockingAwait();
             this.ontology.returnAndCommitTransaction(trestleTransaction);
         } catch (Exception e) {
             this.ontology.returnAndAbortTransaction(trestleTransaction);
@@ -356,11 +354,12 @@ public class CollectionEngine implements ITrestleCollectionEngine {
             try {
                 logger.debug("Removing {}, if empty", collectionIndividual);
 //                Get related by relations and see if we need if any are left
-                final Optional<List<OWLObjectPropertyAssertionAxiom>> relatedProperties = this.ontology.getIndividualObjectProperty(collection, relatedByIRI);
+                final Optional<List<OWLObjectPropertyAssertionAxiom>> relatedProperties = Optional.of(this.ontology.getIndividualObjectProperty(collection, relatedByIRI).toList().blockingGet());
 
-                if (!relatedProperties.isPresent()) {
+                //noinspection ConstantConditions - We will remove this soon
+                if (relatedProperties.isEmpty()) {
                     logger.debug("{} is empty, removing", collectionIndividual);
-                    this.ontology.removeIndividual(collectionIndividual);
+                    this.ontology.removeIndividual(collectionIndividual).blockingAwait();
                 }
                 this.ontology.returnAndCommitTransaction(emptyTransaction);
             } catch (Exception e) {
@@ -379,9 +378,8 @@ public class CollectionEngine implements ITrestleCollectionEngine {
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         try {
-            final TrestleResultSet trestleResultSet = this.ontology.executeSPARQLResults(adjacentQuery);
+            final List<TrestleResult> trestleResultSet = this.ontology.executeSPARQLResults(adjacentQuery).toList().blockingGet();
             return trestleResultSet
-                    .getResults()
                     .stream()
                     .map(result -> result.unwrapIndividual("collection"))
                     .anyMatch(collection -> collection.equals(matchingIndividual));
@@ -403,12 +401,12 @@ public class CollectionEngine implements ITrestleCollectionEngine {
 
         try {
 //            Remove the from and two relations
-            this.ontology.removeIndividualObjectProperty(relation, df.getOWLObjectProperty(relatedToIRI), collection);
-            this.ontology.removeIndividualObjectProperty(relation, df.getOWLObjectProperty(relationOfIRI), null);
+            this.ontology.removeIndividualObjectProperty(relation, df.getOWLObjectProperty(relatedToIRI), collection).blockingAwait();
+            this.ontology.removeIndividualObjectProperty(relation, df.getOWLObjectProperty(relationOfIRI), null).blockingAwait();
 //            Remove the strength
-            this.ontology.removeIndividualDataProperty(relation, df.getOWLDataProperty(relationStrengthIRI), null);
+            this.ontology.removeIndividualDataProperty(relation, df.getOWLDataProperty(relationStrengthIRI), null).blockingAwait();
 //            Remove the individual
-            this.ontology.removeIndividual(relation);
+            this.ontology.removeIndividual(relation).blockingAwait();
             this.ontology.returnAndCommitTransaction(removeTransaction);
         } catch (Exception e) {
             this.ontology.returnAndAbortTransaction(removeTransaction);

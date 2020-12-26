@@ -3,7 +3,6 @@ package com.nickrobison.trestle.ontology.utils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
-import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDatatype;
 import org.semanticweb.owlapi.model.OWLLiteral;
@@ -11,7 +10,7 @@ import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
+import javax.inject.Inject;
 
 /**
  * Created by nrobison on 1/11/17.
@@ -19,11 +18,25 @@ import java.util.Optional;
 public class RDF4JLiteralFactory {
 
     private static final Logger logger = LoggerFactory.getLogger(RDF4JLiteralFactory.class);
-    private static final SimpleValueFactory vf = SimpleValueFactory.getInstance();
-    private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
+    private final SimpleValueFactory vf;
+    private final OWLDataFactory df;
+
+    @Inject
+    public RDF4JLiteralFactory(OWLDataFactory df, SimpleValueFactory vf) {
+        this.df = df;
+        this.vf = vf;
+    }
+
+    public SimpleValueFactory getValueFactory() {
+        return this.vf;
+    }
+
+    public OWLDataFactory getDataFactory() {
+        return this.df;
+    }
 
 
-    public static Literal createLiteral(OWLLiteral owlLiteral) {
+    public Literal createLiteral(OWLLiteral owlLiteral) {
         if (owlLiteral.hasLang()) {
             logger.trace("Creating typed literal {} with language {}", owlLiteral.getLiteral(), owlLiteral.getLang());
             return vf.createLiteral(owlLiteral.getLiteral(), owlLiteral.getLang());
@@ -34,7 +47,7 @@ public class RDF4JLiteralFactory {
         }
     }
 
-    public static Optional<OWLLiteral> createOWLLiteral(Literal literal) {
+    public OWLLiteral createOWLLiteral(Literal literal) {
         OWLDatatype owlDatatype;
         if (literal.getDatatype() == null) {
             logger.error("Literal has an emptyURI");
@@ -43,15 +56,10 @@ public class RDF4JLiteralFactory {
             final String numericString = literal.stringValue();
             owlDatatype = SharedLiteralUtils.parseNumericDatatype(numericString);
         } else if (literal.getLanguage().isPresent()) {
-            return Optional.of(df.getOWLLiteral(literal.stringValue(), literal.getLanguage().get()));
+            return df.getOWLLiteral(literal.stringValue(), literal.getLanguage().get());
         } else {
             owlDatatype = df.getOWLDatatype(org.semanticweb.owlapi.model.IRI.create(literal.getDatatype().toString()));
         }
-
-        if (owlDatatype.getIRI().toString().equals("nothing")) {
-            logger.error("Datatype {} doesn't exist", literal.getDatatype());
-            return Optional.empty();
-        }
-        return Optional.of(df.getOWLLiteral(literal.stringValue(), owlDatatype));
+        return df.getOWLLiteral(literal.stringValue(), owlDatatype);
     }
 }

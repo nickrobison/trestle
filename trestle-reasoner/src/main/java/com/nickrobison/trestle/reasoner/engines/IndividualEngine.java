@@ -5,7 +5,6 @@ import com.nickrobison.trestle.common.exceptions.TrestleMissingFactException;
 import com.nickrobison.trestle.common.exceptions.TrestleMissingIndividualException;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.types.TrestleResult;
-import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
@@ -24,6 +23,7 @@ import com.nickrobison.trestle.types.events.TrestleEventType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
+import io.reactivex.rxjava3.functions.Supplier;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -34,10 +34,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.time.OffsetDateTime;
 import java.time.temporal.Temporal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
@@ -135,7 +132,7 @@ public class IndividualEngine {
         try {
             final CompletableFuture<TrestleIndividual> temporalFuture = CompletableFuture.supplyAsync(() -> {
                 final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-                final Set<OWLDataPropertyAssertionAxiom> individualDataProperties = ontology.getAllDataPropertiesForIndividual(individual);
+                final Set<OWLDataPropertyAssertionAxiom> individualDataProperties = ontology.getAllDataPropertiesForIndividual(individual).collect((Supplier<HashSet<OWLDataPropertyAssertionAxiom>>) HashSet::new, HashSet::add).blockingGet();
                 this.ontology.returnAndCommitTransaction(tt);
                 return new TemporalPropertiesPair(individual, individualDataProperties);
             })
@@ -143,7 +140,7 @@ public class IndividualEngine {
                     .thenApply(temporalObject -> new TrestleIndividual(individual.toStringID(), temporalObject.orElseThrow(() -> new CompletionException(new TrestleMissingIndividualException(individual)))));
 
 //                Get all the facts
-            final Optional<List<OWLObjectPropertyAssertionAxiom>> individualFacts = ontology.getIndividualObjectProperty(individual, hasFactIRI);
+            final Optional<List<OWLObjectPropertyAssertionAxiom>> individualFacts = Optional.of(ontology.getIndividualObjectProperty(individual, hasFactIRI).toList().blockingGet());
             final List<CompletableFuture<TrestleFact>> factFutureList = individualFacts.orElse(new ArrayList<>())
                     .stream()
                     .map(fact -> buildTrestleFact(fact.getObject().asOWLNamedIndividual(), trestleTransaction))
@@ -156,7 +153,7 @@ public class IndividualEngine {
                 final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
                 String query = this.qb.buildIndividualRelationQuery(individual);
                 try {
-                    return ontology.executeSPARQLResults(query);
+                    return ontology.executeSPARQLResults(query).toList().blockingGet();
                 } catch (Exception e) {
                     this.ontology.returnAndAbortTransaction(tt);
                     final Throwable cause = e.getCause();
@@ -170,7 +167,7 @@ public class IndividualEngine {
             }, individualThreadPool)
                     .thenApply(sparqlResults -> {
                         List<TrestleRelation> relations = new ArrayList<>();
-                        sparqlResults.getResults()
+                        sparqlResults
                                 .stream()
 //                            We want the subProperties of Temporal/Spatial/Event relations. So we filter them out
                                 .filter(result -> !result.unwrapIndividual("o").asOWLNamedIndividual().getIRI().equals(temporalRelationIRI))
@@ -190,7 +187,7 @@ public class IndividualEngine {
                 final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
                 final String query = this.qb.buildIndividualEventQuery(individual);
                 try {
-                    return this.ontology.executeSPARQLResults(query);
+                    return this.ontology.executeSPARQLResults(query).toList().blockingGet();
                 } catch (Exception e) {
                     this.ontology.returnAndAbortTransaction(tt);
                     final Throwable cause = e.getCause();
@@ -202,7 +199,7 @@ public class IndividualEngine {
                     this.ontology.returnAndCommitTransaction(tt);
                 }
             }, this.individualThreadPool)
-                    .thenApply(results -> results.getResults()
+                    .thenApply(results -> results
                             .stream()
                             .filter(result -> !result.unwrapIndividual("type").asOWLNamedIndividual().getIRI().equals(trestleEventIRI))
                             .map(result -> {
@@ -272,9 +269,9 @@ public class IndividualEngine {
         //        Build the query string
         final String eventQuery = this.qb.buildIndividualEventQuery(individual);
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(transaction, false);
-        final TrestleResultSet resultSet;
+        final List<TrestleResult> resultSet;
         try {
-            resultSet = this.ontology.executeSPARQLResults(eventQuery);
+            resultSet = this.ontology.executeSPARQLResults(eventQuery).toList().blockingGet();
         } catch (Exception e) {
             logger.error("Unable to get events for individual: {}", individual);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
@@ -284,7 +281,7 @@ public class IndividualEngine {
         }
 //        Parse out the events
 //        I think I can suppress this, because if the above method throws an error, the catch statement will return an empty optional
-        @SuppressWarnings({"dereference.of.nullable"}) final List<TrestleResult> results = resultSet.getResults();
+        @SuppressWarnings({"dereference.of.nullable"}) final List<TrestleResult> results = resultSet;
         final Set<TrestleEvent> individualEvents = results
                 .stream()
 //                Filter out Trestle_Event from results
@@ -317,7 +314,7 @@ public class IndividualEngine {
         return CompletableFuture.supplyAsync(() -> {
             final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(transactionObject);
             try {
-                return ontology.getAllDataPropertiesForIndividual(factIndividual);
+                return ontology.getAllDataPropertiesForIndividual(factIndividual).toList().blockingGet();
             } finally {
                 this.ontology.returnAndCommitTransaction(tt);
             }

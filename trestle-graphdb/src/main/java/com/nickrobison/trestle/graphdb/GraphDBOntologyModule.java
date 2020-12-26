@@ -6,6 +6,7 @@ import com.google.inject.multibindings.Multibinder;
 import com.nickrobison.trestle.ontology.ConnectionProperties;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.annotations.OntologyName;
+import com.nickrobison.trestle.ontology.utils.RDF4JLiteralFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
@@ -18,9 +19,9 @@ public class GraphDBOntologyModule extends AbstractModule {
     }
 
     @Provides
-    GraphDBOntology provideOntology(@OntologyName String name, OWLOntology ontology, DefaultPrefixManager pm, ConnectionProperties conn) {
+    GraphDBOntology provideOntology(@OntologyName String name, OWLOntology ontology, DefaultPrefixManager pm, ConnectionProperties conn, RDF4JLiteralFactory factory) {
         return new GraphDBOntology(name,
                 conn.getConnectionString(), conn.getUsername(), conn.getPassword(),
-                ontology, pm);
+                ontology, pm, factory);
     }
 }

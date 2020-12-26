@@ -5,6 +5,9 @@ import com.google.inject.Injector;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,5 +47,17 @@ public class TrestleOntologyModule extends AbstractModule {
     @Singleton
     public QueryBuilder provideQueryBuilder(ITrestleOntology ontology) {
         return ontology.getUnderlyingQueryBuilder();
+    }
+
+    @Provides
+    @Singleton
+    public OWLDataFactory provideDataFactory() {
+        return OWLManager.getOWLDataFactory();
+    }
+
+    @Provides
+    @Singleton
+    public SimpleValueFactory literalFactory() {
+        return SimpleValueFactory.getInstance();
     }
 }

@@ -2,11 +2,11 @@ package com.nickrobison.trestle.reasoner.engines.events;
 
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.ReasonerPrefix;
-import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.parser.TemporalParser;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.events.TrestleEventType;
+import io.reactivex.rxjava3.functions.Supplier;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
@@ -15,9 +15,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.time.OffsetDateTime;
 import java.time.temporal.Temporal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.nickrobison.trestle.common.StaticIRI.*;
 import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseToTemporal;
@@ -73,7 +71,7 @@ public class EventEngineImpl implements TrestleEventEngine {
             }
 //            Write the properties
             final String updateQuery = this.qb.updateObjectProperties(eventAxioms, trestleEventIRI);
-            this.ontology.executeUpdateSPARQL(updateQuery);
+            this.ontology.executeUpdateSPARQL(updateQuery).blockingAwait();
         });
     }
 
@@ -102,10 +100,10 @@ public class EventEngineImpl implements TrestleEventEngine {
             addTemporalEvent(TrestleEventType.MERGED, subject, eventTemporal);
 //            Add the components to the event
             for (OWLNamedIndividual object : objects) {
-                this.ontology.writeIndividualObjectProperty(object, componentOfIRI, eventName);
+                this.ontology.writeIndividualObjectProperty(object, componentOfIRI, eventName).blockingAwait();
             }
-        } catch (MissingOntologyEntity e) {
-            logger.error("Missing Individual {}", e.getIndividual(), e);
+        } catch (Exception e) {
+            logger.error("Missing Individual {}", subject.getIRI(), e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
         } finally {
             this.ontology.returnAndCommitTransaction(trestleTransaction);
@@ -122,12 +120,12 @@ public class EventEngineImpl implements TrestleEventEngine {
             addTemporalEvent(TrestleEventType.SPLIT, subject, eventTemporal);
 //            Add the components to the event
             for (OWLNamedIndividual object : objects) {
-                this.ontology.writeIndividualObjectProperty(object, componentOfIRI, eventName);
+                this.ontology.writeIndividualObjectProperty(object, componentOfIRI, eventName).blockingAwait();
             }
-        } catch (MissingOntologyEntity e) {
-            logger.error("Missing Individual {}", e.getIndividual(), e);
+        } catch (Exception e) {
+            logger.error("Missing Individual {}", subject.getIRI(), e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
-            throw new TrestleEventException(df.getOWLNamedIndividual(e.getIndividual()), "Missing individual");
+            throw new TrestleEventException(df.getOWLNamedIndividual(subject.getIRI()), "Missing individual");
         } finally {
             this.ontology.returnAndCommitTransaction(trestleTransaction);
         }
@@ -148,15 +146,15 @@ public class EventEngineImpl implements TrestleEventEngine {
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
         try {
 //            Create the new event
-            this.ontology.createIndividual(classAxiom);
+            this.ontology.createIndividual(classAxiom).blockingAwait();
 //            Add the data property
-            this.ontology.writeIndividualDataProperty(existsAtAxiom);
-            this.ontology.writeIndividualObjectProperty(objectAssertion);
+            this.ontology.writeIndividualDataProperty(existsAtAxiom).blockingAwait();
+            this.ontology.writeIndividualObjectProperty(objectAssertion).blockingAwait();
 //            Write the object relation
-        } catch (MissingOntologyEntity e) {
+        } catch (Exception e) {
             logger.error("Missing ontology entity", e);
             this.ontology.returnAndAbortTransaction(trestleTransaction);
-            throw new TrestleEventException(df.getOWLNamedIndividual(e.getIndividual()), "Missing individual");
+            throw new TrestleEventException(individual, "Missing individual");
         } finally {
             this.ontology.returnAndCommitTransaction(trestleTransaction);
         }
@@ -174,11 +172,11 @@ public class EventEngineImpl implements TrestleEventEngine {
     @SuppressWarnings({"squid:UnusedPrivateMethod"})
     // Suppressed because we may add this later, once we figure out isolation levels
     private Temporal extractTrestleObjectTemporal(OWLNamedIndividual individual, IRI temporalIRI) {
-        final Set<OWLLiteral> existsFromProperty = this.ontology
+        final Set<OWLLiteral> existsFromProperty = Optional.of(this.ontology
                 .getIndividualDataProperty(individual,
-                        df.getOWLDataProperty(temporalIRI))
-                .orElseGet(() -> this.ontology
-                        .getIndividualDataProperty(individual, temporalExistsAtIRI)
+                        df.getOWLDataProperty(temporalIRI)).collect((Supplier<HashSet<OWLLiteral>>) HashSet::new, HashSet::add).blockingGet())
+                .orElseGet(() -> Optional.of(this.ontology
+                        .getIndividualDataProperty(individual, temporalExistsAtIRI).collect((Supplier<HashSet<OWLLiteral>>) HashSet::new, HashSet::add).blockingGet())
                         .orElseThrow(() -> new IllegalStateException(String.format("Individual %s does not have existsFrom or ExistsTo Temporal", individual.toStringID()))));
 //            We can just grab the first set member
 //            TODO(nrobison): This should be either LocalDate or OffsetDateTime. In the future

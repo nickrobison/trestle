@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.server.resources;
 
+import com.nickrobison.trestle.ontology.types.TrestleResult;
 import com.nickrobison.trestle.ontology.types.TrestleResultSet;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
 import com.nickrobison.trestle.server.annotations.PrivilegesAllowed;
@@ -20,6 +21,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import static javax.ws.rs.core.Response.ok;
@@ -61,9 +64,9 @@ public class QueryResource {
     public Response executeQuery(@NotEmpty String queryString) {
         logger.debug("Executing query {}", queryString);
         try {
-            final TrestleResultSet results = this.reasoner.executeSPARQLSelect(queryString);
+            final List<TrestleResult> results = this.reasoner.executeSPARQLSelect(queryString);
 
-            return ok(results).build();
+            return ok(new TrestleResultSet(results.size(), Collections.emptyList(), results)).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e).build();
         }
