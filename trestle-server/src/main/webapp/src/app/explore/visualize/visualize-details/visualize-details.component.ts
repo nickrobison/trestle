@@ -1,15 +1,12 @@
-import {AfterViewInit, Component, ViewContainerRef} from "@angular/core";
+import {AfterViewInit, Component} from "@angular/core";
 import moment, {Moment} from "moment";
 import {ActivatedRoute, Params} from '@angular/router';
 import {TrestleIndividual} from '../../../shared/individual/TrestleIndividual/trestle-individual';
 import {BehaviorSubject, combineLatest, Observable} from 'rxjs';
 import {MapSource} from '../../../ui/trestle-map/trestle-map.component';
 import {IIndividualHistory} from '../../../ui/history-graph/history-graph.component';
-import {MatDialog, MatDialogConfig, MatDialogRef} from '@angular/material/dialog';
-import {IndividualValueDialog} from '../individual-value.dialog';
 import {IndividualService} from '../../../shared/individual/individual.service';
 import {map} from 'rxjs/operators';
-import {TrestleFact} from '../../../shared/individual/TrestleIndividual/trestle-fact';
 
 interface IRouteObservable {
     route: Params;
@@ -32,13 +29,9 @@ export class VisualizeDetailsComponent implements AfterViewInit {
     public maxGraphDate = new Date("2017-01-01");
     public validAt: Moment;
     public dbAt: Moment;
-    public displayedColumns = ["name", "type", "value", "from", "to"];
     private routeObservable: Observable<IRouteObservable>;
-    private dialogRef: MatDialogRef<IndividualValueDialog> | null;
 
     constructor(private is: IndividualService,
-                private dialog: MatDialog,
-                private viewContainerRef: ViewContainerRef,
                 private route: ActivatedRoute) {
         this.mapIndividual = new BehaviorSubject(undefined);
         this.minTime = moment().year(1990).startOf("year");
@@ -91,19 +84,6 @@ export class VisualizeDetailsComponent implements AfterViewInit {
      */
     public getPrefix(object: string): string {
         return TrestleIndividual.extractPrefix(object);
-    }
-
-    /**
-     * Open the value Modal and display the given fact value
-     * @param {TrestleFact} fact
-     */
-    public openValueModal(fact: TrestleFact): void {
-        const config = new MatDialogConfig();
-        config.viewContainerRef = this.viewContainerRef;
-        this.dialogRef = this.dialog.open(IndividualValueDialog, config);
-        this.dialogRef.componentInstance.name = fact.getName();
-        this.dialogRef.componentInstance.value = fact.getValue();
-        this.dialogRef.afterClosed().subscribe(() => this.dialogRef = null);
     }
 
     private loadIndividual(value: string): void {

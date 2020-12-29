@@ -27,37 +27,7 @@
         </div>
         <div class="section">
 
-          <table mat-table [dataSource]="individual.getFacts()" class="mat-elevation-z1">
-            <ng-container matColumnDef="name">
-              <th id="fact-name" mat-header-cell *matHeaderCellDef>Name</th>
-              <td mat-cell *matCellDef="let fact">{{fact.getName()}}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="type">
-              <th id="fact-type" mat-header-cell *matHeaderCellDef>Type</th>
-              <td mat-cell *matCellDef="let fact">{{fact.getType()}}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="value">
-              <th id="fact-value" mat-header-cell *matHeaderCellDef>Value</th>
-              <td mat-cell *matCellDef="let fact"
-                  [className]="fact.getValue().length > 200 ? 'cell-truncated mat-cell' : 'mat-cell'"
-                  (click)="fact.getValue().length > 200 ? openValueModal(fact) : null">{{fact.getValue().length > 200 ? '...' : fact.getValue()}}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="from">
-              <th id="fact-from" mat-header-cell *matHeaderCellDef>From</th>
-              <td mat-cell *matCellDef="let fact">{{fact.getValidTemporal().getFrom()}}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="to">
-              <th id="fact-to" mat-header-cell *matHeaderCellDef>To</th>
-              <td mat-cell *matCellDef="let fact">{{fact.getValidTemporal().getFrom()}}</td>
-            </ng-container>
-
-            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-          </table>
+          <visualize-fact-table [facts]="individual.getFacts()"></visualize-fact-table>
         </div>
       </mat-tab>
       <mat-tab label="Object Relations">

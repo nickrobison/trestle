@@ -29,6 +29,7 @@ import {COLOR_SERVICE_CONFIG} from '../shared/color/color-service.config';
 import {AggregateComponent} from './aggregate/aggregate.component';
 import {AggregationService} from './aggregate/aggregation.service';
 import {FlexModule} from '@angular/flex-layout';
+import {FactTableComponent} from './visualize/visualize-details/fact-table/fact-table.component';
 
 
 @NgModule({
@@ -42,7 +43,8 @@ import {FlexModule} from '@angular/flex-layout';
     VisualizeDetailsComponent,
     IndividualValueDialog,
     CompareComponent,
-    AggregateComponent],
+    AggregateComponent,
+    FactTableComponent],
   imports: [
     CommonModule,
     UserModule,
