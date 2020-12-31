@@ -17,7 +17,7 @@ dependencies {
     implementation group: "org.geotools", name: "gt-epsg-hsql", version: geotoolsVersion
     implementation group: 'com.google.inject', name: 'guice', version: guiceVersion
     implementation group: 'com.google.inject.extensions', name: 'guice-assistedinject', version: guiceVersion
-    implementation group: 'joda-time', name: 'joda-time', version: '2.10.8'
+    implementation group: 'joda-time', name: 'joda-time', version: '2.10.9'
     implementation group: 'com.github.ben-manes.caffeine', name: 'caffeine', version: caffeineVersion
     implementation group: 'com.github.ben-manes.caffeine', name: 'jcache', version: caffeineVersion
     implementation group: 'com.nickrobison', name: 'fasttuple-core', version: '0.3.1'
