@@ -1,8 +1,9 @@
-import {Component, Input, ViewContainerRef} from '@angular/core';
+import {Component, Input, OnChanges, OnInit, SimpleChanges, ViewContainerRef} from '@angular/core';
 import {animate, state, style, transition, trigger} from '@angular/animations';
 import {TrestleFact} from "../../../../shared/individual/TrestleIndividual/trestle-fact";
 import {MatDialog, MatDialogConfig, MatDialogRef} from "@angular/material/dialog";
 import {IndividualValueDialog} from "../../individual-value.dialog";
+import {filter, flow, groupBy, mapValues, orderBy} from 'lodash/fp';
 
 @Component({
   selector: 'visualize-fact-table',
@@ -16,17 +17,32 @@ import {IndividualValueDialog} from "../../individual-value.dialog";
     ]),
   ],
 })
-export class FactTableComponent {
+export class FactTableComponent implements OnInit, OnChanges {
 
   @Input()
   facts: TrestleFact[];
   columnsToDisplay = ["name", "type", "value", "from", "to"];
   expandedElement: TrestleFact | null;
+  data: TrestleFact[][] = [];
   private dialogRef: MatDialogRef<IndividualValueDialog> | null;
+
 
   constructor(
     private dialog: MatDialog,
-    private viewContainerRef: ViewContainerRef) { }
+    private viewContainerRef: ViewContainerRef) {
+    this.groupData();
+  }
+
+  ngOnInit(): void {
+    this.groupData();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    this.facts = changes["facts"].currentValue;
+    this.groupData();
+    // This is where we should call refresh on the table.
+  }
+
 
   /**
    * Open the value Modal and display the given fact value
@@ -41,4 +57,14 @@ export class FactTableComponent {
     this.dialogRef.afterClosed().subscribe(() => this.dialogRef = null);
   }
 
+  private groupData() {
+    const d = flow(
+      // Eventually we'll want to remove this filter, but it's good enough for now.
+      filter((f: TrestleFact) => f.getDatabaseTemporal().isContinuing()),
+      groupBy((x: TrestleFact) => x.getName()),
+      mapValues((v: TrestleFact[]) => orderBy(v => v.getDatabaseTemporal().getFrom(), "desc", v)),
+      mapValues((v: TrestleFact[]) => orderBy(v => v.getValidTemporal().getFrom(), "desc", v)),
+    )(this.facts);
+    this.data = Object.values(d);
+  }
 }
