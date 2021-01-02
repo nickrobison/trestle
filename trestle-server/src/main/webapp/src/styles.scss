@@ -3,6 +3,8 @@
 @import "~mapbox-gl/dist/mapbox-gl";
 @import "~codemirror/lib/codemirror";
 @import "~codemirror/theme/material";
+@import "~@angular/cdk/overlay";
+@include cdk-overlay();
 
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }

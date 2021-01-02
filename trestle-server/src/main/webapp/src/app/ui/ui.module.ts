@@ -10,10 +10,18 @@ import {LoadingSpinnerService} from './loading-spinner/loading-spinner.service';
 import {SearchComponent} from './search/search.component';
 import {MaterialModule} from '../material/material.module';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
+import {ToastComponent} from './notifications/toast/toast.component';
 
 
 @NgModule({
-  declarations: [HistoryGraphComponent, TrestleMapComponent, SpatialUnionComponent, EventGraphComponent, LoadingSpinnerComponent, SearchComponent],
+  declarations: [
+    HistoryGraphComponent,
+    TrestleMapComponent,
+    SpatialUnionComponent,
+    EventGraphComponent,
+    LoadingSpinnerComponent,
+    SearchComponent,
+    ToastComponent],
   exports: [
     TrestleMapComponent,
     HistoryGraphComponent,
@@ -27,7 +35,8 @@ import {FormsModule, ReactiveFormsModule} from '@angular/forms';
     MaterialModule,
     ReactiveFormsModule,
     FormsModule
-  ]
+  ],
+  entryComponents: [ToastComponent]
 })
 export class UiModule {
 }
