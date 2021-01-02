@@ -4,9 +4,10 @@
 import {ActivatedRouteSnapshot, CanActivate, RouterStateSnapshot} from '@angular/router';
 import {Observable, Subscription} from 'rxjs';
 import {Injectable, OnDestroy} from '@angular/core';
-import {selectUserFromUser, State} from '../reducers';
+import {State} from '../reducers';
 import {select, Store} from '@ngrx/store';
 import {Privileges, TrestleUser} from './trestle-user';
+import {selectUserFromUser} from "../reducers/auth.reducers";
 
 @Injectable()
 export class PermissionsGuard implements CanActivate, OnDestroy {
