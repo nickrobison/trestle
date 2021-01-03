@@ -10,7 +10,8 @@ import {LoadingSpinnerService} from './loading-spinner/loading-spinner.service';
 import {SearchComponent} from './search/search.component';
 import {MaterialModule} from '../material/material.module';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
-import {ToastComponent} from './notifications/toast/toast.component';
+import {ToastComponent} from '../navigation/notifications/notification/toast.component';
+import {NotificationCenterComponent} from '../navigation/notifications/notification-center/notification-center.component';
 
 
 @NgModule({
@@ -21,7 +22,8 @@ import {ToastComponent} from './notifications/toast/toast.component';
     EventGraphComponent,
     LoadingSpinnerComponent,
     SearchComponent,
-    ToastComponent],
+    ToastComponent,
+    NotificationCenterComponent],
   exports: [
     TrestleMapComponent,
     HistoryGraphComponent,

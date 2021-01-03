@@ -1,10 +1,13 @@
 import {Injectable, Injector} from '@angular/core';
 import {Overlay} from "@angular/cdk/overlay";
 import {ComponentPortal, PortalInjector} from "@angular/cdk/portal";
-import {ToastComponent} from "./toast/toast.component";
-import {ToastRef} from "./toast/ToastRef";
+import {ToastComponent} from "./notification/toast.component";
+import {ToastRef} from "./notification/ToastRef";
 import {TrestleError, TrestleMessage, TrestleNotification} from "../../reducers/notification.reducers";
-import {ToastData} from "./toast/toast-config";
+import {ToastData} from "./notification/toast-config";
+import {NotificationCenterComponent} from "./notification-center/notification-center.component";
+import {Store} from "@ngrx/store";
+import {State} from "../../reducers";
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +16,7 @@ export class NotificationService {
 
   private lastToast: ToastRef | null;
 
-  constructor(private overlay: Overlay, private parentInjector: Injector) {
+  constructor(private overlay: Overlay, private parentInjector: Injector, private store: Store<State>) {
   }
 
   public addNotification(notification: TrestleNotification) {
@@ -32,6 +35,31 @@ export class NotificationService {
 
   public removeNotification(notification: TrestleNotification) {
     // Not used yet
+  }
+
+  public createNotificationCenter() {
+    const tokens = new WeakMap();
+    tokens.set(Store, this.store);
+
+    const injector = new PortalInjector(this.parentInjector, tokens);
+
+    const strategy = this.overlay
+      .position()
+      .global()
+      .right();
+
+    const overlayRef = this.overlay.create({
+      positionStrategy: strategy,
+    });
+
+    // const toastRef = new ToastRef(overlayRef);
+    // const injector = NotificationService.getInjector(data, toastRef, this.parentInjector);
+    const toastPortal = new ComponentPortal(NotificationCenterComponent, null, injector);
+    overlayRef.attach(toastPortal);
+
+    // this.lastToast = toastRef;
+
+    // return toastRef;
   }
 
   show(data: ToastData): ToastRef {

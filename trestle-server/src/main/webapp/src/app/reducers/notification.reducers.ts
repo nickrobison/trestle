@@ -4,7 +4,7 @@ import {State} from "./index";
 
 export interface TrestleMessage {
   state: "notification";
-  msg: string
+  msg: string;
 }
 
 export interface TrestleError {
@@ -31,7 +31,7 @@ const _notificationReducer = createReducer(initialNotificationState,
     };
   }),
   on(removeNotification, (state, news) => {
-    const notices = state.notifications;
+    const notices = Array.from(state.notifications);
     const idx = notices.indexOf(news.notification);
     if (idx > -1) {
       notices.splice(idx, 1);

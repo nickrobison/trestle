@@ -1,18 +1,19 @@
-import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { NavigationComponent } from './navigation/navigation.component';
-import { LoginComponent } from './login/login.component';
+import {NgModule} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {NavigationComponent} from './navigation/navigation.component';
+import {LoginComponent} from './login/login.component';
 import {MaterialModule} from "../material/material.module";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {Route, RouterModule} from '@angular/router';
 import {Privileges} from '../user/trestle-user';
-import { SidebarComponent } from './sidebar/sidebar.component';
-import { TopNavComponent } from './top-nav/top-nav.component';
+import {SidebarComponent} from './sidebar/sidebar.component';
+import {TopNavComponent} from './top-nav/top-nav.component';
 import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
-import { UserIconComponent } from './user-icon/user-icon.component';
+import {UserIconComponent} from './user-icon/user-icon.component';
+import {UiModule} from "../ui/ui.module";
 
 export interface ITrestleRoute extends Route {
-  data?: ITrestleRouteData
+  data?: ITrestleRouteData;
 }
 
 export interface ITrestleRouteData {
@@ -27,7 +28,8 @@ export interface ITrestleRouteData {
     FormsModule,
     ReactiveFormsModule,
     RouterModule,
-    FontAwesomeModule
+    FontAwesomeModule,
+    UiModule
   ],
   exports: [
     NavigationComponent,
