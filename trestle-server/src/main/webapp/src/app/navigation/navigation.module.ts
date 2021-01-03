@@ -38,4 +38,5 @@ export interface ITrestleRouteData {
     TopNavComponent
   ]
 })
-export class NavigationModule { }
+export class NavigationModule {
+}

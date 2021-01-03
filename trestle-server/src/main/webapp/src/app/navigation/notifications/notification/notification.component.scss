@@ -1,0 +1,64 @@
+.toast {
+  position: relative;
+  display: flex;
+  justify-content: space-around;
+  margin: 0 10px 20px 0;
+  padding: 10px 15px 10px 10px;
+  width: 290px;
+  background: #fff;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #dddddd #d6d6d6 #cfcfcf;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.11);
+}
+
+.msg-text {
+  margin-left: 5px;
+}
+
+$bar-width: 5px;
+$opacity: 80%;
+
+.timer .background {
+  height: 100%;
+  width: $bar-width;
+  background: yellowgreen;
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  opacity: $opacity;
+}
+
+.timer .timebar {
+  height: 100%;
+  width: $bar-width;
+  background: green;
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  opacity: $opacity;
+  animation: roundtime calc(var(--duration) * 1s) linear forwards;
+  transform-origin: bottom;
+}
+
+.timer[data-status="notification"] .background {
+  background: yellowgreen;
+}
+
+.timer[data-status="notification"] .timebar {
+  background: green;
+}
+
+.timer[data-status="error"] .background {
+  background: indianred;
+}
+
+.timer[data-status="error"] .timebar {
+  background: red;
+}
+
+@keyframes roundtime {
+  to {
+    transform: scaleY(0);
+  }
+}

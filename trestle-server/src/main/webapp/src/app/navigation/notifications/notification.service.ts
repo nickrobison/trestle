@@ -1,7 +1,7 @@
 import {Injectable, Injector} from '@angular/core';
 import {Overlay} from "@angular/cdk/overlay";
 import {ComponentPortal, PortalInjector} from "@angular/cdk/portal";
-import {ToastComponent} from "./notification/toast.component";
+import {NotificationComponent} from "./notification/notification.component";
 import {ToastRef} from "./notification/ToastRef";
 import {TrestleError, TrestleMessage, TrestleNotification} from "../../reducers/notification.reducers";
 import {ToastData} from "./notification/toast-config";
@@ -75,7 +75,7 @@ export class NotificationService {
 
     const toastRef = new ToastRef(overlayRef);
     const injector = NotificationService.getInjector(data, toastRef, this.parentInjector);
-    const toastPortal = new ComponentPortal(ToastComponent, null, injector);
+    const toastPortal = new ComponentPortal(NotificationComponent, null, injector);
     overlayRef.attach(toastPortal);
 
     this.lastToast = toastRef;
