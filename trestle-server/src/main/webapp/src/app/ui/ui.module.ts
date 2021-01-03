@@ -10,9 +10,6 @@ import {LoadingSpinnerService} from './loading-spinner/loading-spinner.service';
 import {SearchComponent} from './search/search.component';
 import {MaterialModule} from '../material/material.module';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
-import {NotificationComponent} from '../navigation/notifications/notification/notification.component';
-import {NotificationCenterComponent} from '../navigation/notifications/notification-center/notification-center.component';
-
 
 @NgModule({
   declarations: [
@@ -21,9 +18,7 @@ import {NotificationCenterComponent} from '../navigation/notifications/notificat
     SpatialUnionComponent,
     EventGraphComponent,
     LoadingSpinnerComponent,
-    SearchComponent,
-    NotificationComponent,
-    NotificationCenterComponent],
+    SearchComponent],
   exports: [
     TrestleMapComponent,
     HistoryGraphComponent,
@@ -37,8 +32,7 @@ import {NotificationCenterComponent} from '../navigation/notifications/notificat
     MaterialModule,
     ReactiveFormsModule,
     FormsModule
-  ],
-  entryComponents: [NotificationComponent]
+  ]
 })
 export class UiModule {
 }

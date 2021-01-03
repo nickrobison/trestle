@@ -19,7 +19,21 @@ describe('ToastComponent', () => {
     fixture.detectChanges();
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  it('should be notification', () => {
+    component.notification = {
+      state: 'notification',
+      msg: 'Hello there',
+    };
+    fixture.detectChanges();
+    expect(component).toMatchSnapshot();
+  });
+
+  it('should be error', () => {
+    component.notification = {
+      state: 'notification',
+      msg: 'Hello there',
+    };
+    fixture.detectChanges();
+    expect(component).toMatchSnapshot();
   });
 });

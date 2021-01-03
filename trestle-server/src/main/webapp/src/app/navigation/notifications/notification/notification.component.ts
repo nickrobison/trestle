@@ -15,7 +15,7 @@ import {AnimationEvent} from "@angular/animations";
 export class NotificationComponent implements OnInit, OnDestroy {
 
   @Input()
-  readonly notification: TrestleNotification;
+  notification: TrestleNotification;
   readonly notificationLifetime = 5;
   animationState: NotificationAnimationState = 'default';
   buttonState: NotificationButtonState = 'out';

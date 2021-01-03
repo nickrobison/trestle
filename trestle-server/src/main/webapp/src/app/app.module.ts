@@ -16,7 +16,6 @@ import {StoreDevtoolsModule} from '@ngrx/store-devtools';
 import {EffectsModule} from '@ngrx/effects';
 import {AuthEffects} from './effects/auth.effects';
 import {selectTokenFromUser} from "./reducers/auth.reducers";
-import {NotificationEffects} from "./effects/notification.effects";
 
 export function jwtOptionsFactory(store: Store<State>) {
   const tokenSelector = store.pipe(select(selectTokenFromUser));
@@ -63,7 +62,7 @@ export function jwtOptionsFactory(store: Store<State>) {
       }
     }),
     !environment.production ? StoreDevtoolsModule.instrument() : [],
-    EffectsModule.forFeature([AuthEffects, NotificationEffects]),
+    EffectsModule.forFeature([AuthEffects]),
     EffectsModule.forRoot([])
   ],
   bootstrap: [AppComponent]
