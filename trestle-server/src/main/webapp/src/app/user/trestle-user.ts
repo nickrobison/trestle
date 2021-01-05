@@ -60,12 +60,12 @@ export class TrestleUser {
      * @returns {boolean} - Has admin or higher permissions?
      */
     public isAdmin(): boolean {
-        // tslint:disable-next-line:no-bitwise
+        // eslint-disable-next-line no-bitwise
         return (this._privileges & Privileges.ADMIN) > 0;
     }
 
     public hasRequiredPrivileges(roles: Privileges[]): boolean {
-        // tslint:disable-next-line:no-bitwise
+        // eslint-disable-next-line no-bitwise
         return (this._privileges & TrestleUser.buildRoleValue(roles)) > 0;
     }
 
@@ -89,7 +89,7 @@ export class TrestleUser {
     private static buildRoleValue(roles: Privileges[]): number {
         let roleValue = 0;
         roles.forEach((role) => {
-            // tslint:disable-next-line:no-bitwise
+            // eslint-disable-next-line no-bitwise
             roleValue = roleValue | role;
         });
         return roleValue;

@@ -48,7 +48,7 @@ export class UsersComponent implements OnInit, OnDestroy {
    * @returns {boolean}
    */
   public isAdmin(user: ITrestleUser): boolean {
-    // tslint:disable-next-line:no-bitwise
+    // eslint-disable-next-line no-bitwise
     return (user.privileges & Privileges.ADMIN) > 0;
   }
 
@@ -58,7 +58,7 @@ export class UsersComponent implements OnInit, OnDestroy {
    * @returns {boolean}
    */
   public isDBA(user: ITrestleUser): boolean {
-    // tslint:disable-next-line:no-bitwise
+    // eslint-disable-next-line no-bitwise
     return (user.privileges & Privileges.DBA) > 0;
   }
 

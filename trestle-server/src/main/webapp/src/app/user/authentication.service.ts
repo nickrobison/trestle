@@ -118,7 +118,7 @@ export class AuthService {
   public isAdmin(): boolean {
     if (this.loggedIn()) {
       const token = this.getToken();
-      // tslint:disable-next-line:no-bitwise
+      // eslint-disable-next-line no-bitwise
       return (token !== null) && ((token.getUser().privileges & Privileges.ADMIN) > 0);
     }
     return false;
