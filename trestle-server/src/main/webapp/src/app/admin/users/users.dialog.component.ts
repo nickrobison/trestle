@@ -142,7 +142,7 @@ export class UserDialogComponent implements OnInit {
    * @param {Privileges} level
    */
   public alterPermissionLevel(level: Privileges): void {
-    // tslint:disable-next-line:no-bitwise
+    // eslint-disable-next-line no-bitwise
     this.user.privileges = this.user.privileges ^ level;
   }
 
@@ -152,7 +152,7 @@ export class UserDialogComponent implements OnInit {
    * @returns {boolean}
    */
   public isSelected(privilage: Privileges): boolean {
-    // tslint:disable-next-line:no-bitwise
+    // eslint-disable-next-line no-bitwise
     return (this.user.privileges & privilage) > 0;
   }
 

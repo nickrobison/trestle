@@ -315,7 +315,7 @@ export class TrestleIndividual implements IInterfacable<ITrestleIndividual> {
         let hash = 0;
         for (let i = 0; i < id.length; i++) {
             const char = id.charCodeAt(i);
-            // tslint:disable-next-line:no-bitwise
+            // eslint-disable-next-line no-bitwise
             hash = char + (hash << 6) + (hash << 16) - hash;
         }
         return hash;
