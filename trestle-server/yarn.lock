@@ -5996,10 +5996,10 @@ eslint-plugin-prefer-arrow@1.2.2:
   resolved "https://registry.yarnpkg.com/eslint-plugin-prefer-arrow/-/eslint-plugin-prefer-arrow-1.2.2.tgz#0c6d25a6b94cb3e0110a23d129760af5860edb6e"
   integrity sha512-C8YMhL+r8RMeMdYAw/rQtE6xNdMulj+zGWud/qIGnlmomiPRaLDGLMeskZ3alN6uMBojmooRimtdrXebLN4svQ==
 
-eslint-plugin-rxjs@^2.1.5:
-  version "2.1.5"
-  resolved "https://registry.yarnpkg.com/eslint-plugin-rxjs/-/eslint-plugin-rxjs-2.1.5.tgz#67f864a4a42a301d5845d6b27444627677ca89cd"
-  integrity sha512-gQppucbXyYKCxgdBVud/mwVJ1+EIA7jr5WXvyGslWWEhA7JfQcVSKHpanywAT4QDvRreyq0sY3Kzm0hKgYJGBQ==
+eslint-plugin-rxjs@^2.1.6:
+  version "2.1.6"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-rxjs/-/eslint-plugin-rxjs-2.1.6.tgz#fb5ede39a99a6caaf206cd5664810fffa85382c4"
+  integrity sha512-dtCJ7jKLPNsyM4Kc9erzLSe1s+4LdR9JOLOECx1jR0B2srFAxw1PbWYub0ORFAyMF2UHqW3V/XUoHYTeq1krWw==
   dependencies:
     "@typescript-eslint/experimental-utils" "^4.0.0"
     common-tags "^1.8.0"
