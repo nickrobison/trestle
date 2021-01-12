@@ -2196,10 +2196,10 @@
   resolved "https://registry.yarnpkg.com/@types/chai/-/chai-4.2.14.tgz#44d2dd0b5de6185089375d976b4ec5caf6861193"
   integrity sha512-G+ITQPXkwTrslfG5L/BksmbLUA0M1iybEsmCWPqzSxsRRhJZimBKJkoMi8fr/CPygPTj4zO5pJH7I2/cm9M7SQ==
 
-"@types/codemirror@^0.0.105":
-  version "0.0.105"
-  resolved "https://registry.yarnpkg.com/@types/codemirror/-/codemirror-0.0.105.tgz#34270aa3c31b3a347bfa1c978a60ea1ed5086ef3"
-  integrity sha512-FO3qdFLKK0yayyBJcctZndSVZzVC76uH/um8ELd0AQR3ucZBi/Ld+1lBQnCvXUytVFWVO0Yh0uWNnsmVJ+gNbw==
+"@types/codemirror@^0.0.106":
+  version "0.0.106"
+  resolved "https://registry.yarnpkg.com/@types/codemirror/-/codemirror-0.0.106.tgz#0e4adcf51c4ff201ac25adba22771938dbcf1d72"
+  integrity sha512-o2bJWaI56+J1IuzUyb1KKNLs0Tm1sqdosGeSneicQZpg9s59++8Nz70KOD6IACiZWI6b+H0H+UE+JRkgTUO3Ww==
   dependencies:
     "@types/tern" "*"
 
