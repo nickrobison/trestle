@@ -29,7 +29,7 @@
     "@auth0/angular-jwt": "^4.2.0",
     "@fortawesome/angular-fontawesome": "^0.8.1",
     "@fortawesome/fontawesome-svg-core": "^1.2.34",
-    "@fortawesome/free-regular-svg-icons": "^5.15.1",
+    "@fortawesome/free-regular-svg-icons": "^5.15.2",
     "@fortawesome/free-solid-svg-icons": "^5.15.2",
     "@mapbox/geojson-extent": "^1.0.0",
     "@ngrx/effects": "^10.0.0",
