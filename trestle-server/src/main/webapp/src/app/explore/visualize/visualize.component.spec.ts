@@ -12,6 +12,7 @@ import {INDIVIDUAL_CACHE} from '../../shared/individual/individual.service';
 import {CacheService} from '../../shared/cache/cache.service';
 import {TrestleIndividual} from '../../shared/individual/TrestleIndividual/trestle-individual';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
+import {provideMockStore} from '@ngrx/store/testing';
 
 describe('VisualizeComponent', () => {
   let component: VisualizeComponent;
@@ -20,7 +21,7 @@ describe('VisualizeComponent', () => {
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       imports: [RouterTestingModule, MaterialModule, UiModule, ReactiveFormsModule, FormsModule, HttpClientTestingModule, NoopAnimationsModule],
-      providers: [{
+      providers: [provideMockStore(), {
         provide: CACHE_SERVICE_CONFIG, useValue: INDIVIDUAL_CACHE_DI_CONFIG
       }, {
         provide: INDIVIDUAL_CACHE, useFactory: () => (new CacheService<string, TrestleIndividual>(INDIVIDUAL_CACHE_DI_CONFIG))
