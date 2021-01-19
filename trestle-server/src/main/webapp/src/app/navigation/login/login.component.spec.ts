@@ -8,15 +8,16 @@ import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {MockStore, provideMockStore} from '@ngrx/store/testing';
 import {MemoizedSelector} from '@ngrx/store';
-import * as fromState from '../../reducers';
 import {AuthService} from '../../user/authentication.service';
 import {HttpErrorResponse} from '@angular/common/http';
+import {selectErrorFromUser} from '../../reducers/auth.reducers';
+import {State} from '../../reducers';
 
 describe('LoginComponent', () => {
   let component: LoginComponent;
   let fixture: ComponentFixture<LoginComponent>;
   let mockStore: MockStore;
-  let mockUsernameSelector: MemoizedSelector<fromState.State, Error>;
+  let mockUsernameSelector: MemoizedSelector<State, Error>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
@@ -33,7 +34,7 @@ describe('LoginComponent', () => {
     component = fixture.componentInstance;
     mockStore = TestBed.inject(MockStore);
     mockUsernameSelector = mockStore.overrideSelector(
-      fromState.selectErrorFromUser,
+      selectErrorFromUser,
       null
     );
 

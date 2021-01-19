@@ -1,9 +1,9 @@
-import { createAction, props } from '@ngrx/store';
+import {createAction, props} from '@ngrx/store';
 import {TrestleUser} from '../user/trestle-user';
 
 export const login = createAction(
   '[Auth] Login',
-  props<{username: string, password: string, returnUrl: string}>()
+  props<{ username: string, password: string, returnUrl: string }>()
 );
 
 export const loginSuccess = createAction(

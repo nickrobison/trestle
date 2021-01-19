@@ -1,0 +1,18 @@
+<div class="toast"
+     [@fadeAnimation]="{value: animationState, params: {fadeIn: 1000, fadeOut: 1000}}"
+     (@fadeAnimation.done)="onFadeFinished($event)"
+>
+  <div class="timer" [attr.data-status]="notification.state" style="{{'--duration: ' + notificationLifetime + ';'}}">
+    <div class="background"></div>
+    <div class="timebar"></div>
+  </div>
+  <div class="msg-text">
+    {{getMessage()}}
+  </div>
+  <mat-icon (click)="triggerClose()"
+            (mouseenter)="this.buttonState = 'in'"
+            (mouseleave)="this.buttonState = 'out'"
+            [@buttonAnimation]="{value: buttonState}">close
+  </mat-icon>
+</div>
+

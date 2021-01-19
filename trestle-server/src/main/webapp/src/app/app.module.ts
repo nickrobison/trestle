@@ -11,10 +11,11 @@ import {NavigationModule} from './navigation/navigation.module';
 import {JWT_OPTIONS, JwtModule} from '@auth0/angular-jwt';
 import {environment} from '../environments/environment';
 import {select, Store, StoreModule} from '@ngrx/store';
-import {metaReducers, reducers, selectTokenFromUser, State} from './reducers';
+import {metaReducers, reducers, State} from './reducers';
 import {StoreDevtoolsModule} from '@ngrx/store-devtools';
 import {EffectsModule} from '@ngrx/effects';
 import {AuthEffects} from './effects/auth.effects';
+import {selectTokenFromUser} from "./reducers/auth.reducers";
 
 export function jwtOptionsFactory(store: Store<State>) {
   const tokenSelector = store.pipe(select(selectTokenFromUser));

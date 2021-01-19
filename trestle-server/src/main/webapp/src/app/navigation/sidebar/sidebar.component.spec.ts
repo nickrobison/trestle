@@ -4,18 +4,19 @@ import {SidebarComponent} from './sidebar.component';
 import {MemoizedSelector} from '@ngrx/store';
 import {MockStore, provideMockStore} from '@ngrx/store/testing';
 import {Privileges, TrestleUser} from '../../user/trestle-user';
-import * as fromState from '../../reducers/index';
 import {By} from '@angular/platform-browser';
 import {MaterialModule} from '../../material/material.module';
 import {RouterTestingModule} from '@angular/router/testing';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {createMockUser} from '../../../test.helpers';
+import {State} from '../../reducers';
+import {selectUserFromUser} from '../../reducers/auth.reducers';
 
 describe('SidebarComponent', () => {
   let component: SidebarComponent;
   let fixture: ComponentFixture<SidebarComponent>;
   let mockStore: MockStore;
-  let mockUsernameSelector: MemoizedSelector<fromState.State, TrestleUser>;
+  let mockUsernameSelector: MemoizedSelector<State, TrestleUser>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
@@ -33,7 +34,7 @@ describe('SidebarComponent', () => {
     component = fixture.componentInstance;
     mockStore = TestBed.inject(MockStore);
     mockUsernameSelector = mockStore.overrideSelector(
-      fromState.selectUserFromUser,
+      selectUserFromUser,
       null
     );
     fixture.detectChanges();

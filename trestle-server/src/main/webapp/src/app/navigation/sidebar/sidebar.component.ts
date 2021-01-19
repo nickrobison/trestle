@@ -1,11 +1,12 @@
 import {ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {MediaMatcher} from '@angular/cdk/layout';
-import {selectUserFromUser, State} from '../../reducers';
+import {State} from '../../reducers';
 import {select, Store} from '@ngrx/store';
 import {Observable} from 'rxjs';
-import {TrestleUser, Privileges} from '../../user/trestle-user';
+import {Privileges, TrestleUser} from '../../user/trestle-user';
 import {tap} from 'rxjs/operators';
 import {MatDrawerToggleResult, MatSidenav} from '@angular/material/sidenav';
+import {selectUserFromUser} from "../../reducers/auth.reducers";
 
 @Component({
   selector: 'app-sidebar',

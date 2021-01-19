@@ -7,9 +7,10 @@ import {AuthService} from './user/authentication.service';
 import {Router} from '@angular/router';
 import {MediaMatcher} from '@angular/cdk/layout';
 import {select, Store} from '@ngrx/store';
-import {selectUserFromUser, State} from './reducers';
+import {State} from './reducers';
 import {Observable} from 'rxjs';
 import {tap} from 'rxjs/operators';
+import {selectUserFromUser} from "./reducers/auth.reducers";
 
 @Component({
   selector: 'app-root',
