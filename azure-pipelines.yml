@@ -3,6 +3,11 @@ pool:
 
 pr: none
 
+trigger:
+  paths:
+    exclude:
+      - .azure/*
+
 variables:
   MAVEN_CACHE_FOLDER: $(Pipeline.Workspace)/.m2/repository
   YARN_CACHE_FOLDER: $(Pipeline.Workspace)/.yarn
