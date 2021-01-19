@@ -5,10 +5,10 @@ import {catchError, debounceTime, switchMap, tap} from 'rxjs/operators';
 import {Observable} from 'rxjs';
 import {IndividualService} from '../../shared/individual/individual.service';
 import {TrestleIndividual} from '../../shared/individual/TrestleIndividual/trestle-individual';
-import {State} from "../../reducers";
-import {Store} from "@ngrx/store";
-import {addNotification} from "../../actions/notification.actions";
-import {TrestleError} from "../../reducers/notification.reducers";
+import {State} from '../../reducers';
+import {Store} from '@ngrx/store';
+import {addNotification} from '../../actions/notification.actions';
+import {TrestleError} from '../../reducers/notification.reducers';
 
 @Component({
   selector: 'search',
@@ -44,7 +44,8 @@ export class SearchComponent implements OnInit {
               this.store.dispatch(addNotification({notification: tError}));
               this.errorText = 'Cannot search for individual';
               return [];
-            }))));
+            }))
+        ));
   }
 
   /**
@@ -62,5 +63,5 @@ export class SearchComponent implements OnInit {
    */
   public selectHandler = (event: MatAutocompleteSelectedEvent): void => {
     this.selected.next(event.option.value);
-  }
+  };
 }

@@ -3,7 +3,6 @@ import {selectNotificationsFromNotifications, TrestleNotification} from "../../.
 import {Observable} from "rxjs";
 import {select, Store} from "@ngrx/store";
 import {State} from "../../../reducers";
-import {tap} from "rxjs/operators";
 
 @Component({
   selector: 'app-notification-center',
@@ -20,7 +19,6 @@ export class NotificationCenterComponent implements OnInit {
 
   ngOnInit(): void {
     this.notifications = this.store
-      .pipe(select(selectNotificationsFromNotifications),
-        tap(n => console.debug("Notifications: ", n)));
+      .pipe(select(selectNotificationsFromNotifications));
   }
 }

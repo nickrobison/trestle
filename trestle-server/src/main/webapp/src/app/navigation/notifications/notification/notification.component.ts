@@ -51,7 +51,7 @@ export class NotificationComponent implements OnInit, OnDestroy {
 
   getMessage(): string {
     switch (this.notification.state) {
-      case "error":
+      case 'error':
         return this.notification.error.message;
       default:
         return this.notification.msg;

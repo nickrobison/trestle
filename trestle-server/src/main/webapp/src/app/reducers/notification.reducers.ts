@@ -18,7 +18,7 @@ export type NotificationState = {
   notifications: TrestleNotification[];
 };
 
-const initialNotificationState: NotificationState = {
+export const initialNotificationState: NotificationState = {
   notifications: [],
 };
 

@@ -9,7 +9,7 @@ export interface UserState {
   userToken: string;
 }
 
-const initialUserState: UserState = {
+export const initialUserState: UserState = {
   user: null,
   userError: null,
   userToken: ''
