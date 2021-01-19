@@ -1,0 +1,215 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`NotificationComponent should be error 1`] = `
+NotificationComponent {
+  "animationState": "default",
+  "buttonState": "out",
+  "intervalId": 15,
+  "notification": Object {
+    "error": [Error: I'm an error],
+    "state": "error",
+  },
+  "notificationLifetime": 5,
+  "store": MockStore {
+    "_isScalar": false,
+    "actionsObserver": ActionsSubject {
+      "_isScalar": false,
+      "_value": Object {
+        "type": "@ngrx/store/init",
+      },
+      "closed": false,
+      "hasError": false,
+      "isStopped": false,
+      "observers": Array [],
+      "thrownError": null,
+    },
+    "initialState": Object {
+      "notifications": Object {
+        "notifications": Array [],
+      },
+      "user": Object {
+        "user": null,
+        "userError": null,
+        "userToken": "",
+      },
+    },
+    "lastState": Object {
+      "notifications": Object {
+        "notifications": Array [],
+      },
+      "user": Object {
+        "user": null,
+        "userError": null,
+        "userToken": "",
+      },
+    },
+    "reducerManager": MockReducerManager {
+      "_isScalar": false,
+      "_value": [Function],
+      "closed": false,
+      "hasError": false,
+      "isStopped": false,
+      "observers": Array [],
+      "thrownError": null,
+    },
+    "scannedActions$": Observable {
+      "_isScalar": false,
+      "source": ActionsSubject {
+        "_isScalar": false,
+        "_value": Object {
+          "type": "@ngrx/store/init",
+        },
+        "closed": false,
+        "hasError": false,
+        "isStopped": false,
+        "observers": Array [],
+        "thrownError": null,
+      },
+    },
+    "selectors": Map {},
+    "source": MockState {
+      "_isScalar": false,
+      "_value": Object {
+        "notifications": Object {
+          "notifications": Array [],
+        },
+        "user": Object {
+          "user": null,
+          "userError": null,
+          "userToken": "",
+        },
+      },
+      "closed": false,
+      "hasError": false,
+      "isStopped": false,
+      "observers": Array [],
+      "thrownError": null,
+    },
+    "state$": MockState {
+      "_isScalar": false,
+      "_value": Object {
+        "notifications": Object {
+          "notifications": Array [],
+        },
+        "user": Object {
+          "user": null,
+          "userError": null,
+          "userToken": "",
+        },
+      },
+      "closed": false,
+      "hasError": false,
+      "isStopped": false,
+      "observers": Array [],
+      "thrownError": null,
+    },
+  },
+}
+`;
+
+exports[`NotificationComponent should be notification 1`] = `
+NotificationComponent {
+  "animationState": "default",
+  "buttonState": "out",
+  "intervalId": 7,
+  "notification": Object {
+    "msg": "Hello there",
+    "state": "notification",
+  },
+  "notificationLifetime": 5,
+  "store": MockStore {
+    "_isScalar": false,
+    "actionsObserver": ActionsSubject {
+      "_isScalar": false,
+      "_value": Object {
+        "type": "@ngrx/store/init",
+      },
+      "closed": false,
+      "hasError": false,
+      "isStopped": false,
+      "observers": Array [],
+      "thrownError": null,
+    },
+    "initialState": Object {
+      "notifications": Object {
+        "notifications": Array [],
+      },
+      "user": Object {
+        "user": null,
+        "userError": null,
+        "userToken": "",
+      },
+    },
+    "lastState": Object {
+      "notifications": Object {
+        "notifications": Array [],
+      },
+      "user": Object {
+        "user": null,
+        "userError": null,
+        "userToken": "",
+      },
+    },
+    "reducerManager": MockReducerManager {
+      "_isScalar": false,
+      "_value": [Function],
+      "closed": false,
+      "hasError": false,
+      "isStopped": false,
+      "observers": Array [],
+      "thrownError": null,
+    },
+    "scannedActions$": Observable {
+      "_isScalar": false,
+      "source": ActionsSubject {
+        "_isScalar": false,
+        "_value": Object {
+          "type": "@ngrx/store/init",
+        },
+        "closed": false,
+        "hasError": false,
+        "isStopped": false,
+        "observers": Array [],
+        "thrownError": null,
+      },
+    },
+    "selectors": Map {},
+    "source": MockState {
+      "_isScalar": false,
+      "_value": Object {
+        "notifications": Object {
+          "notifications": Array [],
+        },
+        "user": Object {
+          "user": null,
+          "userError": null,
+          "userToken": "",
+        },
+      },
+      "closed": false,
+      "hasError": false,
+      "isStopped": false,
+      "observers": Array [],
+      "thrownError": null,
+    },
+    "state$": MockState {
+      "_isScalar": false,
+      "_value": Object {
+        "notifications": Object {
+          "notifications": Array [],
+        },
+        "user": Object {
+          "user": null,
+          "userError": null,
+          "userToken": "",
+        },
+      },
+      "closed": false,
+      "hasError": false,
+      "isStopped": false,
+      "observers": Array [],
+      "thrownError": null,
+    },
+  },
+}
+`;

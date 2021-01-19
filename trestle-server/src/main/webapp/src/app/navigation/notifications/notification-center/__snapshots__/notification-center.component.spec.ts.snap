@@ -1,0 +1,19 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`NotificationCenterComponent should create 1`] = `
+<app-notification-center
+  notifications={[Function Store]}
+  store={[Function MockStore]}
+>
+  
+</app-notification-center>
+`;
+
+exports[`NotificationCenterComponent should have notifications 1`] = `
+<app-notification-center
+  notifications={[Function Store]}
+  store={[Function MockStore]}
+>
+  
+</app-notification-center>
+`;

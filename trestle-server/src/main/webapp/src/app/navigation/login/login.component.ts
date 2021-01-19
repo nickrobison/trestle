@@ -6,11 +6,12 @@ import {ActivatedRoute, Router} from '@angular/router';
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {animate, state, style, transition, trigger} from '@angular/animations';
 import {AuthService} from '../../user/authentication.service';
-import {selectErrorFromUser, State} from '../../reducers';
+import {State} from '../../reducers';
 import {select, Store} from '@ngrx/store';
 import {Subscription} from 'rxjs';
 import {login} from '../../actions/auth.actions';
 import {HttpErrorResponse} from '@angular/common/http';
+import {selectErrorFromUser} from "../../reducers/auth.reducers";
 
 interface IUserLogin {
   username: string;

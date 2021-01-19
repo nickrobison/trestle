@@ -5,8 +5,9 @@ import {ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot} from '
 import {Injectable} from '@angular/core';
 import {Observable, Subscription} from 'rxjs';
 import {select, Store} from '@ngrx/store';
-import {selectUserFromUser, State} from '../reducers';
+import {State} from '../reducers';
 import {TrestleUser} from './trestle-user';
+import {selectUserFromUser} from "../reducers/auth.reducers";
 
 @Injectable()
 export class LoggedInGuard implements CanActivate {

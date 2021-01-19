@@ -5,6 +5,10 @@ import {catchError, debounceTime, switchMap, tap} from 'rxjs/operators';
 import {Observable} from 'rxjs';
 import {IndividualService} from '../../shared/individual/individual.service';
 import {TrestleIndividual} from '../../shared/individual/TrestleIndividual/trestle-individual';
+import {State} from '../../reducers';
+import {Store} from '@ngrx/store';
+import {addNotification} from '../../actions/notification.actions';
+import {TrestleError} from '../../reducers/notification.reducers';
 
 @Component({
   selector: 'search',
@@ -14,13 +18,13 @@ import {TrestleIndividual} from '../../shared/individual/TrestleIndividual/trest
 export class SearchComponent implements OnInit {
 
   @Input()
-  public showError: boolean = true;
+  public showError = true;
   public options: Observable<string[]>;
   public individualName = new FormControl();
   public errorText = '';
   @Output() public selected = new EventEmitter<string>();
 
-  public constructor(private is: IndividualService) {
+  public constructor(private is: IndividualService, private store: Store<State>) {
   }
 
   public ngOnInit(): void {
@@ -32,9 +36,16 @@ export class SearchComponent implements OnInit {
         switchMap((name) => this.is.searchForIndividual(name)
           .pipe(
             catchError(() => {
+              // Create error
+              const tError: TrestleError = {
+                state: 'error',
+                error: new Error('Cannot search for individuals'),
+              };
+              this.store.dispatch(addNotification({notification: tError}));
               this.errorText = 'Cannot search for individual';
               return [];
-            }))));
+            }))
+        ));
   }
 
   /**

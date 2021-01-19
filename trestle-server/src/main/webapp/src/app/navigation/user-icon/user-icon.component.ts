@@ -2,11 +2,12 @@ import {Component, OnInit} from '@angular/core';
 import {SizeProp} from '@fortawesome/fontawesome-svg-core';
 import {faSignInAlt, faSignOutAlt} from '@fortawesome/free-solid-svg-icons';
 import {select, Store} from '@ngrx/store';
-import {selectUserFromUser, State} from '../../reducers';
+import {State} from '../../reducers';
 import {Observable} from 'rxjs';
 import {TrestleUser} from '../../user/trestle-user';
 import {logout} from '../../actions/auth.actions';
 import {MD5} from 'crypto-js';
+import {selectUserFromUser} from "../../reducers/auth.reducers";
 
 @Component({
   selector: 'user-icon',

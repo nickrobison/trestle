@@ -5,6 +5,8 @@ import {login, loginFailure, loginSuccess, logout} from '../actions/auth.actions
 import {catchError, exhaustMap, map, tap} from 'rxjs/operators';
 import {of} from 'rxjs';
 import {Router} from '@angular/router';
+import {addNotification} from "../actions/notification.actions";
+import {TrestleError} from "../reducers/notification.reducers";
 
 
 @Injectable()
@@ -37,6 +39,15 @@ export class AuthEffects {
       dispatch: false
     }
   );
+
+  loginFailure = createEffect(() => this.actions$
+    .pipe(ofType(loginFailure), map(action => {
+        const notice: TrestleError = {
+          state: 'error',
+          error: action.error,
+        };
+        return addNotification({notification: notice});
+      })));
 
   logout = createEffect(() =>
     this.actions$
