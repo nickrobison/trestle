@@ -4,6 +4,9 @@ pool:
 pr: none
 
 trigger:
+  branches:
+    include:
+    - '*'
   paths:
     exclude:
       - .azure/*
