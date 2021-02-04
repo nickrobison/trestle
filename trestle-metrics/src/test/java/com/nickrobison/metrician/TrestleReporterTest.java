@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * Created by nrobison on 3/20/17.
  */
 @SuppressWarnings({"initialization.fields.uninitialized"})
-@Disabled // TOOD: Re-enable this.
+//@Disabled // TOOD: Re-enable this.
 public class TrestleReporterTest {
 
     private Metrician metrician;
@@ -46,7 +46,7 @@ public class TrestleReporterTest {
         metricsClass.testIncrement();
         reporter.report();
         metricsClass.testMeter();
-        assertAll(() -> assertEquals(65, metrician.getRegistry().getGauges().size(), "Should have gauges"),
+        assertAll(() -> assertEquals(75, metrician.getRegistry().getGauges().size(), "Should have gauges"),
                 () -> assertEquals(1, metrician.getRegistry().getMeters().size(), "Should have meters"),
                 () -> assertEquals(1, metrician.getRegistry().getCounters().size(), "Should have timers"),
                 () -> assertEquals(2, metrician.getRegistry().counter("com.nickrobison.metrician.TestMetricsReporterClass.test-reporter-counter").getCount(), "Count should be 2"));
