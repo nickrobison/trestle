@@ -347,9 +347,10 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
                             .getNewFactVersions()
                             .forEach(fact -> writeObjectFacts(aClass, owlNamedIndividual, Collections.singletonList(fact.getAxiom()), fact.getValidTemporal(), dTemporal));
 //                Write the new valid facts
-                    final Timer.Context factsTimer = this.metrician.registerTimer("trestle-merge-facts-timer").time();
-                    writeObjectFacts(aClass, owlNamedIndividual, mergeScript.getNewFacts(), factTemporal, dTemporal);
-                    factsTimer.stop();
+                    try (Timer.Context factsTimer = this.metrician.registerTimer("trestle-merge-facts-timer").time()) {
+                        writeObjectFacts(aClass, owlNamedIndividual, mergeScript.getNewFacts(), factTemporal, dTemporal);
+                        factsTimer.stop();
+                    }
 
 //                    Write new individual existence axioms, if they exist
                     if (!mergeScript.getIndividualExistenceAxioms().isEmpty()) {

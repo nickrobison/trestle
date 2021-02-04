@@ -501,11 +501,11 @@ public class ClassParser implements IClassParser {
     @Override
     public String matchWithClassMember(Class<?> clazz, String classMember) {
 //        Check for a matching field
-        Field classField = null;
+        Field classField;
         try {
             classField = clazz.getDeclaredField(classMember);
         } catch (NoSuchFieldException e) {
-
+            throw new IllegalStateException("Cannot get class member", e);
         }
 
 //        See if the member directly matches an existing constructor argument
@@ -514,182 +514,12 @@ public class ClassParser implements IClassParser {
                 return classMember;
             }
         } catch (MissingConstructorException e) {
-            throw new RuntimeException("Cannot get constructor", e);
+            throw new IllegalStateException("Cannot get constructor", e);
         }
 
-        if (classField == null) {
-            final Optional<Field> dataField = Arrays.stream(clazz.getDeclaredFields())
-                    .filter(f -> f.isAnnotationPresent(Fact.class))
-                    .filter(f -> f.getAnnotation(Fact.class).name().equals(classMember))
-                    .findFirst();
-
-            if (dataField.isPresent()) {
-                return dataField.get().getName();
-            }
-
-        } else {
-            return classField.getName();
-        }
+        return classField.getName();
 
 //        Check for a matching method
-        final Optional<String> matchingMethod = Arrays.stream(clazz.getDeclaredMethods())
-                .map(ClassParser::filterMethodName)
-                .filter(name -> name.equals(classMember))
-                .findFirst();
-
-        if (matchingMethod.isPresent()) {
-            return matchingMethod.get();
-        }
-
-        final Optional<Method> annotatedMethod = Arrays.stream(clazz.getDeclaredMethods())
-                .filter(m -> m.isAnnotationPresent(Fact.class))
-                .filter(m -> m.getAnnotation(Fact.class).name().equals(classMember))
-                .findFirst();
-        if (annotatedMethod.isPresent()) {
-            return filterMethodName(annotatedMethod.get());
-        }
-
-//        Spatial
-        if (classMember.equals("asWKT")) {
-
-////            Check for specified argument name
-//            final Optional<Method> spatialMethod = Arrays.stream(clazz.getDeclaredMethods())
-//                    .filter(m -> m.isAnnotationPresent(Spatial.class))
-////                    .map(m -> m.getAnnotation(Spatial.class).name())
-//                    .findFirst();
-//
-//            if (spatialMethod.isPresent()) {
-//                return filterMethodName(spatialMethod.get());
-//            }
-//
-////            if (!spatialMethod.orElse("").equals("")) {
-////                return spatialMethod.orElse("");
-////            }
-//
-//            final Optional<Field> spatialField = Arrays.stream(clazz.getDeclaredFields())
-//                    .filter(f -> f.isAnnotationPresent(Spatial.class))
-////                    .map(f -> f.getAnnotation(Spatial.class).name())
-//                    .findFirst();
-//
-//            if (spatialField.isPresent()) {
-//                return spatialField.get().getName();
-//            }
-
-//            if (!spatialField.orElse("").equals("")) {
-//                return spatialField.orElse("");
-//            }
-
-//            TODO(nrobison): I think these things can go away.
-            final Optional<Field> spatialField = Arrays.stream(clazz.getDeclaredFields())
-                    .filter(f -> f.isAnnotationPresent(Spatial.class))
-                    .findFirst();
-
-            if (spatialField.isPresent()) {
-                return spatialField.get().getName();
-            }
-
-            final Optional<Method> spatialMethod = Arrays.stream(clazz.getDeclaredMethods())
-                    .filter(m -> m.isAnnotationPresent(Spatial.class))
-                    .findFirst();
-
-            if (spatialMethod.isPresent()) {
-                return filterMethodName(spatialMethod.get());
-            }
-        }
-
-//        Temporal
-//        Default
-        if (TemporalParser.isDefault(clazz)) {
-            final Optional<Field> temporalField = Arrays.stream(clazz.getDeclaredFields())
-                    .filter(f -> (f.isAnnotationPresent(DefaultTemporal.class)))
-                    .findFirst();
-
-            if (temporalField.isPresent()) {
-//                Check to see if we have a given temporal property
-                final String annotationName = temporalField.get().getAnnotation(DefaultTemporal.class).name();
-                if (annotationName.equals("")) {
-                    return temporalField.get().getName();
-                } else {
-                    return temporalField.get().getName();
-//                    return annotationName;
-                }
-            }
-
-            final Optional<Method> temporalMethod = Arrays.stream(clazz.getDeclaredMethods())
-                    .filter(f -> (f.isAnnotationPresent(DefaultTemporal.class)))
-                    .findFirst();
-
-
-            if (temporalMethod.isPresent()) {
-                final String annotationName = temporalMethod.get().getAnnotation(DefaultTemporal.class).name();
-                if (annotationName.equals("")) {
-                    return filterMethodName(temporalMethod.get());
-                } else {
-                    return filterMethodName(temporalMethod.get());
-//                    return annotationName;
-                }
-            }
-//        TODO(nrobison): This should be better. String matching is nasty.
-        } else if (classMember.toLowerCase().contains("start")) {
-//            Check for start/end temporal names
-            final Optional<Field> temporalField = Arrays.stream(clazz.getDeclaredFields())
-                    .filter(f -> (f.isAnnotationPresent(StartTemporal.class)))
-                    .findFirst();
-
-            if (temporalField.isPresent()) {
-                final String annotationName = temporalField.get().getAnnotation(StartTemporal.class).name();
-                if (annotationName.equals("")) {
-                    return temporalField.get().getName();
-                } else {
-                    return temporalField.get().getName();
-//                    return annotationName;
-                }
-            }
-
-            final Optional<Method> temporalMethod = Arrays.stream(clazz.getDeclaredMethods())
-                    .filter(f -> (f.isAnnotationPresent(StartTemporal.class)))
-                    .findFirst();
-            if (temporalMethod.isPresent()) {
-                final String annotationName = temporalMethod.get().getAnnotation(StartTemporal.class).name();
-                if (annotationName.equals("")) {
-                    return filterMethodName(temporalMethod.get());
-                } else {
-                    return filterMethodName(temporalMethod.get());
-//                    return annotationName;
-                }
-            }
-
-        } else {
-            final Optional<Field> temporalField = Arrays.stream(clazz.getDeclaredFields())
-                    .filter(f -> (f.isAnnotationPresent(EndTemporal.class)))
-                    .findFirst();
-
-            if (temporalField.isPresent()) {
-                final String annotationName = temporalField.get().getAnnotation(EndTemporal.class).name();
-                if (annotationName.equals("")) {
-                    return temporalField.get().getName();
-                } else {
-                    return temporalField.get().getName();
-//                    return annotationName;
-                }
-            }
-
-            final Optional<Method> temporalMethod = Arrays.stream(clazz.getDeclaredMethods())
-                    .filter(f -> (f.isAnnotationPresent(EndTemporal.class)))
-                    .findFirst();
-            if (temporalMethod.isPresent()) {
-                final String annotationName = temporalMethod.get().getAnnotation(EndTemporal.class).name();
-                if (annotationName.equals("")) {
-                    return filterMethodName(temporalMethod.get());
-                } else {
-                    return filterMethodName(temporalMethod.get());
-//                    return temporalField.get().getName();
-//                    return annotationName;
-                }
-            }
-        }
-
-        throw new RuntimeException("Cannot match field or method");
     }
 
     @Override
@@ -718,10 +548,7 @@ public class ClassParser implements IClassParser {
                 .filter(field -> field.getName().equals(classMember))
                 .findFirst();
 
-        if (matchedField.isPresent()) {
-            return Optional.of(matchedField.get().getType());
-        }
-        return Optional.empty();
+        return matchedField.map(Field::getType);
     }
 
     @Override
@@ -749,19 +576,15 @@ public class ClassParser implements IClassParser {
                 .findFirst();
 
         if (matchedMethod.isPresent()) {
-            return Optional.of(matchedMethod.get());
+            return matchedMethod;
         }
 //        Now the fields
-        final Optional<IRI> matchedField = Arrays.stream(clazz.getDeclaredFields())
+
+        return Arrays.stream(clazz.getDeclaredFields())
                 .filter(field -> ClassParser.filterFactField(field, false))
                 .filter(field -> field.getName().equals(classMember))
                 .map(field -> SpatialParser.filterDataSpatialName(field, this.ReasonerPrefix))
                 .findFirst();
-
-        if (matchedField.isPresent()) {
-            return Optional.of(matchedField.get());
-        }
-        return Optional.empty();
 
     }
 
@@ -791,102 +614,5 @@ public class ClassParser implements IClassParser {
         }
 
         return Optional.of(castReturn);
-    }
-
-    /**
-     * Parse the name of a given field and return either the name, or the one declared in the annotation
-     *
-     * @param field - Field to parse name from
-     * @return - String of parsed field name
-     */
-    static String getFieldName(Field field) {
-
-//        Iterate through the various annotations and figure out if we need to get an annotated values
-        if (field.isAnnotationPresent(Fact.class)) {
-            final String fieldName = field.getAnnotation(Fact.class).name();
-            if (fieldName.equals("")) {
-                return field.getName();
-            } else {
-                return fieldName;
-            }
-        } else if (field.isAnnotationPresent(Spatial.class)) {
-            final String fieldName = field.getAnnotation(Spatial.class).name();
-            if (fieldName.equals("")) {
-                return field.getName();
-            } else {
-                return fieldName;
-            }
-        } else if (field.isAnnotationPresent(DefaultTemporal.class)) {
-            final String fieldName = field.getAnnotation(DefaultTemporal.class).name();
-            if (fieldName.equals("")) {
-                return field.getName();
-            } else {
-                return fieldName;
-            }
-        } else if (field.isAnnotationPresent(StartTemporal.class)) {
-            final String fieldName = field.getAnnotation(StartTemporal.class).name();
-            if (fieldName.equals("")) {
-                return field.getName();
-            } else {
-                return fieldName;
-            }
-        } else if (field.isAnnotationPresent(EndTemporal.class)) {
-            final String fieldName = field.getAnnotation(EndTemporal.class).name();
-            if (fieldName.equals("")) {
-                return field.getName();
-            } else {
-                return fieldName;
-            }
-        } else {
-            return field.getName();
-        }
-    }
-
-    /**
-     * Parse the name of a given method and return either the filtered name, or the one declared in the annotation
-     *
-     * @param method - Method to parse name from
-     * @return - String of filtered method name
-     */
-    static String getMethodName(Method method) {
-        //        Iterate through the various annotations and figure out if we need to get an annotated values
-        if (method.isAnnotationPresent(Fact.class)) {
-            final String methodName = method.getAnnotation(Fact.class).name();
-            if (methodName.equals("")) {
-                return filterMethodName(method);
-            } else {
-                return methodName;
-            }
-        } else if (method.isAnnotationPresent(Spatial.class)) {
-            final String methodName = method.getAnnotation(Spatial.class).name();
-            if (methodName.equals("")) {
-                return filterMethodName(method);
-            } else {
-                return methodName;
-            }
-        } else if (method.isAnnotationPresent(DefaultTemporal.class)) {
-            final String methodName = method.getAnnotation(DefaultTemporal.class).name();
-            if (methodName.equals("")) {
-                return filterMethodName(method);
-            } else {
-                return methodName;
-            }
-        } else if (method.isAnnotationPresent(StartTemporal.class)) {
-            final String methodName = method.getAnnotation(StartTemporal.class).name();
-            if (methodName.equals("")) {
-                return filterMethodName(method);
-            } else {
-                return methodName;
-            }
-        } else if (method.isAnnotationPresent(EndTemporal.class)) {
-            final String methodName = method.getAnnotation(EndTemporal.class).name();
-            if (methodName.equals("")) {
-                return filterMethodName(method);
-            } else {
-                return methodName;
-            }
-        } else {
-            return filterMethodName(method);
-        }
     }
 }

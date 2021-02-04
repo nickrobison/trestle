@@ -80,10 +80,10 @@ public class KMLExporter implements ITrestleExporter {
                 try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(kmzFile.toPath()))) {
                     final ZipEntry zipEntry = new ZipEntry(exportName);
                     zos.putNextEntry(zipEntry);
-                    final InputStream fis = Files.newInputStream(file.toPath());
-                    IOUtils.copy(fis, zos);
-                    zos.closeEntry();
-                    IOUtils.closeQuietly(fis);
+                    try (InputStream fis = Files.newInputStream(file.toPath())) {
+                        IOUtils.copy(fis, zos);
+                        zos.closeEntry();
+                    }
                     return kmzFile;
                 }
             }

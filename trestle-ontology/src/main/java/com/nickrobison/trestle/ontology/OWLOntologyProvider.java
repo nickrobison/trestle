@@ -54,9 +54,8 @@ public class OWLOntologyProvider implements Provider<OWLOntology> {
 
         OWLOntologyLoaderConfiguration loaderConfig = new OWLOntologyLoaderConfiguration();
         loaderConfig.setMissingImportHandlingStrategy(MissingImportHandlingStrategy.THROW_EXCEPTION);
-        final InputStream is = getIRI(Optional.empty());
 
-        try {
+        try(final InputStream is = getIRI(Optional.empty())) {
 //            if (iri.isPresent()) {
 //            logger.debug("Loading ontology from: {}", iri);
 //            owlOntology = owlOntologyManager.loadOntologyFromOntologyDocument((new IRIDocumentSource(iri)), loaderConfig);
@@ -73,8 +72,8 @@ public class OWLOntologyProvider implements Provider<OWLOntology> {
 //            else {
 //                owlOntology = owlOntologyManager.createOntology();
 //            }
-        } catch (OWLOntologyCreationException e) {
-            e.printStackTrace();
+        } catch (OWLOntologyCreationException | IOException e) {
+            throw new IllegalStateException("Cannot load ontology", e);
         }
 
         return owlOntology;

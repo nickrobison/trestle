@@ -183,6 +183,9 @@ public class AggregationEngine {
 
         while (!individualQueue.isEmpty()) {
             final String fromID = individualQueue.poll();
+            if (fromID == null) {
+                continue;
+            }
             visited.add(fromID);
 
             try {

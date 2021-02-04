@@ -82,18 +82,19 @@ public abstract class RDBMSBackend implements IMetricianBackend {
         logger.debug("Exporting values for Metrics {} from {} to {}", metrics, start, end == null ? Long.MAX_VALUE : end);
         final List<MetricianExportedValue> values = new ArrayList<>();
         try {
-            final PreparedStatement exportStatement = getExportPreparedStatement(metrics);
-            exportStatement.setLong(1, start);
-            if (end != null) {
-                exportStatement.setLong(2, end);
-            } else {
-                exportStatement.setLong(2, Long.MAX_VALUE);
-            }
+            try (PreparedStatement exportStatement = getExportPreparedStatement(metrics)) {
+                exportStatement.setLong(1, start);
+                if (end != null) {
+                    exportStatement.setLong(2, end);
+                } else {
+                    exportStatement.setLong(2, Long.MAX_VALUE);
+                }
 
-            try (ResultSet resultSet = exportStatement.executeQuery()) {
-                while (resultSet.next()) {
+                try (ResultSet resultSet = exportStatement.executeQuery()) {
                     while (resultSet.next()) {
-                        values.add(new MetricianExportedValue(resultSet.getString(1), resultSet.getLong(2), resultSet.getObject(3)));
+                        while (resultSet.next()) {
+                            values.add(new MetricianExportedValue(resultSet.getString(1), resultSet.getLong(2), resultSet.getObject(3)));
+                        }
                     }
                 }
             }

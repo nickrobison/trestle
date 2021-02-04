@@ -112,7 +112,12 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
 //        If we have an object returned from the above function, we need to look for any other overlapping objects
         if (inputRecordsOptional.isPresent()) {
             final Queue<MapperOutput> inputRecords = inputRecordsOptional.get();
-            final GAULObject newGAULObject = inputRecords.poll().toObject();
+            final MapperOutput next = inputRecords.poll();
+            if (next == null) {
+                logger.error("Null object pulled from queue");
+                return;
+            }
+            final GAULObject newGAULObject = next.toObject();
             logger.warn("Processing {}-{}-{} for union and intersections", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
 
 //            List of objects to compare to given object

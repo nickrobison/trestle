@@ -110,7 +110,7 @@ public final class TypeUtils {
             }
 
             case "boolean": {
-                return (T) (Object) Boolean.getBoolean(literal.getLiteral());
+                return (T) (Object) Boolean.parseBoolean(literal.getLiteral());
             }
 
             case "java.lang.Boolean": {

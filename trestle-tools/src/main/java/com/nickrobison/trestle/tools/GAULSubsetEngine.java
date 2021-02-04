@@ -54,15 +54,13 @@ public class GAULSubsetEngine {
                 fileFilter, TrueFileFilter.INSTANCE);
 
 //        Create a new progress bar
-        final ProgressBar pb = new ProgressBar("Filtering data:", files.size());
-        pb.start();
-
-        for (final File file : files) {
-            final SimpleFeatureCollection filteredFeatures = this.readShapefile(file);
-            this.writeShapefile(filteredFeatures, file.getName());
-            pb.step();
+        try (ProgressBar pb = new ProgressBar("Filtering data:", files.size())) {
+            for (final File file : files) {
+                final SimpleFeatureCollection filteredFeatures = this.readShapefile(file);
+                this.writeShapefile(filteredFeatures, file.getName());
+                pb.step();
+            }
         }
-        pb.stop();
     }
 
     private SimpleFeatureCollection readShapefile(File file) throws IOException, CQLException {

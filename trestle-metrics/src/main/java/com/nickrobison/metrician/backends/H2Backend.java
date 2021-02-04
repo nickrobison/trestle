@@ -136,17 +136,18 @@ public class H2Backend extends RDBMSBackend {
     public void exportData(File file) {
         logger.info("Exporting metrics to {}", file);
         //            Get all the metrics
-        String exportQuery = "SELECT M.METRIC, C.TIMESTAMP, C.VALUE FROM METRICS AS M\n" +
-                "LEFT JOIN (\n" +
-                "    SELECT *\n" +
-                "    FROM GAUGES\n" +
-                "    UNION ALL\n" +
-                "    SELECT *\n" +
-                "    FROM COUNTERS\n" +
-                "    ) AS C\n" +
-                "ON C.METRICID = M.METRICID;";
+        String exportQuery = "CALL CSVWRITE(?, 'SELECT M.METRIC, C.TIMESTAMP, C.VALUE FROM METRICS AS M" +
+                " LEFT JOIN (" +
+                " SELECT *" +
+                " FROM GAUGES" +
+                " UNION ALL" +
+                " SELECT *" +
+                " FROM COUNTERS" +
+                " ) AS C" +
+                " ON C.METRICID = M.METRICID;')";
         try (final Connection connection = getConnection();
-             final CallableStatement callableStatement = connection.prepareCall(String.format("CALL CSVWRITE('%s', '%s')", file.toString(), exportQuery))) {
+             final CallableStatement callableStatement = connection.prepareCall(exportQuery)) {
+            callableStatement.setString(1, file.toString());
             callableStatement.execute();
         } catch (SQLException e) {
             logger.error("Unable to export results to {}", file, e);
