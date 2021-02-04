@@ -6,11 +6,14 @@
  */
 plugins {
     id "java-library"
+    id "maven-publish"
+    id "signing"
     id "jacoco"
     id 'org.sonarqube' version '3.1'
     id "dev.clojurephant.clojure" version "0.6.0-alpha.10" apply false
     id 'com.google.cloud.tools.jib' version '2.7.1' apply false
     id "io.spring.dependency-management" version "1.0.11.RELEASE" apply false
+    id "net.researchgate.release" version "2.8.1"
 }
 
 ext {
@@ -31,12 +34,11 @@ ext {
 }
 
 allprojects {
-    group = "com.nickrobison.trestle"
-    version = "0.9.2-SNAPSHOT"
     repositories {
         // This needs to go first, in order to get the jai core jars, which jcenter doesn't have.
         maven { url "https://repo.osgeo.org/repository/release/" }
         jcenter()
+        mavenCentral()
         maven { url "https://clojars.org/repo" }
         maven { url "https://jitpack.io" }
     }
@@ -91,5 +93,32 @@ subprojects {
 
     test {
         useJUnitPlatform()
+    }
+
+    release {
+        git {
+            signTag = true
+        }
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+
+        }
+    }
+    repositories {
+        maven {
+
+            def stagingUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+            def snapshotUrl = "https://oss.sonatype.org/content/repositories/snapshots"
+            url version.endsWith("SNAPSHOT") ? snapshotUrl : stagingUrl
+            credentials {
+                username sonatypeUsername
+                password sonatypePassword
+            }
+            name "oss-sonatype"
+        }
     }
 }
