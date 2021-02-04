@@ -97,9 +97,10 @@ public class TrestleServer extends Application<TrestleServerConfiguration> {
         try (Connection connection = migrationDataSource.getConnection()) {
           final JdbcConnection conn = new JdbcConnection(connection);
           final Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(conn);
-          final Liquibase liquibase = new Liquibase("migrations.xml", new ClassLoaderResourceAccessor(), database);
-          liquibase.update("");
-          logger.info("Migration complete");
+          try (Liquibase liquibase = new Liquibase("migrations.xml", new ClassLoaderResourceAccessor(), database)) {
+            liquibase.update("");
+            logger.info("Migration complete");
+          }
         } catch (Exception ex) {
           throw new IllegalStateException("Unable to migrate database", ex);
         }

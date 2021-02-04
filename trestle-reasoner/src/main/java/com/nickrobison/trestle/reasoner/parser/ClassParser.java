@@ -501,11 +501,11 @@ public class ClassParser implements IClassParser {
     @Override
     public String matchWithClassMember(Class<?> clazz, String classMember) {
 //        Check for a matching field
-        Field classField = null;
+        Field classField;
         try {
             classField = clazz.getDeclaredField(classMember);
         } catch (NoSuchFieldException e) {
-
+            throw new RuntimeException("Cannot get class member", e);
         }
 
 //        See if the member directly matches an existing constructor argument

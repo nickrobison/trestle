@@ -97,7 +97,12 @@ public class GaugeTransformer extends AbstractMetricianTransformer {
         });
         if (gaugeAnnotatedMetric.isPresent()) {
             gauges.put(method.getName(), gaugeAnnotatedMetric);
-            logger.debug("Registered Gauge {} method {}", gaugeAnnotatedMetric.getMetric().getValue().getClass().getName(), method.getName());
+            final Object gauge = gaugeAnnotatedMetric.getMetric().getValue();
+            if (gauge == null) {
+                logger.error("Unable to register Gauge");
+                return;
+            }
+            logger.debug("Registered Gauge {} method {}", gauge.getClass().getName(), method.getName());
         } else {
             logger.debug("Missing Gauge for method {}", method.getName());
         }

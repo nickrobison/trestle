@@ -1,5 +1,6 @@
 package com.nickrobison.trestle.gaulintegrator;
 
+import com.esri.core.geometry.Geometry;
 import com.esri.io.PolygonFeatureWritable;
 import com.nickrobison.trestle.gaulintegrator.common.GAULHelpers;
 import org.apache.hadoop.io.BooleanWritable;
@@ -103,7 +104,12 @@ public class GAULMapper extends Mapper<LongWritable, PolygonFeatureWritable, GAU
             LocalDate expirationDate = expirationYear.plusYears(1).with(TemporalAdjusters.firstDayOfYear());
 
 //        Ensure the polygon has the correct coordinate system
-            final Matcher matcher = coordinateRegex.matcher(inputRecord.polygon.getBoundary().toString());
+            final Geometry boundary = inputRecord.polygon.getBoundary();
+            if (boundary == null) {
+                logger.error("{}, Year {} has an empty boundary, which shouldn't happen", polygonName, inputYear);
+                return;
+            }
+            final Matcher matcher = coordinateRegex.matcher(boundary.toString());
             if (!matcher.find()) {
                 logger.error("Cannot parse boundary for {}, year {}", polygonName, inputYear);
             }
@@ -111,7 +117,7 @@ public class GAULMapper extends Mapper<LongWritable, PolygonFeatureWritable, GAU
 
 //        If the coordinate is outside the bounds of a valid geographic coordinate, then we know this record has bad data.
             if (firstCoordinate > 180.0 || firstCoordinate < -180.0) {
-                logger.error("{}, Year {} has invalid polygon data. {}", polygonName, inputYear, inputRecord.polygon.getBoundary());
+                logger.error("{}, Year {} has invalid polygon data. {}", polygonName, inputYear, boundary);
             }
 
 

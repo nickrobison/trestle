@@ -279,7 +279,7 @@ public class SpatialEngine implements ITrestleSpatialEngine {
         if (dbAt == null) {
             dbTemporal = OffsetDateTime.now();
         } else {
-            dbTemporal = parseTemporalToOntologyDateTime(validAt, ZoneOffset.UTC);
+            dbTemporal = parseTemporalToOntologyDateTime(dbAt, ZoneOffset.UTC);
         }
 
 //        String spatialIntersection;

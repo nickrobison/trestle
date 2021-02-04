@@ -40,6 +40,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static javax.measure.MetricPrefix.KILO;
+
 /**
  * Created by nickrobison on 8/1/18.
  */
@@ -95,21 +97,19 @@ public class GAULAnalyzer {
 
         Map<String, Double> sizeDistribution = new HashMap<>();
 
-        final ProgressBar pb = new ProgressBar("Calculating Size Distribution", members.size());
-        pb.start();
-
-        for (final String member : members) {
-            final TrestleObjectHeader header = this.reasoner.readObjectHeader(GAULObject.class, member).orElseThrow(() -> new IllegalStateException("Cannot not have object"));
-            final GAULObject gaulObject = this.reasoner.readTrestleObject(GAULObject.class, member, header.getExistsFrom(), null);
-//            final double area = gaulObject.getShapePolygon().calculateArea2D();
-            final String wktValue = gaulObject.getPolygonAsWKT();
-            final Geometry read = new WKTReader().read(wktValue);
-            final Quantity<Area> area = GAULAnalyzer.calculatePolygonArea(read);
-            final Unit<Area> sq_km = (Unit<Area>) MetricPrefix.KILO(SI.METRE).multiply(MetricPrefix.KILO(SI.METRE));
-            sizeDistribution.put(member, area.to(sq_km).getValue().doubleValue());
-            pb.step();
+        try (ProgressBar pb = new ProgressBar("Calculating Size Distribution", members.size())) {
+            for (final String member : members) {
+                final TrestleObjectHeader header = this.reasoner.readObjectHeader(GAULObject.class, member).orElseThrow(() -> new IllegalStateException("Cannot not have object"));
+                final GAULObject gaulObject = this.reasoner.readTrestleObject(GAULObject.class, member, header.getExistsFrom(), null);
+    //            final double area = gaulObject.getShapePolygon().calculateArea2D();
+                final String wktValue = gaulObject.getPolygonAsWKT();
+                final Geometry read = new WKTReader().read(wktValue);
+                final Quantity<Area> area = GAULAnalyzer.calculatePolygonArea(read);
+                @SuppressWarnings("unchecked") final Unit<Area> sq_km = (Unit<Area>) KILO(SI.METRE).multiply(KILO(SI.METRE));
+                sizeDistribution.put(member, area.to(sq_km).getValue().doubleValue());
+                pb.step();
+            }
         }
-        pb.stop();
         System.out.println("Done with size calc");
 
         GAULAnalyzer.writeMapToFile(sizeDistribution, "%s,%f\n", this.filePath);

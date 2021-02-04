@@ -103,14 +103,15 @@ public class TrestleExecutorService implements ExecutorService {
             time.stop();
             logger.trace("Task took {} ms to start", Duration.between(taskSubmit, Instant.now()).toMillis());
             this.executionCount.mark();
-            final Timer.Context execTimer = executionTimer.time();
-            try {
-                return task.call();
-            } catch (Exception e) {
-                logger.error("Exception {} in task submitted from thread {}, here:", e, Thread.currentThread().getName(), clientTrace());
-                throw e;
-            } finally {
-                execTimer.stop();
+            try (Timer.Context execTimer = executionTimer.time()) {
+                try {
+                    return task.call();
+                } catch (Exception e) {
+                    logger.error("Exception {} in task submitted from thread {}, here:", e, Thread.currentThread().getName(), clientTrace());
+                    throw e;
+                } finally {
+                    execTimer.stop();
+                }
             }
         });
     }

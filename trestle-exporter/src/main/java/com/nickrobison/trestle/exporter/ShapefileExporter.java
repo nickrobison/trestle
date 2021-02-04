@@ -181,10 +181,8 @@ public class ShapefileExporter<T extends Geometry> implements ITrestleExporter {
     private static void addToZipArchive(ZipOutputStream zos, String... fileName) {
         Arrays.stream(fileName).forEach(fn -> {
             final File file = new File(fn);
-            final InputStream fileInputStream;
             final ZipEntry zipEntry = new ZipEntry(fn);
-            try {
-                fileInputStream = Files.newInputStream(file.toPath());
+            try(InputStream fileInputStream = Files.newInputStream(file.toPath())) {
                 try {
                     zos.putNextEntry(zipEntry);
                     final byte[] bytes = new byte[1024];

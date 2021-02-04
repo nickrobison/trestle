@@ -75,11 +75,7 @@ public class MergeEngineImpl implements TrestleMergeEngine {
         }
 
         final ExistenceStrategy eStrategy;
-        if (existenceStrategy == ExistenceStrategy.Default) {
-            eStrategy = this.existenceStrategy;
-        } else {
-            eStrategy = existenceStrategy;
-        }
+        eStrategy = this.existenceStrategy;
         logger.debug("Merging facts using the {} strategy and {} existence", methodStrategy, eStrategy);
 
         switch (methodStrategy) {

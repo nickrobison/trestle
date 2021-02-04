@@ -41,8 +41,9 @@ public class IntegrationRunner extends Configured implements Tool {
         Configuration conf = this.getConf();
 
         final Properties userProperties = new Properties();
-        final InputStream is = IntegrationRunner.class.getClassLoader().getResourceAsStream("sd.properties");
-        userProperties.load(is);
+        try (InputStream is = IntegrationRunner.class.getClassLoader().getResourceAsStream("sd.properties")) {
+            userProperties.load(is);
+        }
 
         for (String name : userProperties.stringPropertyNames()) {
             conf.set(name, userProperties.getProperty(name));
@@ -69,44 +70,45 @@ public class IntegrationRunner extends Configured implements Tool {
                 .withoutMetrics()
                 .build();
 
-        Job job = Job.getInstance(conf, "GAUL Integrator");
-        job.setJarByClass(IntegrationRunner.class);
-        job.setMapperClass(GAULMapper.class);
-        job.setMapOutputKeyClass(GAULMapperKey.class);
-        job.setMapOutputValueClass(MapperOutput.class);
-        //        Deterministic sorting and partitioning, very course grained, we'll just do country code
-        //        We also need both the grouping and the sort comparator, not entirely sure why
-        job.setGroupingComparatorClass(NaturalKeyGroupingComparator.class);
-        job.setSortComparatorClass(GAULMapperADM2CodeComparator.class);
-        job.setPartitionerClass(GAULPartitioner.class);
-        job.setReducerClass(GAULReducer.class);
+        try (Job job = Job.getInstance(conf, "GAUL Integrator")) {
+            job.setJarByClass(IntegrationRunner.class);
+            job.setMapperClass(GAULMapper.class);
+            job.setMapOutputKeyClass(GAULMapperKey.class);
+            job.setMapOutputValueClass(MapperOutput.class);
+            //        Deterministic sorting and partitioning, very course grained, we'll just do country code
+            //        We also need both the grouping and the sort comparator, not entirely sure why
+            job.setGroupingComparatorClass(NaturalKeyGroupingComparator.class);
+            job.setSortComparatorClass(GAULMapperADM2CodeComparator.class);
+            job.setPartitionerClass(GAULPartitioner.class);
+            job.setReducerClass(GAULReducer.class);
 
-        job.setInputFormatClass(PolygonFeatureInputFormat.class);
-        job.setOutputFormatClass(TextOutputFormat.class);
-        FileInputFormat.setInputDirRecursive(job, true);
-        FileInputFormat.setInputPaths(job, new Path(args[0]));
-        final Path outputDir = new Path(args[1]);
+            job.setInputFormatClass(PolygonFeatureInputFormat.class);
+            job.setOutputFormatClass(TextOutputFormat.class);
+            FileInputFormat.setInputDirRecursive(job, true);
+            FileInputFormat.setInputPaths(job, new Path(args[0]));
+            final Path outputDir = new Path(args[1]);
 
-        //        If we're in debug mode, truncate the table and delete the output dir
-        if (logger.isDebugEnabled()) {
-            logger.debug("Deleting output dir: {}", outputDir.getName());
-            outputDir.getFileSystem(conf).delete(outputDir, true);
-        }
-        FileOutputFormat.setOutputPath(job, outputDir);
-
-        //        Remove the HDS output directory
-        try (final FileSystem fileSystem = FileSystem.get(conf)) {
-            if (fileSystem.exists(outputDir)) {
-                fileSystem.delete(outputDir, true);
+            //        If we're in debug mode, truncate the table and delete the output dir
+            if (logger.isDebugEnabled()) {
+                logger.debug("Deleting output dir: {}", outputDir.getName());
+                outputDir.getFileSystem(conf).delete(outputDir, true);
             }
-        }
+            FileOutputFormat.setOutputPath(job, outputDir);
+
+            //        Remove the HDS output directory
+            try (final FileSystem fileSystem = FileSystem.get(conf)) {
+                if (fileSystem.exists(outputDir)) {
+                    fileSystem.delete(outputDir, true);
+                }
+            }
 
 //        Add the cache files
-        job.waitForCompletion(true);
-        reasoner.shutdown(false);
+            job.waitForCompletion(true);
+            reasoner.shutdown(false);
 
-        if (job.isSuccessful()) {
-            return 0;
+            if (job.isSuccessful()) {
+                return 0;
+            }
         }
         return 1;
     }
