@@ -311,7 +311,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
 
 //        Merge operation, if the object exists
         // temporal merging occurs by default but may be disabled in the configuration
-        if (this.mergeEngine.mergeOnLoad() && this.engineUtils.checkExists(owlNamedIndividual.getIRI())) {
+        if (this.mergeEngine.mergeOnLoad() && this.engineUtils.checkExists(owlNamedIndividual.getIRI()).blockingGet()) {
             final Timer.Context mergeTimer = this.metrician.registerTimer("trestle-merge-timer").time();
             final Optional<List<OWLDataPropertyAssertionAxiom>> individualFactsOptional = this.classParser.getFacts(inputObject);
             try {

@@ -428,7 +428,7 @@ public class SpatialEngine implements ITrestleSpatialEngine {
                 .stream()
                 .map(individual -> CompletableFuture.supplyAsync(() -> {
 //                    Figure out if (and how much) we need to adjust the query temporal to get the earliest/latest version of the object
-                    return this.objectEngineUtils.getAdjustedQueryTemporal(individual, atTemporal, trestleTransaction);
+                    return this.objectEngineUtils.getAdjustedQueryTemporal(individual, atTemporal, trestleTransaction).blockingGet();
 
                 }, this.spatialPool)
                         .thenApply(temporal -> {
@@ -477,13 +477,13 @@ public class SpatialEngine implements ITrestleSpatialEngine {
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
 //        First, read object A
-        final CompletableFuture<Object> objectAFuture = CompletableFuture.supplyAsync(() -> this.objectEngineUtils.getAdjustedQueryTemporal(objectAID, atTemporal, trestleTransaction), this.spatialPool)
+        final CompletableFuture<Object> objectAFuture = CompletableFuture.supplyAsync(() -> this.objectEngineUtils.getAdjustedQueryTemporal(objectAID, atTemporal, trestleTransaction).blockingGet(), this.spatialPool)
                 .thenCompose((temporal) -> this.getAdjustedIndividual(datasetID, objectAID, temporal, trestleTransaction));
 
 //        Read all the other objects
         final List<CompletableFuture<Object>> objectFutures = comparisonObjectIDs
                 .stream()
-                .map(id -> CompletableFuture.supplyAsync(() -> this.objectEngineUtils.getAdjustedQueryTemporal(id, atTemporal, trestleTransaction),
+                .map(id -> CompletableFuture.supplyAsync(() -> this.objectEngineUtils.getAdjustedQueryTemporal(id, atTemporal, trestleTransaction).blockingGet(),
                         this.spatialPool)
                         .thenCompose((temporal) -> this.getAdjustedIndividual(datasetID, id, temporal, trestleTransaction)))
                 .collect(Collectors.toList());

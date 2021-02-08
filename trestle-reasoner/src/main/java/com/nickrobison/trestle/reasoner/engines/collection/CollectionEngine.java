@@ -209,7 +209,7 @@ public class CollectionEngine implements ITrestleCollectionEngine {
                     .map(iri -> CompletableFuture.supplyAsync(() -> {
                         final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
                         try {
-                            final Temporal adjustedIntersection = this.objectUtils.getAdjustedQueryTemporal(iri, atTemporal, tt);
+                            final Temporal adjustedIntersection = this.objectUtils.getAdjustedQueryTemporal(iri, atTemporal, tt).blockingGet();
                             return this.objectReader.readTrestleObject(clazz, iri, adjustedIntersection, null);
                         } catch (MissingOntologyEntity e) {
                             logger.error("Cannot find ontology individual {}", e.getIndividual(), e);

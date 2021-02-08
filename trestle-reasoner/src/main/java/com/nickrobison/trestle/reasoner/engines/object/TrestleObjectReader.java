@@ -214,7 +214,7 @@ public class TrestleObjectReader implements ITrestleObjectReader {
         final String factQuery = qb.buildObjectFactRetrievalQuery(validAtTemporal, dbAtTemporal, true, null, df.getOWLNamedIndividual(individualIRI));
 
         //        Figure out its name
-        if (!this.engineUtils.checkExists(individualIRI)) {
+        if (!this.engineUtils.checkExists(individualIRI).blockingGet()) {
             logger.error("Missing individual {}", individualIRI);
             return Optional.empty();
         }
