@@ -190,10 +190,10 @@ public class AggregationEngine {
 
             try {
 //            Get the initial individual
-                final T from = this.reader.readTrestleObject(clazz, fromID, validAt, dbAt);
+                final T from = this.reader.readTrestleObject(clazz, fromID, validAt, dbAt).blockingGet();
 
 //            Get everything it touches
-                final List<Edge<T, B>> relatedEdges = this.reader.getRelatedObjects(clazz, fromID, ObjectRelation.SPATIAL_MEETS, validAt, dbAt)
+                final List<Edge<T, B>> relatedEdges = this.reader.getRelatedObjects(clazz, fromID, ObjectRelation.SPATIAL_MEETS, validAt, dbAt).toList().blockingGet()
                         .stream()
                         .filter(filter::filter)
 //                        Remove self

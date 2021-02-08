@@ -48,6 +48,9 @@ import com.nickrobison.trestle.types.relations.CollectionRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Supplier;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -346,28 +349,28 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //    ----------------------------
 
     @Override
-    public <T extends @NonNull Object> T readTrestleObject(String datasetClassID, String objectID) throws MissingOntologyEntity, TrestleClassException {
+    public <T extends @NonNull Object> Single<@NonNull Object> readTrestleObject(String datasetClassID, String objectID) throws MissingOntologyEntity, TrestleClassException {
         return this.objectReader.readTrestleObject(datasetClassID, objectID);
     }
 
     @Override
-    public <T extends @NonNull Object> T readTrestleObject(String datasetClassID, String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws MissingOntologyEntity, TrestleClassException {
+    public <T extends @NonNull Object> Single<T> readTrestleObject(String datasetClassID, String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws MissingOntologyEntity, TrestleClassException {
         return this.objectReader.readTrestleObject(datasetClassID, objectID, validTemporal, databaseTemporal);
     }
 
     @Override
-    public <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, String objectID) throws TrestleClassException, MissingOntologyEntity {
+    public <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, String objectID) throws TrestleClassException, MissingOntologyEntity {
         return this.objectReader.readTrestleObject(clazz, objectID);
     }
 
 
     @Override
-    public <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws TrestleClassException, MissingOntologyEntity {
+    public <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws TrestleClassException, MissingOntologyEntity {
         return this.objectReader.readTrestleObject(clazz, objectID, validTemporal, databaseTemporal);
     }
 
     @Override
-    public Optional<TrestleObjectHeader> readObjectHeader(Class<?> clazz, String individual) {
+    public @io.reactivex.rxjava3.annotations.NonNull Maybe<TrestleObjectHeader> readObjectHeader(Class<?> clazz, String individual) {
         return this.objectReader.readObjectHeader(clazz, individual);
     }
 
@@ -376,37 +379,37 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //    ----------------------------
 
     @Override
-    public <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache) {
+    public <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache) {
         return this.objectReader.readTrestleObject(clazz, individualIRI, bypassCache);
     }
 
     @Override
-    public <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt) {
+    public @io.reactivex.rxjava3.annotations.NonNull <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt) {
         return this.objectReader.readTrestleObject(clazz, individualIRI, bypassCache, validAt, databaseAt);
     }
 
     @Override
-    public List<Object> getFactValues(Class<?> clazz, String individual, String factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
+    public Flowable<Object> getFactValues(Class<?> clazz, String individual, String factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
         return this.objectReader.getFactValues(clazz, individual, factName, validStart, validEnd, databaseTemporal);
     }
 
     @Override
-    public List<Object> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
+    public @io.reactivex.rxjava3.annotations.NonNull Flowable<Object> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
         return this.objectReader.getFactValues(clazz, individual, factName, validStart, validEnd, databaseTemporal);
     }
 
     @Override
-    public List<Object> sampleFactValues(Class<?> clazz, String factName, long sampleLimit) {
+    public Flowable<Object> sampleFactValues(Class<?> clazz, String factName, long sampleLimit) {
         return this.objectReader.sampleFactValues(clazz, factName, sampleLimit);
     }
 
     @Override
-    public List<Object> sampleFactValues(Class<?> clazz, OWLDataProperty factName, long sampleLimit) {
+    public @io.reactivex.rxjava3.annotations.NonNull Flowable<Object> sampleFactValues(Class<?> clazz, OWLDataProperty factName, long sampleLimit) {
         return this.objectReader.sampleFactValues(clazz, factName, sampleLimit);
     }
 
     @Override
-    public <T> List<T> getRelatedObjects(Class<T> clazz, String identifier, ObjectRelation relation, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
+    public <T> Flowable<T> getRelatedObjects(Class<T> clazz, String identifier, ObjectRelation relation, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
         return this.objectReader.getRelatedObjects(clazz, identifier, relation, validAt, dbAt);
     }
 
@@ -685,7 +688,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             final List<T> individualList = equivalentIndividuals
                     .stream()
                     .map(individual -> {
-                        return this.objectReader.readTrestleObject(clazz, individual.getIRI(), false, queryTemporal, null);
+                        return this.objectReader.readTrestleObject(clazz, individual.getIRI(), false, queryTemporal, null).blockingGet();
                     })
                     .collect(Collectors.toList());
             this.ontology.returnAndCommitTransaction(trestleTransaction);
@@ -702,7 +705,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         final IRI individualIRI = parseStringToIRI(this.reasonerPrefix, individual);
 
 //        Read the object first
-        final T trestleObject = this.objectReader.readTrestleObject(clazz, individual, validAt, null);
+        final T trestleObject = this.objectReader.readTrestleObject(clazz, individual, validAt, null).blockingGet();
 //        Intersect it
         final Optional<List<T>> intersectedObjects = this.spatialEngine.spatialIntersectObject(trestleObject, 1, validAt, null);
 //        Now, compute the relationships (I'm fine doing this on an alternate thread, but it should return a completable future, rather than blocking the thread

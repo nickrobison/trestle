@@ -43,7 +43,7 @@ public class ConstructorTemporalDependencyTest extends AbstractReasonerTest {
 
         try {
             reasoner.writeTrestleObject(inObj);
-            TestObject outObject = reasoner.readTrestleObject(TestObject.class, id, startDate, null);
+            TestObject outObject = reasoner.readTrestleObject(TestObject.class, id, startDate, null).blockingGet();
             if (!outObject.equals(inObj))
                 fail("Input and output objects are not equivalent");
         } catch (TrestleClassException e) {

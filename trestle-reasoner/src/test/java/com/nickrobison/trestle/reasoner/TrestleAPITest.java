@@ -75,7 +75,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
 
         classObjects.parallelStream().forEach(object -> {
             final OWLNamedIndividual owlNamedIndividual = tp.classParser.getIndividual(object);
-            final Object returnedObject = reasoner.readTrestleObject(object.getClass(), owlNamedIndividual.getIRI(), false);
+            final Object returnedObject = reasoner.readTrestleObject(object.getClass(), owlNamedIndividual.getIRI(), false).blockingGet();
             if (returnedObject instanceof TestClasses.GAULComplexClassTest) {
                 assertEquals(gaulComplexClassTest, returnedObject, "Should have the same object");
             } else if (returnedObject instanceof TestClasses.JTSGeometryTest) {
@@ -188,7 +188,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
 
 //        Try to read one out.
 //        final GAULTestClass ancuabe = reasoner.readTrestleObject(GAULTestClass.class, IRI.create("trestle:", "Ancuabe"));
-        final TestClasses.GAULTestClass ancuabe = reasoner.readTrestleObject(TestClasses.GAULTestClass.class, IRI.create(OVERRIDE_PREFIX, "Ancuabe"), true, OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null);
+        final TestClasses.GAULTestClass ancuabe = reasoner.readTrestleObject(TestClasses.GAULTestClass.class, IRI.create(OVERRIDE_PREFIX, "Ancuabe"), true, OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null).blockingGet();
         assertEquals("Ancuabe", ancuabe.adm0_name, "Wrong name");
 //        Check the temporal to make sure they got parsed correctly
         assertEquals(LocalDate.of(1990, 1, 1).atStartOfDay(), ancuabe.time, "Times should match");
@@ -201,9 +201,9 @@ public class TrestleAPITest extends AbstractReasonerTest {
                 .filter(ds -> ds.equals("GAUL_Test"))
                 .findAny()
                 .get();
-        @NonNull final Object ancuabe1 = reasoner.readTrestleObject(datasetClassID, "Ancuabe", OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null);
+        @NonNull final Object ancuabe1 = reasoner.readTrestleObject(datasetClassID, "Ancuabe", OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null).blockingGet();
         assertEquals(ancuabe, ancuabe1, "Objects should be equal");
-        final Object ancuabe2 = reasoner.readTrestleObject(reasoner.getDatasetClass(datasetClassID), "Ancuabe", OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null);
+        final Object ancuabe2 = reasoner.readTrestleObject(reasoner.getDatasetClass(datasetClassID), "Ancuabe", OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null).blockingGet();
         assertEquals(ancuabe, ancuabe2, "Should be equal");
 
 //        Check the spatial intersection
@@ -234,11 +234,11 @@ public class TrestleAPITest extends AbstractReasonerTest {
         // Write the first object
         reasoner.writeTrestleObject(jtsGeometryTest);
         // Try to read with a non-existent fact
-        assertThrows(NoValidStateException.class, () -> reasoner.readTrestleObject(TestClasses.JTSExtended.class, "4326", LocalDate.of(1990, 7, 21), null));
+        assertThrows(NoValidStateException.class, () -> reasoner.readTrestleObject(TestClasses.JTSExtended.class, "4326", LocalDate.of(1990, 7, 21), null).blockingGet());
         reasoner.writeTrestleObject(related);
 
         // Read it back
-        final TestClasses.JTSExtended jtsExtended = reasoner.readTrestleObject(TestClasses.JTSExtended.class, "4326", LocalDate.of(1990, 7, 21), null);
+        final TestClasses.JTSExtended jtsExtended = reasoner.readTrestleObject(TestClasses.JTSExtended.class, "4326", LocalDate.of(1990, 7, 21), null).blockingGet();
         assertEquals(1000, jtsExtended.population, "Should have correct population");
 
         // Related should NOT have root object facts

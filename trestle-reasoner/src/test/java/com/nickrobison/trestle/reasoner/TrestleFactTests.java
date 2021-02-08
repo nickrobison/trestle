@@ -66,7 +66,7 @@ public class TrestleFactTests extends AbstractReasonerTest {
         assertAll(() -> assertTrue(events.isPresent(), "Should have events"),
                 () -> assertEquals(1, events.get().size(), "Should only have created event"),
                 () -> assertEquals(v1.getValidFrom(), events.get().stream().filter(event -> event.getType() == TrestleEventType.CREATED).findFirst().get().getAtTemporal(), "CREATED event should equal valid from"));
-        final TestClasses.FactVersionTest v1Return = reasoner.readTrestleObject(v1.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
+        final TestClasses.FactVersionTest v1Return = reasoner.readTrestleObject(v1.getClass(), tp.classParser.getIndividual(v1).getIRI(), false).blockingGet();
         assertEquals(v1, v1Return, "Should be equal to V1");
         reasoner.writeTrestleObject(v2);
         final Optional<Set<TrestleEvent>> events2 = reasoner.getIndividualEvents(v2.getClass(), v2.id);
@@ -74,17 +74,17 @@ public class TrestleFactTests extends AbstractReasonerTest {
                 () -> assertEquals(1, events2.get().size(), "Should only have created event"),
                 () -> assertEquals(v1.getValidFrom(), events2.get().stream().filter(event -> event.getType() == TrestleEventType.CREATED).findFirst().get().getAtTemporal(), "CREATED event should equal V1 Valid from"));
 
-        final TestClasses.FactVersionTest v2Return = reasoner.readTrestleObject(v2.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
+        final TestClasses.FactVersionTest v2Return = reasoner.readTrestleObject(v2.getClass(), tp.classParser.getIndividual(v1).getIRI(), false).blockingGet();
         assertEquals(v2, v2Return, "Should be equal to V2");
         reasoner.writeTrestleObject(v3);
-        final TestClasses.FactVersionTest v3Return = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false);
+        final TestClasses.FactVersionTest v3Return = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false).blockingGet();
         assertEquals(v3, v3Return, "Should be equal to V3");
 //        Try for specific points in time
-        final TestClasses.FactVersionTest v1ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(1990, 3, 26), null);
+        final TestClasses.FactVersionTest v1ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(1990, 3, 26), null).blockingGet();
         assertEquals(v1, v1ReturnHistorical, "Historical query should be equal to V1");
-        final TestClasses.FactVersionTest v2ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(1999, 3, 26), null);
+        final TestClasses.FactVersionTest v2ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(1999, 3, 26), null).blockingGet();
         assertEquals(v2, v2ReturnHistorical, "Historical query should be equal to V2");
-        final TestClasses.FactVersionTest v3ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(2016, 3, 26), null);
+        final TestClasses.FactVersionTest v3ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(2016, 3, 26), null).blockingGet();
         assertEquals(v3, v3ReturnHistorical, "Historical query should be equal to V3");
         assertThrows(NoValidStateException.class, () -> reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), true, LocalDate.of(1980, 3, 26), null));
 
@@ -100,10 +100,10 @@ public class TrestleFactTests extends AbstractReasonerTest {
         assertThrows(IllegalArgumentException.class, () -> reasoner.getFactValues(v3.getClass(), "test-object", "missing-fact", null, null, null));
 
 //        Try to get some fact values
-        final List<Object> values = reasoner.getFactValues(v3.getClass(), "test-object", "testValue", null, null, null);
+        final List<Object> values = reasoner.getFactValues(v3.getClass(), "test-object", "testValue", null, null, null).toList().blockingGet();
         assertEquals(5, values.size(), "Should have 5 fact values");
 
-        final List<Object> wktValues = reasoner.getFactValues(v3.getClass(), "test-object", "wkt", LocalDate.of(1988, 3, 26), LocalDate.of(1995, 3, 26), null);
+        final List<Object> wktValues = reasoner.getFactValues(v3.getClass(), "test-object", "wkt", LocalDate.of(1988, 3, 26), LocalDate.of(1995, 3, 26), null).toList().blockingGet();
         assertEquals(2, wktValues.size(), "Should only have 2 wkt values");
 
 //        Test merging with overlapping (non-continuing facts)
@@ -114,17 +114,17 @@ public class TrestleFactTests extends AbstractReasonerTest {
         assertThrows(TrestleMergeConflict.class, () -> reasoner.addFactToTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", "adm0_code", 9944, LocalDate.of(1989, 5, 14).atStartOfDay(), null));
         assertThrows(TrestleMergeConflict.class, () -> reasoner.writeTrestleObject(updatedFactClass));
 //        Read out the same object
-        final TestClasses.GAULTestClass originalObject = reasoner.readTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", LocalDate.of(1989, 5, 14), null);
+        final TestClasses.GAULTestClass originalObject = reasoner.readTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", LocalDate.of(1989, 5, 14), null).blockingGet();
         assertEquals(overlappingFactTest, originalObject, "Should match the original object");
 
 //        Change method and try again
         this.reasoner.getMergeEngine().changeDefaultMergeStrategy(MergeStrategy.ExistingFacts);
         reasoner.writeTrestleObject(updatedFactClass);
-        final TestClasses.GAULTestClass updatedObject = reasoner.readTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", LocalDate.of(1989, 5, 15), null);
+        final TestClasses.GAULTestClass updatedObject = reasoner.readTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", LocalDate.of(1989, 5, 15), null).blockingGet();
         assertEquals(updatedFactClass, updatedObject);
         reasoner.addFactToTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", "wkt", "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))", LocalDate.of(1989, 5, 14), null, null);
         final TestClasses.GAULTestClass newWKT = new TestClasses.GAULTestClass(9944, "test-fact-object", LocalDate.of(1989, 03, 26).atStartOfDay(), LocalDate.of(1990, 03, 26).atStartOfDay(),  "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))");
-        final TestClasses.GAULTestClass updatedWKT = reasoner.readTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", LocalDate.of(1989, 5, 15), null);
+        final TestClasses.GAULTestClass updatedWKT = reasoner.readTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", LocalDate.of(1989, 5, 15), null).blockingGet();
         assertEquals(newWKT, updatedWKT);
 
 //        Try for no merge.
@@ -133,7 +133,7 @@ public class TrestleFactTests extends AbstractReasonerTest {
         assertThrows(TrestleMergeConflict.class, () -> reasoner.addFactToTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", "wkt", "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))", LocalDate.of(1989, 5, 14), null, null));
 //        Try to add facts in the future.
         this.reasoner.addFactToTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", "adm0_code", 1234, LocalDate.of(1990, 5, 14).atStartOfDay(), null, null);
-        final List<Object> factValues = reasoner.getFactValues(TestClasses.GAULTestClass.class, "test-fact-object", "adm0_code", null, null, null);
+        final List<Object> factValues = reasoner.getFactValues(TestClasses.GAULTestClass.class, "test-fact-object", "adm0_code", null, null, null).toList().blockingGet();
         assertEquals(4, factValues.size(), "Should have 4 values for ADM0_Code");
 
 ////        Test database temporals
@@ -174,7 +174,7 @@ public class TrestleFactTests extends AbstractReasonerTest {
         this.reasoner.getMergeEngine().changeDefaultExistenceStrategy(ExistenceStrategy.Extend);
 //        Try to write the before object, again
         this.reasoner.writeTrestleObject(beforeExists);
-        final TestClasses.FactVersionTest extendedFact = this.reasoner.readTrestleObject(TestClasses.FactVersionTest.class, "test-object", LocalDate.of(1984, 5, 14), null);
+        final TestClasses.FactVersionTest extendedFact = this.reasoner.readTrestleObject(TestClasses.FactVersionTest.class, "test-object", LocalDate.of(1984, 5, 14), null).blockingGet();
         assertEquals(LocalDate.of(1980, 3, 26), extendedFact.getValidFrom(), "Should have extended existsFrom");
 //        Check that the CREATED event was extended correctly
         final Optional<Set<TrestleEvent>> beforeEvents = this.reasoner.getIndividualEvents(TestClasses.FactVersionTest.class, "test-object");
@@ -196,7 +196,7 @@ public class TrestleFactTests extends AbstractReasonerTest {
         this.reasoner.addFactToTrestleObject(BoundedFact.class, "bounded-object", "testValue", "new value, after exists", LocalDate.of(1989, 3, 26).plusYears(6), LocalDate.of(1989, 3, 26).plusYears(10), null);
         this.reasoner.addFactToTrestleObject(BoundedFact.class, "bounded-object", "id", "bounded-object", LocalDate.of(1989, 3, 26).plusYears(6), LocalDate.of(1989, 3, 26).plusYears(10), null);
         this.reasoner.addFactToTrestleObject(BoundedFact.class, "bounded-object", "wkt", "POINT(0.71255092695307 -25.572028714467507)", LocalDate.of(1989, 3, 26).plusYears(6), LocalDate.of(1989, 3, 26).plusYears(10), null);
-        @NonNull final BoundedFact extendedBoundedFact = this.reasoner.readTrestleObject(BoundedFact.class, "bounded-object", LocalDate.of(1989, 3, 26).plusYears(7), null);
+        @NonNull final BoundedFact extendedBoundedFact = this.reasoner.readTrestleObject(BoundedFact.class, "bounded-object", LocalDate.of(1989, 3, 26).plusYears(7), null).blockingGet();
         final Optional<Set<TrestleEvent>> boundedExtendedEvents = this.reasoner.getIndividualEvents(BoundedFact.class, "bounded-object");
         assertEquals(LocalDate.of(1989, 3, 26).plusYears(10).plusDays(1), extendedBoundedFact.getValidTo(), "Should have extended ending temporal");
         assertAll(() -> assertTrue(boundedExtendedEvents.isPresent()),

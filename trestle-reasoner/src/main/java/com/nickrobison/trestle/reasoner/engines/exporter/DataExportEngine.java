@@ -96,7 +96,7 @@ public class DataExportEngine implements ITrestleDataExporter {
                 .map(id -> CompletableFuture.supplyAsync(() -> {
                     final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
                     try {
-                        final T object = this.objectReader.readTrestleObject(inputClass, id, false, validAt, databaseAt);
+                        final T object = this.objectReader.readTrestleObject(inputClass, id, false, validAt, databaseAt).blockingGet();
                         return Optional.of(object);
                     } catch (NoValidStateException e) {
                         this.ontology.returnAndAbortTransaction(tt);

@@ -48,14 +48,14 @@ public class NullEndTemporalTest extends AbstractReasonerTest {
             reasoner.writeTrestleObject(inObj1);
             reasoner.writeTrestleObject(inObj2);
             LocalDate retrieveDate1 = startDate.plusMonths(1);
-            TestObject outObject1 = reasoner.readTrestleObject(TestObject.class, id, retrieveDate1, null);
+            TestObject outObject1 = reasoner.readTrestleObject(TestObject.class, id, retrieveDate1, null).blockingGet();
             // output object should equal inObj1
             if (!outObject1.equals(inObj1))
                 fail("Output does not equal first input object");
 
             // output object should equal inObj2
             LocalDate retrieveDate2 = startDate.plusMonths(13);
-            TestObject outObject2 = reasoner.readTrestleObject(TestObject.class, id, retrieveDate2, null);
+            TestObject outObject2 = reasoner.readTrestleObject(TestObject.class, id, retrieveDate2, null).blockingGet();
             if (!outObject2.equals(inObj2))
                 fail("Output does not equal second input object");
         } catch (TrestleClassException e) {

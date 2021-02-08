@@ -307,7 +307,7 @@ public class SpatialEngine implements ITrestleSpatialEngine {
                             .map(iri -> CompletableFuture.supplyAsync(() -> {
                                 final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
                                 try {
-                                    return this.objectReader.readTrestleObject(clazz, iri, false, atTemporal, dbTemporal);
+                                    return this.objectReader.readTrestleObject(clazz, iri, false, atTemporal, dbTemporal).blockingGet();
                                 } finally {
                                     this.ontology.returnAndCommitTransaction(tt);
                                 }
