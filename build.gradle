@@ -110,13 +110,12 @@ publishing {
     }
     repositories {
         maven {
-
             def stagingUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
             def snapshotUrl = "https://oss.sonatype.org/content/repositories/snapshots"
             url version.endsWith("SNAPSHOT") ? snapshotUrl : stagingUrl
             credentials {
-                username sonatypeUsername
-                password sonatypePassword
+                username project.hasProperty("sonatypeUsername") ? project.property("sonatypeUsername") : System.getenv("SONATYPE_USERNAME")
+                password project.hasProperty("sonatypePassword") ? project.property("sonatypePassword") : System.getenv("SONATYPE_PASSWORD")
             }
             name "oss-sonatype"
         }
