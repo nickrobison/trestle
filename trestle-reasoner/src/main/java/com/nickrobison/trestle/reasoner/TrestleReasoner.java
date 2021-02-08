@@ -26,6 +26,7 @@ import com.nickrobison.trestle.reasoner.parser.TypeConstructor;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.events.TrestleEvent;
 import com.nickrobison.trestle.types.events.TrestleEventType;
+import io.reactivex.rxjava3.core.Completable;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
@@ -185,7 +186,7 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
     void addTrestleObjectEvent(TrestleEventType type, OWLNamedIndividual individual, Temporal eventTemporal);
 
     @Override
-    <T extends @NonNull Object> void addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects, double strength);
+    <T extends @NonNull Object> Completable addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects, double strength);
 
     /**
      * Get a {@link List} of objects that are equivalent to given individual at the given time point

@@ -48,6 +48,7 @@ import com.nickrobison.trestle.types.relations.CollectionRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -320,23 +321,23 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
 
     @Override
-    public void writeTrestleObject(Object inputObject) throws TrestleClassException, MissingOntologyEntity {
-        this.objectWriter.writeTrestleObject(inputObject);
+    public Completable writeTrestleObject(Object inputObject) throws TrestleClassException, MissingOntologyEntity {
+        return this.objectWriter.writeTrestleObject(inputObject);
     }
 
     @Override
-    public void writeTrestleObject(Object inputObject, Temporal startTemporal, @Nullable Temporal endTemporal) throws MissingOntologyEntity, UnregisteredClassException {
-        this.objectWriter.writeTrestleObject(inputObject, startTemporal, endTemporal);
+    public Completable writeTrestleObject(Object inputObject, Temporal startTemporal, @Nullable Temporal endTemporal) throws MissingOntologyEntity, UnregisteredClassException {
+        return this.objectWriter.writeTrestleObject(inputObject, startTemporal, endTemporal);
     }
 
     @Override
-    public void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validAt, @Nullable Temporal databaseFrom) {
-        this.objectWriter.addFactToTrestleObject(clazz, individual, factName, value, validAt, databaseFrom);
+    public Completable addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validAt, @Nullable Temporal databaseFrom) {
+        return this.objectWriter.addFactToTrestleObject(clazz, individual, factName, value, validAt, databaseFrom);
     }
 
     @Override
-    public void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validFrom, @Nullable Temporal validTo, @Nullable Temporal databaseFrom) {
-        this.objectWriter.addFactToTrestleObject(clazz, individual, factName, value, validFrom, validTo, databaseFrom);
+    public Completable addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validFrom, @Nullable Temporal validTo, @Nullable Temporal databaseFrom) {
+        return this.objectWriter.addFactToTrestleObject(clazz, individual, factName, value, validFrom, validTo, databaseFrom);
     }
 
 
@@ -437,8 +438,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public <T extends @NonNull Object> void addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects, double strength) {
-        this.objectWriter.addTrestleObjectSplitMerge(type, subject, objects, strength);
+    public <T extends @NonNull Object> Completable addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects, double strength) {
+        return this.objectWriter.addTrestleObjectSplitMerge(type, subject, objects, strength);
     }
 
 //    ----------------------------
@@ -562,18 +563,18 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public void writeObjectRelationship(Object subject, Object object, ObjectRelation relation) {
-        this.objectWriter.writeObjectRelationship(subject, object, relation);
+    public Completable writeObjectRelationship(Object subject, Object object, ObjectRelation relation) {
+        return this.objectWriter.writeObjectRelationship(subject, object, relation);
     }
 
     @Override
-    public void writeSpatialOverlap(Object subject, Object object, String wkt) {
-        this.objectWriter.writeSpatialOverlap(subject, object, wkt);
+    public Completable writeSpatialOverlap(Object subject, Object object, String wkt) {
+        return this.objectWriter.writeSpatialOverlap(subject, object, wkt);
     }
 
     @Override
-    public void writeTemporalOverlap(Object subject, Object object, String temporalOverlap) {
-        this.objectWriter.writeTemporalOverlap(subject, object, temporalOverlap);
+    public Completable writeTemporalOverlap(Object subject, Object object, String temporalOverlap) {
+        return this.objectWriter.writeTemporalOverlap(subject, object, temporalOverlap);
     }
 
     /**
