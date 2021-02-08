@@ -40,9 +40,9 @@ public class SpatialProjectionTest extends AbstractReasonerTest {
                 .parallelStream()
                 .forEach(county -> {
                     try {
-                        this.reasoner.writeTrestleObject(county);
+                        this.reasoner.writeTrestleObject(county).blockingAwait();
                     } catch (TrestleClassException | MissingOntologyEntity e) {
-                        e.printStackTrace();
+                        fail(e);
                     }
                 });
 
@@ -56,9 +56,9 @@ public class SpatialProjectionTest extends AbstractReasonerTest {
                 .parallelStream()
                 .forEach(census -> {
                     try {
-                        this.reasoner.writeTrestleObject(census);
+                        this.reasoner.writeTrestleObject(census).blockingAwait();
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        fail(e);
                     }
                 });
 
@@ -67,7 +67,7 @@ public class SpatialProjectionTest extends AbstractReasonerTest {
         final List<TestClasses.KCProjectionTestClass> kcObjects = this.reasoner.spatialIntersect(TestClasses.KCProjectionTestClass.class
                 , polygonWKT, 0).orElseThrow(() -> new IllegalStateException("Should have objects"));
         List<SharedTestUtils.ICensusTract> intersectedObjects = new ArrayList<>(kcObjects);
-        assertEquals(14, intersectedObjects.size(), "Should have intersected with 2 objects");
+        assertEquals(14, intersectedObjects.size(), "Should have intersected with 14 objects");
 
 //        Try to add the others
         intersectedObjects.addAll(this.reasoner.spatialIntersect(TestClasses.CensusProjectionTestClass.class, polygonWKT, 0).orElseThrow(() -> new IllegalStateException("Should have objects")));

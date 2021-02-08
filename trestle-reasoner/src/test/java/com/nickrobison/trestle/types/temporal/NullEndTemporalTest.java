@@ -45,8 +45,8 @@ public class NullEndTemporalTest extends AbstractReasonerTest {
         TestObject inObj2 = new TestObject(startDate.plusYears(1), null, id, 2);
 
         try {
-            reasoner.writeTrestleObject(inObj1);
-            reasoner.writeTrestleObject(inObj2);
+            reasoner.writeTrestleObject(inObj1).blockingAwait();
+            reasoner.writeTrestleObject(inObj2).blockingAwait();
             LocalDate retrieveDate1 = startDate.plusMonths(1);
             TestObject outObject1 = reasoner.readTrestleObject(TestObject.class, id, retrieveDate1, null).blockingGet();
             // output object should equal inObj1
@@ -58,11 +58,7 @@ public class NullEndTemporalTest extends AbstractReasonerTest {
             TestObject outObject2 = reasoner.readTrestleObject(TestObject.class, id, retrieveDate2, null).blockingGet();
             if (!outObject2.equals(inObj2))
                 fail("Output does not equal second input object");
-        } catch (TrestleClassException e) {
-            e.printStackTrace();
-            fail(e);
-        } catch (MissingOntologyEntity e) {
-            e.printStackTrace();
+        } catch (TrestleClassException | MissingOntologyEntity e) {
             fail(e);
         }
     }

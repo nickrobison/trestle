@@ -174,7 +174,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
 //        Write the objects
         SharedTestUtils.readGAULObjects().parallelStream().forEach(gaul -> {
             try {
-                reasoner.writeTrestleObject(gaul);
+                reasoner.writeTrestleObject(gaul).blockingAwait();
             } catch (TrestleClassException e) {
                 throw new RuntimeException(String.format("Problem storing object %s", gaul.adm0_name), e);
             } catch (MissingOntologyEntity missingOntologyEntity) {
@@ -232,10 +232,10 @@ public class TrestleAPITest extends AbstractReasonerTest {
         final TestClasses.CountyRelated related = new TestClasses.CountyRelated("Test Related", LocalDate.of(1990, 5, 14), 4326, "Related Object", 1000);
 
         // Write the first object
-        reasoner.writeTrestleObject(jtsGeometryTest);
+        reasoner.writeTrestleObject(jtsGeometryTest).blockingAwait();
         // Try to read with a non-existent fact
         assertThrows(NoValidStateException.class, () -> reasoner.readTrestleObject(TestClasses.JTSExtended.class, "4326", LocalDate.of(1990, 7, 21), null).blockingGet());
-        reasoner.writeTrestleObject(related);
+        reasoner.writeTrestleObject(related).blockingAwait();
 
         // Read it back
         final TestClasses.JTSExtended jtsExtended = reasoner.readTrestleObject(TestClasses.JTSExtended.class, "4326", LocalDate.of(1990, 7, 21), null).blockingGet();

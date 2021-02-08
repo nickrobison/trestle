@@ -63,9 +63,9 @@ public class CollectionEnginesTest extends AbstractReasonerTest {
         assertEquals(4, this.reasoner.getCollections().size(), "Should have all the collections and the demo");
 
         //        Add a relation between one and two
-        this.reasoner.writeObjectRelationship(first, second, ObjectRelation.SPATIAL_MEETS);
+        this.reasoner.writeObjectRelationship(first, second, ObjectRelation.SPATIAL_MEETS).blockingAwait();
 //        And one and three
-        this.reasoner.writeObjectRelationship(first, third, ObjectRelation.SPATIAL_MEETS);
+        this.reasoner.writeObjectRelationship(first, third, ObjectRelation.SPATIAL_MEETS).blockingAwait();
 
 //        Check for adjacency
         assertAll(() -> assertTrue(this.reasoner.collectionsAreAdjacent(FIRST_COLLECTION, SECOND_COLLECTION, 0.5), "First and second should be adjacent"),

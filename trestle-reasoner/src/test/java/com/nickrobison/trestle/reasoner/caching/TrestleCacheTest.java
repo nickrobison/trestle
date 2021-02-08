@@ -50,7 +50,7 @@ public class TrestleCacheTest extends AbstractReasonerTest {
         final TestClasses.JTSGeometryTest jtsGeometryTest = new TestClasses.JTSGeometryTest(4326, jtsGeom, LocalDate.of(1989, 3, 16));
 //        Try to load some data then read it back out.
 //        final TestClasses.OffsetDateTimeTest offsetDateTimeTest = new TestClasses.OffsetDateTimeTest(5515, OffsetDateTime.now(), OffsetDateTime.now().plusYears(5));
-        reasoner.writeTrestleObject(jtsGeometryTest);
+        reasoner.writeTrestleObject(jtsGeometryTest).blockingAwait();
 
         Instant firstStart = Instant.now();
         TestClasses.JTSGeometryTest first = reasoner.readTrestleObject(TestClasses.JTSGeometryTest.class, jtsGeometryTest.getCode().toString(), LocalDate.of(1989, 7, 1), null).blockingGet();
@@ -66,7 +66,7 @@ public class TrestleCacheTest extends AbstractReasonerTest {
 
 //        Update one of the facts, which should invalidate the cache
         logger.info("Updating one of the facts");
-        reasoner.addFactToTrestleObject(TestClasses.JTSGeometryTest.class, jtsGeometryTest.getCode().toString(), "geom", jtsGeom2, LocalDate.of(1989, 10, 1), null, null);
+        reasoner.addFactToTrestleObject(TestClasses.JTSGeometryTest.class, jtsGeometryTest.getCode().toString(), "geom", jtsGeom2, LocalDate.of(1989, 10, 1), null, null).blockingAwait();
         firstStart = Instant.now();
         first = reasoner.readTrestleObject(TestClasses.JTSGeometryTest.class, jtsGeometryTest.getCode().toString(), LocalDate.of(1989, 10, 20), null).blockingGet();
         firstEnd = Instant.now();

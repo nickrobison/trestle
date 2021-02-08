@@ -257,7 +257,7 @@ public class CollectionEngine implements ITrestleCollectionEngine {
 
         try {
             //        Write the object
-            this.objectWriter.writeTrestleObject(inputObject);
+            this.objectWriter.writeTrestleObject(inputObject).blockingAwait();
 //        TODO(nrobison): Implement relation types
 //        switch (relationType) {
 //            case SEMANTIC:

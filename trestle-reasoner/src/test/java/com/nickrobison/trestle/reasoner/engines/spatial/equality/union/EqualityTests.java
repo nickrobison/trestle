@@ -71,9 +71,9 @@ public class EqualityTests extends AbstractReasonerTest {
 //        Write each of the Spatial Unions
 //        Disable merging, just skip existing objects
         this.reasoner.getMergeEngine().changeMergeOnLoad(false);
-        this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.SPLIT, obj1, Arrays.asList(obj6, obj2, obj3, obj4, obj5), 0.9);
-        this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.MERGED, obj9, Arrays.asList(obj5, obj6), 0.9);
-        this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.SPLIT, obj2, Arrays.asList(obj7, obj8), 0.9);
+        this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.SPLIT, obj1, Arrays.asList(obj6, obj2, obj3, obj4, obj5), 0.9).blockingAwait();
+        this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.MERGED, obj9, Arrays.asList(obj5, obj6), 0.9).blockingAwait();
+        this.reasoner.addTrestleObjectSplitMerge(TrestleEventType.SPLIT, obj2, Arrays.asList(obj7, obj8), 0.9).blockingAwait();
 
         unionWalker = this.reasoner.getEqualityEngine();
         obj1Individual = this.tp.classParser.getIndividual(obj1);
@@ -283,12 +283,12 @@ public class EqualityTests extends AbstractReasonerTest {
                 .filter(obj -> obj.getAdm0_code() != 26)
                 .collect(Collectors.toList());
         final Optional<UnionEqualityResult<TestClasses.ESRIPolygonTest>> missingSplitResult = this.reasoner.getEqualityEngine().calculateSpatialUnion(missingSplitObjects, INPUT_SR, 0.9);
-        assertTrue(!missingSplitResult.isPresent(), "Should not have equality");
+        assertTrue(missingSplitResult.isEmpty(), "Should not have equality");
 
 //        Try to write the objects
-        this.reasoner.addTrestleObjectSplitMerge(equalityResult.get().getType(), equalityResult.get().getUnionObject(), new ArrayList<>(equalityResult.get().getUnionOf()), equalityResult.get().getStrength());
-        this.reasoner.addTrestleObjectSplitMerge(nsSplitResult.get().getType(), nsSplitResult.get().getUnionObject(), new ArrayList<>(nsSplitResult.get().getUnionOf()), nsSplitResult.get().getStrength());
-        this.reasoner.addTrestleObjectSplitMerge(unionResult.get().getType(), unionResult.get().getUnionObject(), new ArrayList<>(unionResult.get().getUnionOf()), unionResult.get().getStrength());
+        this.reasoner.addTrestleObjectSplitMerge(equalityResult.get().getType(), equalityResult.get().getUnionObject(), new ArrayList<>(equalityResult.get().getUnionOf()), equalityResult.get().getStrength()).blockingAwait();
+        this.reasoner.addTrestleObjectSplitMerge(nsSplitResult.get().getType(), nsSplitResult.get().getUnionObject(), new ArrayList<>(nsSplitResult.get().getUnionOf()), nsSplitResult.get().getStrength()).blockingAwait();
+        this.reasoner.addTrestleObjectSplitMerge(unionResult.get().getType(), unionResult.get().getUnionObject(), new ArrayList<>(unionResult.get().getUnionOf()), unionResult.get().getStrength()).blockingAwait();
 
         final Optional<List<TestClasses.ESRIPolygonTest>> eqObj2000 = this.reasoner.getEquivalentObjects(TestClasses.ESRIPolygonTest.class, IRI.create(OVERRIDE_PREFIX, "98103"), LocalDate.of(2000, 1, 1));
         assertAll(() -> assertTrue(eqObj2000.isPresent(), "Should have objects"),

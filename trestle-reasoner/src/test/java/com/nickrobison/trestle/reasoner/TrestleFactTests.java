@@ -140,6 +140,7 @@ public class TrestleFactTests extends AbstractReasonerTest {
 //        reasoner.getMetricsEngine().exportData(new File("./target/api-test-fact-validity-metrics.csv"));
     }
 
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
     @Test
     public void testObjectExistenceMerge() throws TrestleClassException, MissingOntologyEntity {
         final BoundedFact boundedFact = new BoundedFact("bounded-object",
