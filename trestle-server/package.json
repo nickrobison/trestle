@@ -71,7 +71,7 @@
     "@types/file-saver": "^2.0.1",
     "@types/jasmine": "~3.6.0",
     "@types/jasminewd2": "~2.0.3",
-    "@types/lodash": "^4.14.167",
+    "@types/lodash": "^4.14.168",
     "@types/mapbox-gl": "^2.0.2",
     "@types/node": "^14.14.22",
     "@types/nodegit": "^0.26.12",
