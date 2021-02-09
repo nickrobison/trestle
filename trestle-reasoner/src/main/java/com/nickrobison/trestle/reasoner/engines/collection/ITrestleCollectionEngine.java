@@ -1,6 +1,10 @@
 package com.nickrobison.trestle.reasoner.engines.collection;
 
 import com.nickrobison.trestle.types.relations.CollectionRelationType;
+import io.reactivex.rxjava3.annotations.NonNull;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
 
@@ -21,7 +25,7 @@ public interface ITrestleCollectionEngine {
      *
      * @return - {@link List} of {@link String} Collection IDs
      */
-    List<String> getCollections();
+    Flowable<String> getCollections();
 
     /**
      * For a given individual, get all related collections and the {@link IRI} of all members of those collections,
@@ -32,7 +36,7 @@ public interface ITrestleCollectionEngine {
      * @param relationStrength - {@link double} Cutoff value of minimum relation strength
      * @return - {@link Optional} {@link Map} of String IRI representations of related collections
      */
-    Optional<Map<String, List<String>>> getRelatedCollections(String individual, @Nullable String collectionID, double relationStrength);
+    Single<Map<String, List<String>>> getRelatedCollections(String individual, @Nullable String collectionID, double relationStrength);
 
     /**
      * Return a set of Trestle_Collections that intersect with the given WKT
@@ -45,7 +49,7 @@ public interface ITrestleCollectionEngine {
      * @param dbAt     - Optional {@link Temporal} of dbAt time
      * @return - {@link Optional} {@link Set} of {@link String} Collection IDs
      */
-    Optional<Set<String>> STIntersectCollection(String wkt, double buffer, double strength, Temporal validAt, @Nullable Temporal dbAt);
+    Flowable<String> STIntersectCollection(String wkt, double buffer, double strength, Temporal validAt, @Nullable Temporal dbAt);
 
     /**
      * Return a set of Trestle_Collections that intersect with the given WKT
@@ -59,7 +63,7 @@ public interface ITrestleCollectionEngine {
      * @param dbAt       - Optional {@link Temporal} of dbAt time
      * @return - {@link Optional} {@link Set} of {@link String} Collection IDs
      */
-    Optional<Set<String>> STIntersectCollection(String wkt, double buffer, Unit<Length> bufferUnit, double strength, Temporal validAt, @Nullable Temporal dbAt);
+    Flowable<String> STIntersectCollection(String wkt, double buffer, Unit<Length> bufferUnit, double strength, Temporal validAt, @Nullable Temporal dbAt);
 
     /**
      * Retrieve all members of a specified collection that match a given class
@@ -75,33 +79,35 @@ public interface ITrestleCollectionEngine {
      * @param temporalIntersection - Optional temporal intersection to restrict results
      * @return - {@link Optional} {@link List} of Objects
      */
-    <T> Optional<List<T>> getCollectionMembers(Class<T> clazz, String collectionID, double strength, @Nullable String spatialIntersection, @Nullable Temporal temporalIntersection);
+    @NonNull <T> Flowable<T> getCollectionMembers(Class<T> clazz, String collectionID, double strength, @Nullable String spatialIntersection, @Nullable Temporal temporalIntersection);
 
     /**
      * Write an object into the database, as a member of a given collection
-     *
-     * @param collectionIRI   - {@link String} ID of collection to add object to
+     *  @param collectionIRI   - {@link String} ID of collection to add object to
      * @param inputObject  - {@link Object} to write into database
      * @param relationType - {@link CollectionRelationType}
      * @param strength     - {@link Double} Strength parameter of relation
+     * @return
      */
-    void addObjectToCollection(String collectionIRI, Object inputObject, CollectionRelationType relationType, double strength);
+    Completable addObjectToCollection(String collectionIRI, Object inputObject, CollectionRelationType relationType, double strength);
 
     /**
      * Remove the specified Trestle_Collection
      *
      * @param collectionIRI - {@link String} Collection ID
+     * @return
      */
-    void removeCollection(String collectionIRI);
+    Completable removeCollection(String collectionIRI);
 
     /**
      * Remove a given Trestle_Object from the Trestle_Collection
      * Optionally, if removing the object causes the Collection to be empty, remove the collection.
-     *  @param collectionIRI - {@link String} Collection ID
+     * @param collectionIRI - {@link String} Collection ID
      * @param inputObject - {@link Object} Java object to add to collection
      * @param removeEmptyCollection - {@code true} Remove Collection if it's empty. {@code false} Leave empty collection
+     * @return
      */
-    void removeObjectFromCollection(String collectionIRI, Object inputObject, boolean removeEmptyCollection);
+    Completable removeObjectFromCollection(String collectionIRI, Object inputObject, boolean removeEmptyCollection);
 
     /**
      * Determines whether or not two Collections are spatially adjacent to each other.
@@ -116,5 +122,5 @@ public interface ITrestleCollectionEngine {
      * @param strength - {@link Double} strength parameter to filter weak associations
      * @return - {@code true} Collections are adjacent. {@code false} Collections are not adjacent.
      */
-    boolean collectionsAreAdjacent(String subjectCollectionID, String objectCollectionID, double strength);
+    Single<Boolean> collectionsAreAdjacent(String subjectCollectionID, String objectCollectionID, double strength);
 }

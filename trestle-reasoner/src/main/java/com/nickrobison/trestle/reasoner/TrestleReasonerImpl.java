@@ -518,47 +518,47 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
 
     @Override
-    public List<String> getCollections() {
+    public Flowable<String> getCollections() {
         return this.collectionEngine.getCollections();
     }
 
     @Override
-    public Optional<Map<String, List<String>>> getRelatedCollections(String individual, @Nullable String collectionID, double relationStrength) {
+    public Single<Map<String, List<String>>> getRelatedCollections(String individual, @Nullable String collectionID, double relationStrength) {
         return this.collectionEngine.getRelatedCollections(individual, collectionID, relationStrength);
     }
 
     @Override
-    public Optional<Set<String>> STIntersectCollection(String wkt, double buffer, double strength, Temporal validAt, @Nullable Temporal dbAt) {
+    public Flowable<String> STIntersectCollection(String wkt, double buffer, double strength, Temporal validAt, @Nullable Temporal dbAt) {
         return this.collectionEngine.STIntersectCollection(wkt, buffer, strength, validAt, dbAt);
     }
 
     @Override
-    public Optional<Set<String>> STIntersectCollection(String wkt, double buffer, Unit<Length> bufferUnit, double strength, Temporal validAt, @Nullable Temporal dbAt) {
+    public Flowable<String> STIntersectCollection(String wkt, double buffer, Unit<Length> bufferUnit, double strength, Temporal validAt, @Nullable Temporal dbAt) {
         return this.collectionEngine.STIntersectCollection(wkt, buffer, bufferUnit, strength, validAt, dbAt);
     }
 
     @Override
-    public <T> Optional<List<T>> getCollectionMembers(Class<T> clazz, String collectionID, double strength, @Nullable String spatialIntersection, @Nullable Temporal temporalIntersection) {
+    public @NonNull <T> Flowable<T> getCollectionMembers(Class<T> clazz, String collectionID, double strength, @Nullable String spatialIntersection, @Nullable Temporal temporalIntersection) {
         return this.collectionEngine.getCollectionMembers(clazz, collectionID, strength, spatialIntersection, temporalIntersection);
     }
 
     @Override
-    public void addObjectToCollection(String collectionIRI, Object inputObject, CollectionRelationType relationType, double strength) {
-        this.collectionEngine.addObjectToCollection(collectionIRI, inputObject, relationType, strength);
+    public Completable addObjectToCollection(String collectionIRI, Object inputObject, CollectionRelationType relationType, double strength) {
+        return this.collectionEngine.addObjectToCollection(collectionIRI, inputObject, relationType, strength);
     }
 
     @Override
-    public void removeObjectFromCollection(String collectionIRI, Object inputObject, boolean removeEmptyCollection) {
-        this.collectionEngine.removeObjectFromCollection(collectionIRI, inputObject, removeEmptyCollection);
+    public Completable removeObjectFromCollection(String collectionIRI, Object inputObject, boolean removeEmptyCollection) {
+        return this.collectionEngine.removeObjectFromCollection(collectionIRI, inputObject, removeEmptyCollection);
     }
 
     @Override
-    public void removeCollection(String collectionIRI) {
-        this.collectionEngine.removeCollection(collectionIRI);
+    public Completable removeCollection(String collectionIRI) {
+        return this.collectionEngine.removeCollection(collectionIRI);
     }
 
     @Override
-    public boolean collectionsAreAdjacent(String subjectCollectionID, String objectCollectionID, double strength) {
+    public Single<Boolean> collectionsAreAdjacent(String subjectCollectionID, String objectCollectionID, double strength) {
         return this.collectionEngine.collectionsAreAdjacent(subjectCollectionID, objectCollectionID, strength);
     }
 
