@@ -13,8 +13,10 @@ import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.temporal.IntervalTemporal;
 import com.nickrobison.trestle.types.temporal.PointTemporal;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.locationtech.jts.geom.MultiPolygon;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLDataProperty;
@@ -28,11 +30,6 @@ import java.io.IOException;
 import java.time.temporal.Temporal;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
-
-import static com.nickrobison.trestle.common.LambdaUtils.sequenceCompletableFutures;
 
 /**
  * Created by nickrobison on 2/19/18.
@@ -68,12 +65,12 @@ public class DataExportEngine implements ITrestleDataExporter {
     }
 
     @Override
-    public <T> File exportDataSetObjects(Class<T> inputClass, List<String> objectID, ITrestleExporter.DataType exportType) throws IOException {
+    public <T> Single<File> exportDataSetObjects(Class<T> inputClass, List<String> objectID, ITrestleExporter.DataType exportType) throws IOException {
         return exportDataSetObjects(inputClass, objectID, null, null, exportType);
     }
 
     @Override
-    public <T> File exportDataSetObjects(Class<T> inputClass, List<String> objectID, @Nullable Temporal validAt, @Nullable Temporal databaseAt, ITrestleExporter.DataType exportType) throws IOException {
+    public <T> Single<File> exportDataSetObjects(Class<T> inputClass, List<String> objectID, @Nullable Temporal validAt, @Nullable Temporal databaseAt, ITrestleExporter.DataType exportType) throws IOException {
 
         final Integer classProjection = this.classParser.getClassProjection(inputClass);
 
@@ -90,77 +87,48 @@ public class DataExportEngine implements ITrestleDataExporter {
 
 
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-        final List<CompletableFuture<Optional<TSIndividual>>> completableFutures = objectID
-                .stream()
+
+        return Flowable.fromIterable(objectID)
                 .map(id -> IRIUtils.parseStringToIRI(this.reasonerPrefix, id))
-                .map(id -> CompletableFuture.supplyAsync(() -> {
-                    final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-                    try {
-                        final T object = this.objectReader.readTrestleObject(inputClass, id, false, validAt, databaseAt).blockingGet();
-                        return Optional.of(object);
-                    } catch (NoValidStateException e) {
-                        this.ontology.returnAndAbortTransaction(tt);
-                        return Optional.empty();
-                    } finally {
-                        this.ontology.returnAndCommitTransaction(tt);
+                .flatMapMaybe(id -> this.objectReader.readTrestleObject(inputClass, id, false, validAt, databaseAt)
+                        .toMaybe()
+                        .onErrorResumeNext(error -> {
+                            logger.debug("No valid state found for {}. Excluding from export", id, error);
+                            return Maybe.empty();
+                        }))
+                .map(object -> parseIndividualToShapefile(object, shapefileSchema))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .toList()
+                .map(individuals -> {
+                    switch (exportType) {
+                        case SHAPEFILE: {
+                            @SuppressWarnings("rawtypes") final ShapefileExporter shapeFileExporter = new ShapefileExporter.ShapefileExporterBuilder(shapefileSchema.getGeomName(), shapefileSchema.getGeomType(), shapefileSchema).setSRID(classProjection).build();
+                            return shapeFileExporter.writePropertiesToByteBuffer(individuals, null);
+                        }
+                        case GEOJSON: {
+                            return new GeoJsonExporter(classProjection).writePropertiesToByteBuffer(individuals, null);
+                        }
+                        case KML: {
+                            return new KMLExporter(false).writePropertiesToByteBuffer(individuals, null);
+                        }
+                        case KMZ: {
+                            return new KMLExporter(true).writePropertiesToByteBuffer(individuals, null);
+                        }
+                        default: {
+                            throw new IllegalArgumentException(String.format("Cannot export to %s format", exportType.toString()));
+                        }
                     }
-                }, this.dataExporterPool))
-                .map(objectFuture -> objectFuture.thenApply(object -> parseIndividualToShapefile(object, shapefileSchema)))
-                .collect(Collectors.toList());
-
-        final CompletableFuture<List<Optional<TSIndividual>>> sequencedFutures = sequenceCompletableFutures(completableFutures);
-
-        try {
-            final List<TSIndividual> individuals = sequencedFutures
-                    .get()
-                    .stream()
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .collect(Collectors.toList());
-
-            switch (exportType) {
-                case SHAPEFILE: {
-                    final ShapefileExporter shapeFileExporter = new ShapefileExporter.ShapefileExporterBuilder(shapefileSchema.getGeomName(), shapefileSchema.getGeomType(), shapefileSchema).setSRID(classProjection).build();
-                    return shapeFileExporter.writePropertiesToByteBuffer(individuals, null);
-                }
-                case GEOJSON: {
-                    return new GeoJsonExporter(classProjection).writePropertiesToByteBuffer(individuals, null);
-                }
-                case KML: {
-                    return new KMLExporter(false).writePropertiesToByteBuffer(individuals, null);
-                }
-                case KMZ: {
-                    return new KMLExporter(true).writePropertiesToByteBuffer(individuals, null);
-                }
-                default: {
-                    throw new IllegalArgumentException(String.format("Cannot export to %s format", exportType.toString()));
-                }
-            }
-
-
-        } catch (ExecutionException e) {
-            logger.error("Error constructing object", e.getCause());
-            return ExceptionUtils.rethrow(e.getCause());
-        } catch (InterruptedException e) {
-            logger.error("Object construction excepted", e.getCause());
-            Thread.currentThread().interrupt();
-            return ExceptionUtils.rethrow(e.getCause());
-        } finally {
-            this.ontology.returnAndCommitTransaction(trestleTransaction);
-        }
+                })
+                .doOnError(error -> this.ontology.returnAndAbortTransaction(trestleTransaction))
+                .doOnSuccess(success -> this.ontology.returnAndCommitTransaction(trestleTransaction));
     }
 
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    private <T extends @NonNull Object> Optional<TSIndividual> parseIndividualToShapefile(Optional<T> objectOptional, ShapefileSchema shapefileSchema) {
-        if (!objectOptional.isPresent()) {
-            return Optional.empty();
-        }
-        final T object = objectOptional.get();
-//        if (objectOptional.isPresent()) {
-//            final T object = objectOptional.get();
+    @SuppressWarnings("rawtypes")
+    private <T extends @NonNull Object> Optional<TSIndividual> parseIndividualToShapefile(T object, ShapefileSchema shapefileSchema) {
         final Class<?> inputClass = object.getClass();
         final Optional<OWLDataPropertyAssertionAxiom> spatialProperty = this.classParser.getSpatialFact(object);
-        if (!spatialProperty.isPresent()) {
+        if (spatialProperty.isEmpty()) {
             logger.error("Individual is not a spatial object");
             return Optional.empty();
         }

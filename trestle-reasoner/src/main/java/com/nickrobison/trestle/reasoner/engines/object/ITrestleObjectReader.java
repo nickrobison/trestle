@@ -108,8 +108,9 @@ public interface ITrestleObjectReader {
      * @param validAt       - Optional {@link Temporal} to specify a validAt time
      * @param databaseAt    - Optional {@link Temporal} to specify databaseAt time
      * @return - Java object of type {@link T}
+     * @throws {@link com.nickrobison.trestle.reasoner.exceptions.NoValidStateException}
      */
-    @io.reactivex.rxjava3.annotations.NonNull <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt);
+    <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt);
 
     /**
      * Retrieve {@link TrestleObjectHeader} for the given Individual
@@ -118,7 +119,7 @@ public interface ITrestleObjectReader {
      * @param individual - {@link String} individual to retrieve header for
      * @return - {@link Optional} {@link TrestleObjectHeader}
      */
-    @io.reactivex.rxjava3.annotations.NonNull Maybe<TrestleObjectHeader> readObjectHeader(Class<?> clazz, String individual);
+    Maybe<TrestleObjectHeader> readObjectHeader(Class<?> clazz, String individual);
 
     /**
      * Retrieve historical states of a given Fact
