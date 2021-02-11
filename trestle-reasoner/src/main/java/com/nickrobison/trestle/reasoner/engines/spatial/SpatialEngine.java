@@ -296,10 +296,10 @@ public class SpatialEngine implements ITrestleSpatialEngine {
         }
 
 //        String spatialIntersection;
-        logger.debug("Running spatial intersection at time {}", atTemporal);
+        logger.debug("Running spatial intersection at {}", atTemporal);
         final String spatialIntersection = qb.buildTemporalSpatialIntersection(owlClass, wktBuffer, atTemporal, dbTemporal);
-        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-
+        // FIXME: This transaction should be a read transaction, but I think we're stuck since everything is in the same thread pool.
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
         return this.ontology.executeSPARQLResults(spatialIntersection)
                 .map(result -> IRI.create(result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID()))
                 .flatMapSingle(iri -> {
@@ -476,7 +476,7 @@ public class SpatialEngine implements ITrestleSpatialEngine {
                                 return this.objectEngineUtils.getAdjustedQueryTemporal(id, atTemporal, trestleTransaction)
                                         .flatMap(temporal -> this.getAdjustedIndividual(datasetID, id, temporal, trestleTransaction));
                             })
-                    .map(objectB -> this.compareTrestleObjects(objectA, objectB, matchThreshold));
+                            .map(objectB -> this.compareTrestleObjects(objectA, objectB, matchThreshold));
                 })
                 .doOnComplete(() -> this.ontology.returnAndCommitTransaction(trestleTransaction))
                 .doOnError(error -> this.ontology.returnAndAbortTransaction(trestleTransaction));

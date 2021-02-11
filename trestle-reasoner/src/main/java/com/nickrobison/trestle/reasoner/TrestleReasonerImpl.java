@@ -706,6 +706,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
         final IRI individualIRI = parseStringToIRI(this.reasonerPrefix, individual);
 
 //        Read the object first
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
         final T trestleObject = this.objectReader.readTrestleObject(clazz, individual, validAt, null).blockingGet();
 //        Intersect it
         final Optional<List<T>> intersectedObjects = Optional.of(this.spatialEngine.spatialIntersectObject(trestleObject, 1, validAt, null).toList().blockingGet());
@@ -734,7 +735,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
 //            Write all the relationships in a single transaction
 //            TODO(nickrobison): This should not be on the main thread.
-            final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
+
             try {
 //                Filter out null objects and those that have no spatial interactions
                 final List<@Nullable TrestlePair<T, TrestlePair<SpatialComparisonReport, TemporalComparisonReport>>> comparisons = comparisonFuture

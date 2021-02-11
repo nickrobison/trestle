@@ -18,7 +18,6 @@ import static com.nickrobison.trestle.SharedTestUtils.readGAULObjects;
 import static org.junit.jupiter.api.Assertions.*;
 
 @Tag("integration")
-//@Disabled
 public class SpatialIntersectionTest extends AbstractReasonerTest {
 
 

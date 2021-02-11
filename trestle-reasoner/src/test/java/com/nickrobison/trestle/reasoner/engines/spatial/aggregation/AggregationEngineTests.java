@@ -17,6 +17,7 @@ import java.util.List;
 
 import static com.nickrobison.trestle.SharedTestUtils.readFromShapeFiles;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Created by nickrobison on 7/25/18.
@@ -38,10 +39,10 @@ public class AggregationEngineTests extends AbstractReasonerTest {
                 .parallelStream()
                 .forEach(county -> {
                     try {
-                        this.reasoner.writeTrestleObject(county);
+                        this.reasoner.writeTrestleObject(county).blockingAwait();
                         this.reasoner.calculateSpatialAndTemporalRelationships(TestClasses.KCProjectionTestClass.class, Long.toString(county.getObjectid()), null);
                     } catch (TrestleClassException | MissingOntologyEntity e) {
-                        e.printStackTrace();
+                        fail(e);
                     }
                 });
         final KCCalculator comp = new KCCalculator();

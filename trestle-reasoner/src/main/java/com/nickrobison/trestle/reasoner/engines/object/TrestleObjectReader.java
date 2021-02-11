@@ -150,7 +150,7 @@ public class TrestleObjectReader implements ITrestleObjectReader {
         }
         logger.debug("Individual is not in cache, continuing");
 
-        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
         return readTrestleObjectImpl(clazz, individualIRI, validTemporal, databaseTemporal)
                 .map(value -> {
                     if (isCacheable) {
@@ -162,7 +162,6 @@ public class TrestleObjectReader implements ITrestleObjectReader {
                     }
                     return value.getObject();
                 })
-//                .subscribeOn(this.objectReaderScheduler)
                 .doOnSuccess(success -> this.ontology.returnAndCommitTransaction(trestleTransaction))
                 .doOnError(error -> this.ontology.returnAndAbortTransaction(trestleTransaction));
     }
