@@ -65,12 +65,12 @@ public class SpatialProjectionTest extends AbstractReasonerTest {
         //        Try to intersect with a WGS 84 point
         final String polygonWKT = "POLYGON((-122.374781 47.690612, -122.325515 47.690612, -122.325515 47.668884, -122.374781 47.668884, -122.374781 47.690612))";
         final List<TestClasses.KCProjectionTestClass> kcObjects = this.reasoner.spatialIntersect(TestClasses.KCProjectionTestClass.class
-                , polygonWKT, 0).orElseThrow(() -> new IllegalStateException("Should have objects"));
+                , polygonWKT, 0).toList().blockingGet();
         List<SharedTestUtils.ICensusTract> intersectedObjects = new ArrayList<>(kcObjects);
         assertEquals(14, intersectedObjects.size(), "Should have intersected with 14 objects");
 
 //        Try to add the others
-        intersectedObjects.addAll(this.reasoner.spatialIntersect(TestClasses.CensusProjectionTestClass.class, polygonWKT, 0).orElseThrow(() -> new IllegalStateException("Should have objects")));
+        intersectedObjects.addAll(this.reasoner.spatialIntersect(TestClasses.CensusProjectionTestClass.class, polygonWKT, 0).toList().blockingGet());
 
         assertEquals(28, intersectedObjects.size(), "Should have intersected with objects from both datasets");
 

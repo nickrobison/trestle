@@ -207,9 +207,8 @@ public class TrestleAPITest extends AbstractReasonerTest {
         assertEquals(ancuabe, ancuabe2, "Should be equal");
 
 //        Check the spatial intersection
-        Optional<List<@NonNull Object>> intersectedObjects = reasoner.spatialIntersectObject(ancuabe1, 100.0, OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null);
-        assertTrue(intersectedObjects.isPresent(), "Should have objects");
-        assertTrue(intersectedObjects.get().size() > 0, "Should have more than 1 object");
+        List<@NonNull Object> intersectedObjects = reasoner.spatialIntersectObject(ancuabe1, 100.0, OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null).toList().blockingGet();
+        assertTrue(intersectedObjects.size() > 0, "Should have more than 1 object");
 
 //        Big intersection
         final String mozWKT = "POLYGON((30.21 -10.33, 41.05 -10.33, 41.05 -26.92, 30.21 -26.92, 30.21 -10.33))";

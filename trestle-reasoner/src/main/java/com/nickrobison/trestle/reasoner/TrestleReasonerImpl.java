@@ -447,43 +447,43 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //    ----------------------------
 
     @Override
-    public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer) {
+    public <T extends @NonNull Object> Flowable<T> spatialIntersectObject(T inputObject, double buffer) {
         return this.spatialEngine.spatialIntersectObject(inputObject, buffer);
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, @Nullable Temporal temporalAt, Temporal dbAt) {
+    public <T extends @NonNull Object> Flowable<T> spatialIntersectObject(T inputObject, double buffer, @Nullable Temporal temporalAt, Temporal dbAt) {
         return this.spatialEngine.spatialIntersectObject(inputObject, buffer, temporalAt, null);
     }
 
     @Override
-    public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit) {
+    public <T extends @NonNull Object> Flowable<T> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit) {
         return this.spatialEngine.spatialIntersectObject(inputObject, buffer, bufferUnit);
     }
 
     @Override
-    public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit, Temporal temporalAt, Temporal dbAt) {
+    public <T extends @NonNull Object> Flowable<T> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit, Temporal temporalAt, Temporal dbAt) {
         return this.spatialEngine.spatialIntersectObject(inputObject, buffer, bufferUnit, temporalAt, null);
     }
 
     @Override
-    public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer) {
+    public <T extends @NonNull Object> Flowable<T> spatialIntersect(Class<T> clazz, String wkt, double buffer) {
         return this.spatialEngine.spatialIntersect(clazz, wkt, buffer);
     }
 
     @Override
-    public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, Unit<Length> bufferUnit) {
+    public <T extends @NonNull Object> Flowable<T> spatialIntersect(Class<T> clazz, String wkt, double buffer, Unit<Length> bufferUnit) {
         return this.spatialEngine.spatialIntersect(clazz, wkt, buffer, bufferUnit);
     }
 
     @Override
-    public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, Unit<Length> bufferUnit, Temporal validAt, Temporal dbAt) {
+    public <T extends @NonNull Object> Flowable<T> spatialIntersect(Class<T> clazz, String wkt, double buffer, Unit<Length> bufferUnit, Temporal validAt, Temporal dbAt) {
         return this.spatialEngine.spatialIntersect(clazz, wkt, buffer, bufferUnit, validAt, null);
     }
 
     @Override
-    public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, @Nullable Temporal validAt, Temporal dbAt) {
+    public <T extends @NonNull Object> Flowable<T> spatialIntersect(Class<T> clazz, String wkt, double buffer, @Nullable Temporal validAt, Temporal dbAt) {
         return this.spatialEngine.spatialIntersect(clazz, wkt, buffer, validAt, null);
     }
 
@@ -648,12 +648,12 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
 
     @Override
-    public Optional<UnionContributionResult> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSRID, double matchThreshold) {
+    public Maybe<UnionContributionResult> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSRID, double matchThreshold) {
         return this.spatialEngine.calculateSpatialUnionWithContribution(datasetClassID, individualIRIs, inputSRID, matchThreshold);
     }
 
     @Override
-    public Optional<List<SpatialComparisonReport>> compareTrestleObjects(String datasetID, String objectAID, List<String> comparisonObjectIDs, int inputSR, double matchThreshold) {
+    public Flowable<SpatialComparisonReport> compareTrestleObjects(String datasetID, String objectAID, List<String> comparisonObjectIDs, int inputSR, double matchThreshold) {
         return this.spatialEngine.compareTrestleObjects(datasetID, objectAID, comparisonObjectIDs, inputSR, matchThreshold);
     }
 
@@ -708,7 +708,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //        Read the object first
         final T trestleObject = this.objectReader.readTrestleObject(clazz, individual, validAt, null).blockingGet();
 //        Intersect it
-        final Optional<List<T>> intersectedObjects = this.spatialEngine.spatialIntersectObject(trestleObject, 1, validAt, null);
+        final Optional<List<T>> intersectedObjects = Optional.of(this.spatialEngine.spatialIntersectObject(trestleObject, 1, validAt, null).toList().blockingGet());
 //        Now, compute the relationships (I'm fine doing this on an alternate thread, but it should return a completable future, rather than blocking the thread
         // TODO(nickrobison): TRESTLE-733 - Make this better with RxJava
         if (intersectedObjects.isPresent()) {
@@ -819,33 +819,33 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public Optional<List<TrestleIndividual>> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer) {
+    public Flowable<TrestleIndividual> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer) {
         return this.spatialEngine.spatialIntersectIndividuals(datasetClassID, wkt, buffer);
     }
 
 
     @Override
-    public Optional<List<TrestleIndividual>> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer, @Nullable Temporal atTemporal, @Nullable Temporal dbTemporal) {
+    public Flowable<TrestleIndividual> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer, @Nullable Temporal atTemporal, @Nullable Temporal dbTemporal) {
         return this.spatialEngine.spatialIntersectIndividuals(datasetClassID, wkt, buffer, atTemporal, dbTemporal);
     }
 
     @Override
-    public Optional<List<TrestleIndividual>> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer, Unit<Length> bufferUnit) {
+    public Flowable<TrestleIndividual> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer, Unit<Length> bufferUnit) {
         return this.spatialEngine.spatialIntersectIndividuals(datasetClassID, wkt, buffer, bufferUnit);
     }
 
     @Override
-    public Optional<List<TrestleIndividual>> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer, Unit<Length> bufferUnit, @Nullable Temporal atTemporal, @Nullable Temporal dbTemporal) {
+    public Flowable<TrestleIndividual> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer, Unit<Length> bufferUnit, @Nullable Temporal atTemporal, @Nullable Temporal dbTemporal) {
         return this.spatialEngine.spatialIntersectIndividuals(datasetClassID, wkt, buffer, bufferUnit, atTemporal, dbTemporal);
     }
 
     @Override
-    public Optional<List<TrestleIndividual>> spatialIntersectIndividuals(Class<?> clazz, String wkt, double buffer, @Nullable Temporal atTemporal, @Nullable Temporal dbTemporal) {
+    public Flowable<TrestleIndividual> spatialIntersectIndividuals(Class<?> clazz, String wkt, double buffer, @Nullable Temporal atTemporal, @Nullable Temporal dbTemporal) {
         return this.spatialEngine.spatialIntersectIndividuals(clazz, wkt, buffer, atTemporal, dbTemporal);
     }
 
     @Override
-    public Optional<List<TrestleIndividual>> spatialIntersectIndividuals(Class<@NonNull ?> clazz, String wkt, double buffer, Unit<Length> bufferUnit, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
+    public Flowable<TrestleIndividual> spatialIntersectIndividuals(Class<@NonNull ?> clazz, String wkt, double buffer, Unit<Length> bufferUnit, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
         return this.spatialEngine.spatialIntersectIndividuals(clazz, wkt, buffer, bufferUnit, validAt, dbAt);
     }
 
