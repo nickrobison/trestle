@@ -187,15 +187,11 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
         return this.writeTrestleObject(subject)
                 .andThen(Completable.defer(() -> Observable.fromIterable(objects)
-                        .flatMapCompletable(obj -> {
-                            return this.writeTrestleObject(obj);
-                        })))
-                .andThen(Completable.defer(() -> {
-                    //            Add the event
-                    this.eventEngine.addSplitMergeEvent(type, subjectIndividual, objectIndividuals, eventTemporal);
-//            Write the strength
-                    return this.ontology.writeIndividualDataProperty(eventIndividual, df.getOWLDataProperty(relationStrengthIRI), df.getOWLLiteral(strength));
-                }))
+                        .flatMapCompletable(this::writeTrestleObject)))
+                //            Add the event
+                .andThen(Completable.defer(() -> this.eventEngine.addSplitMergeEvent(type, subjectIndividual, objectIndividuals, eventTemporal)))
+                // Write the strength
+                .andThen(Completable.defer(() -> this.ontology.writeIndividualDataProperty(eventIndividual, df.getOWLDataProperty(relationStrengthIRI), df.getOWLLiteral(strength))))
                 .doOnError(error -> this.ontology.returnAndAbortTransaction(trestleTransaction))
                 .doOnComplete(() -> this.ontology.returnAndCommitTransaction(trestleTransaction));
     }
@@ -374,7 +370,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
                     this.ontology.executeUpdateSPARQL(updateExistenceQuery).blockingAwait();
 
 //                                Update object events
-                    this.eventEngine.adjustObjectEvents(mergeScript.getIndividualExistenceAxioms());
+                    this.eventEngine.adjustObjectEvents(mergeScript.getIndividualExistenceAxioms()).blockingAwait();
                 }
 
             }
@@ -408,13 +404,13 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
                     final Optional<List<OWLDataPropertyAssertionAxiom>> individualFacts = this.classParser.getFacts(inputObject);
                     return individualFacts.map(owlDataPropertyAssertionAxioms -> writeObjectFacts(aClass, owlNamedIndividual, owlDataPropertyAssertionAxioms, factTemporal, dTemporal)).orElseGet(Completable::complete);
                 }))
+                .andThen(Completable.defer(() -> this.eventEngine.addEvent(TrestleEventType.CREATED, owlNamedIndividual, objectTemporal.getIdTemporal())))
                 .andThen(Completable.defer(() -> {
-                    this.eventEngine.addEvent(TrestleEventType.CREATED, owlNamedIndividual, objectTemporal.getIdTemporal());
                     if (!objectTemporal.isContinuing()) {
                         if (objectTemporal.isInterval()) {
-                            this.eventEngine.addEvent(TrestleEventType.DESTROYED, owlNamedIndividual, (Temporal) objectTemporal.asInterval().getToTime().get());
+                            return this.eventEngine.addEvent(TrestleEventType.DESTROYED, owlNamedIndividual, (Temporal) objectTemporal.asInterval().getToTime().get());
                         } else {
-                            this.eventEngine.addEvent(TrestleEventType.DESTROYED, owlNamedIndividual, objectTemporal.getIdTemporal());
+                            return this.eventEngine.addEvent(TrestleEventType.DESTROYED, owlNamedIndividual, objectTemporal.getIdTemporal());
                         }
                     }
                     return Completable.complete();
@@ -524,10 +520,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
                         final List<OWLDataPropertyAssertionAxiom> individualExistenceAxioms = newFactMergeScript.getIndividualExistenceAxioms();
                         final String updateExistenceQuery = this.qb.updateObjectProperties(individualExistenceAxioms, trestleObjectIRI);
                         return this.ontology.executeUpdateSPARQL(updateExistenceQuery)
-                                .andThen(Completable.defer(() -> {
-                                    this.eventEngine.adjustObjectEvents(individualExistenceAxioms);
-                                    return Completable.complete();
-                                }));
+                                .andThen(Completable.defer(() -> this.eventEngine.adjustObjectEvents(individualExistenceAxioms)));
                     });
         } catch (RuntimeException e) {
             logger.error("Unable to add fact {} to object {}", factName, owlNamedIndividual, e);

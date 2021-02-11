@@ -1,6 +1,7 @@
 package com.nickrobison.trestle.reasoner.engines.events;
 
 import com.nickrobison.trestle.types.events.TrestleEventType;
+import io.reactivex.rxjava3.core.Completable;
 import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.slf4j.Logger;
@@ -18,17 +19,17 @@ public class EventEngineNoOp implements TrestleEventEngine {
     }
 
     @Override
-    public void addEvent(TrestleEventType event, OWLNamedIndividual individual, Temporal eventTemporal) {
-//        Not implemented
+    public Completable addEvent(TrestleEventType event, OWLNamedIndividual individual, Temporal eventTemporal) {
+        return Completable.complete();
     }
 
     @Override
-    public void adjustObjectEvents(List<OWLDataPropertyAssertionAxiom> objectExistenceAxioms) {
-//        Not implemented
+    public Completable adjustObjectEvents(List<OWLDataPropertyAssertionAxiom> objectExistenceAxioms) {
+        return Completable.complete();
     }
 
     @Override
-    public void addSplitMergeEvent(TrestleEventType type, OWLNamedIndividual subject, Set<OWLNamedIndividual> objects, Temporal eventTemporal) {
-//        Not implemented
+    public Completable addSplitMergeEvent(TrestleEventType type, OWLNamedIndividual subject, Set<OWLNamedIndividual> objects, Temporal eventTemporal) {
+        return Completable.complete();
     }
 }

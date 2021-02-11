@@ -178,12 +178,12 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      * Add {@link TrestleEvent} to individual
      * This method cannot be used to add {@link TrestleEventType#MERGED} or {@link TrestleEventType#SPLIT} events because those require additional information.
      * Use the {@link TrestleReasoner#addTrestleObjectSplitMerge(TrestleEventType, Object, List, double)} for those event types
-     *
-     * @param type          - {@link TrestleEventType} to add to individual
+     *  @param type          - {@link TrestleEventType} to add to individual
      * @param individual    - {@link OWLNamedIndividual} individual to add event to
      * @param eventTemporal - {@link Temporal} temporal to use for event
+     * @return
      */
-    void addTrestleObjectEvent(TrestleEventType type, OWLNamedIndividual individual, Temporal eventTemporal);
+    Completable addTrestleObjectEvent(TrestleEventType type, OWLNamedIndividual individual, Temporal eventTemporal);
 
     @Override
     <T extends @NonNull Object> Completable addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects, double strength);

@@ -430,11 +430,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public void addTrestleObjectEvent(TrestleEventType type, OWLNamedIndividual individual, Temporal eventTemporal) {
+    public Completable addTrestleObjectEvent(TrestleEventType type, OWLNamedIndividual individual, Temporal eventTemporal) {
         if (type == TrestleEventType.SPLIT || type == TrestleEventType.MERGED) {
-            throw new IllegalArgumentException("SPLIT and MERGED events cannot be added through this method");
+            return Completable.error(new IllegalArgumentException("SPLIT and MERGED events cannot be added through this method"));
         }
-        this.eventEngine.addEvent(type, individual, eventTemporal);
+        return this.eventEngine.addEvent(type, individual, eventTemporal);
     }
 
     @Override
