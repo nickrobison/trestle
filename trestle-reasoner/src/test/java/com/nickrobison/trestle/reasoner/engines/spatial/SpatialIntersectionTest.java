@@ -43,30 +43,30 @@ public class SpatialIntersectionTest extends AbstractReasonerTest {
         final List<TrestleIndividual> trestleIndividuals = this.reasoner.spatialIntersectIndividuals(TestClasses.GAULTestClass.class,
                 maputo.wkt, 0.0, null, null).toList().blockingGet();
         assertEquals(10, trestleIndividuals.size(), "Should have all Distrito and Aeropuerto individuals");
-
-        //        Do a TS intersection with it
-
-        final List<TrestleIndividual> individuals2015 = this.reasoner.spatialIntersectIndividuals(TestClasses.GAULTestClass.class,
-                maputo.wkt, 0.0, LocalDate.of(2015, 1, 1), null).toList().blockingGet();
-        assertEquals(1, individuals2015.size(), "Should only have itself");
-
-
-//        Find Manhica 2
-        final TestClasses.GAULTestClass manhica = gaulObjects
-                .stream()
-                .filter(gaul -> gaul.adm0_code == 41375)
-                .findFirst().orElseThrow(RuntimeException::new);
-
-//        Add a buffer and try a spatial intersection
-        final List<TrestleIndividual> manhicaSpatial = this.reasoner.spatialIntersectIndividuals(TestClasses.GAULTestClass.class
-                , manhica.wkt, 0.1, null, null).toList().blockingGet();
-        assertEquals(6, manhicaSpatial.size(), "Should have multiple objects");
-
-
-//        Now with the buffer, do a TS Intersection
-        final List<TrestleIndividual> manhica2015 = this.reasoner.spatialIntersectIndividuals(TestClasses.GAULTestClass.class,
-                manhica.wkt, 0.1, LocalDate.of(2015, 1, 1), null).toList().blockingGet();
-        assertEquals(2, manhica2015.size(), "Should not have old Manhica");
+//
+//        //        Do a TS intersection with it
+//
+//        final List<TrestleIndividual> individuals2015 = this.reasoner.spatialIntersectIndividuals(TestClasses.GAULTestClass.class,
+//                maputo.wkt, 0.0, LocalDate.of(2015, 1, 1), null).toList().blockingGet();
+//        assertEquals(1, individuals2015.size(), "Should only have itself");
+//
+//
+////        Find Manhica 2
+//        final TestClasses.GAULTestClass manhica = gaulObjects
+//                .stream()
+//                .filter(gaul -> gaul.adm0_code == 41375)
+//                .findFirst().orElseThrow(RuntimeException::new);
+//
+////        Add a buffer and try a spatial intersection
+//        final List<TrestleIndividual> manhicaSpatial = this.reasoner.spatialIntersectIndividuals(TestClasses.GAULTestClass.class
+//                , manhica.wkt, 0.1, null, null).toList().blockingGet();
+//        assertEquals(6, manhicaSpatial.size(), "Should have multiple objects");
+//
+//
+////        Now with the buffer, do a TS Intersection
+//        final List<TrestleIndividual> manhica2015 = this.reasoner.spatialIntersectIndividuals(TestClasses.GAULTestClass.class,
+//                manhica.wkt, 0.1, LocalDate.of(2015, 1, 1), null).toList().blockingGet();
+//        assertEquals(2, manhica2015.size(), "Should not have old Manhica");
     }
 
 

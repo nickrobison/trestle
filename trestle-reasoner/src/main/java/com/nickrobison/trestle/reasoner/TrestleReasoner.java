@@ -27,6 +27,8 @@ import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.events.TrestleEvent;
 import com.nickrobison.trestle.types.events.TrestleEventType;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
@@ -152,7 +154,7 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      * @param individual - {@link String} ID of the individual to gather events for
      * @return - {@link Optional} {@link Set} of {@link TrestleEvent} for the given individual
      */
-    Optional<Set<TrestleEvent>> getIndividualEvents(Class<?> clazz, String individual);
+    Flowable<TrestleEvent> getIndividualEvents(Class<?> clazz, String individual);
 
     /**
      * Get all {@link TrestleEvent} for the given individual
@@ -161,7 +163,7 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      * @param individual - {@link OWLNamedIndividual} to gather events for
      * @return - {@link Optional} {@link Set} of {@link TrestleEvent} for the given individual
      */
-    Optional<Set<TrestleEvent>> getIndividualEvents(Class<?> clazz, OWLNamedIndividual individual);
+    Flowable<TrestleEvent> getIndividualEvents(Class<?> clazz, OWLNamedIndividual individual);
 
     /**
      * Add {@link TrestleEvent} to individual
@@ -265,7 +267,7 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      * @param individualIRI - String of individual IRI
      * @return - {@link TrestleIndividual}
      */
-    TrestleIndividual getTrestleIndividual(String individualIRI);
+    Single<TrestleIndividual> getTrestleIndividual(String individualIRI);
 
     /**
      * Register dataset class with Reasoner

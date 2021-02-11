@@ -2,8 +2,6 @@ package com.nickrobison.trestle.reasoner.engines.spatial;
 
 import com.codahale.metrics.annotation.Metered;
 import com.codahale.metrics.annotation.Timed;
-import com.esri.core.geometry.SpatialReference;
-import com.nickrobison.trestle.common.LambdaUtils;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
@@ -46,10 +44,6 @@ import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseTemporalToOntologyDateTime;
 
@@ -163,12 +157,7 @@ public class SpatialEngine implements ITrestleSpatialEngine {
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         return this.ontology.executeSPARQLResults(intersectQuery)
                 .map(result -> result.unwrapIndividual("m"))
-                .flatMap(individual -> {
-//                    final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-                    return Flowable.just(this.individualEngine.getTrestleIndividual(individual.asOWLNamedIndividual(), null));
-//                            .doOnError(error -> this.ontology.returnAndAbortTransaction(tt))
-//                            .doOnComplete(() -> this.ontology.returnAndCommitTransaction(tt));
-                })
+                .flatMapSingle(individual -> this.individualEngine.getTrestleIndividual(individual.asOWLNamedIndividual()))
                 .doOnComplete(() -> this.ontology.returnAndCommitTransaction(trestleTransaction))
                 .doOnError(error -> this.ontology.returnAndAbortTransaction(trestleTransaction));
 //

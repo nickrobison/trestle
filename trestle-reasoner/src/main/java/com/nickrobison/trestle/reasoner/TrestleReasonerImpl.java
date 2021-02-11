@@ -415,12 +415,12 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public Optional<Set<TrestleEvent>> getIndividualEvents(Class<?> clazz, String individual) {
+    public Flowable<TrestleEvent> getIndividualEvents(Class<?> clazz, String individual) {
         return getIndividualEvents(clazz, df.getOWLNamedIndividual(parseStringToIRI(reasonerPrefix, individual)));
     }
 
     @Override
-    public Optional<Set<TrestleEvent>> getIndividualEvents(Class<?> clazz, OWLNamedIndividual individual) {
+    public Flowable<TrestleEvent> getIndividualEvents(Class<?> clazz, OWLNamedIndividual individual) {
         return this.individualEngine.getIndividualEvents(clazz, individual);
     }
 
@@ -851,11 +851,11 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public TrestleIndividual getTrestleIndividual(String individualIRI) {
+    public Single<TrestleIndividual> getTrestleIndividual(String individualIRI) {
         return getTrestleIndividual(df.getOWLNamedIndividual(parseStringToIRI(reasonerPrefix, individualIRI)));
     }
 
-    private TrestleIndividual getTrestleIndividual(OWLNamedIndividual individual) {
+    private Single<TrestleIndividual> getTrestleIndividual(OWLNamedIndividual individual) {
         return this.individualEngine.getTrestleIndividual(individual);
     }
 
