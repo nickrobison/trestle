@@ -5,7 +5,6 @@ import com.nickrobison.trestle.exporter.*;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.ReasonerPrefix;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
-import com.nickrobison.trestle.reasoner.exceptions.NoValidStateException;
 import com.nickrobison.trestle.reasoner.parser.*;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorFactory;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
@@ -90,7 +89,7 @@ public class DataExportEngine implements ITrestleDataExporter {
 
         return Flowable.fromIterable(objectID)
                 .map(id -> IRIUtils.parseStringToIRI(this.reasonerPrefix, id))
-                .flatMapMaybe(id -> this.objectReader.readTrestleObject(inputClass, id, false, validAt, databaseAt)
+                .flatMapMaybe(id -> this.objectReader.readTrestleObject(inputClass, id, false, validAt, databaseAt, trestleTransaction)
                         .toMaybe()
                         .onErrorResumeNext(error -> {
                             logger.debug("No valid state found for {}. Excluding from export", id, error);

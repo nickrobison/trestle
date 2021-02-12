@@ -2,6 +2,7 @@ package com.nickrobison.trestle.reasoner.engines.object;
 
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
+import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TrestleObjectHeader;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import io.reactivex.rxjava3.core.Flowable;
@@ -91,9 +92,10 @@ public interface ITrestleObjectReader {
      * @param clazz         - Java {@link Class} of type {@link T} to return
      * @param individualIRI - {@link IRI} ID of individual
      * @param bypassCache   - {@code true} bypass object cache. {@code false} use cache if possible
+     * @param transaction
      * @return - Java object of type {@link T}
      */
-    <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache);
+    <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable TrestleTransaction transaction);
 
     /**
      * /**
@@ -107,10 +109,11 @@ public interface ITrestleObjectReader {
      * @param bypassCache   - {@code true} bypass object cache. {@code false} use cache if possible
      * @param validAt       - Optional {@link Temporal} to specify a validAt time
      * @param databaseAt    - Optional {@link Temporal} to specify databaseAt time
+     * @param transaction
      * @return - Java object of type {@link T}
      * @throws {@link com.nickrobison.trestle.reasoner.exceptions.NoValidStateException}
      */
-    <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt);
+    <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt, @Nullable TrestleTransaction transaction);
 
     /**
      * Retrieve {@link TrestleObjectHeader} for the given Individual

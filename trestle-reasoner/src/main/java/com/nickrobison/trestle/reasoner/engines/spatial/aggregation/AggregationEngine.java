@@ -4,12 +4,10 @@ import com.nickrobison.trestle.common.LambdaUtils;
 import com.nickrobison.trestle.common.StaticIRI;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.ReasonerPrefix;
-import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngineUtils;
 import com.nickrobison.trestle.reasoner.exceptions.NoValidStateException;
-import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.parser.IClassParser;
 import com.nickrobison.trestle.reasoner.parser.ITypeConverter;
 import com.nickrobison.trestle.reasoner.parser.TemporalParser;
@@ -123,7 +121,7 @@ public class AggregationEngine {
                             .map(individual -> CompletableFuture.supplyAsync(() -> {
                                 final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
                                 try {
-                                    return this.reader.readTrestleObject(clazz, individual, false, null, null);
+                                    return this.reader.readTrestleObject(clazz, individual, false, null, null, tt);
                                 } catch (NoValidStateException e) {
                                     logger.warn("Cannot read {}", individual, e);
                                     return null;

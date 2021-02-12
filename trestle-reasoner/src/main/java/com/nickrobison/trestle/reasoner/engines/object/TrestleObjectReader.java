@@ -111,16 +111,16 @@ public class TrestleObjectReader implements ITrestleObjectReader {
     @Override
     public <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) {
         final IRI individualIRI = parseStringToIRI(this.reasonerPrefix, objectID);
-        return readTrestleObject(clazz, individualIRI, false, validTemporal, databaseTemporal);
+        return readTrestleObject(clazz, individualIRI, false, validTemporal, databaseTemporal, null);
     }
 
     @Override
-    public <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache) {
-        return readTrestleObject(clazz, individualIRI, bypassCache, null, null);
+    public <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable TrestleTransaction transaction) {
+        return readTrestleObject(clazz, individualIRI, bypassCache, null, null, transaction);
     }
 
     @Override
-    public <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt) {
+    public <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt, @Nullable TrestleTransaction transaction) {
         logger.debug("Reading {}", individualIRI);
 
         //        Contains class?
@@ -150,8 +150,8 @@ public class TrestleObjectReader implements ITrestleObjectReader {
         }
         logger.debug("Individual is not in cache, continuing");
 
-        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
-        return readTrestleObjectImpl(clazz, individualIRI, validTemporal, databaseTemporal)
+        final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(transaction);
+        return readTrestleObjectImpl(clazz, individualIRI, validTemporal, databaseTemporal, tt)
                 .map(value -> {
                     if (isCacheable) {
                         try {
@@ -162,8 +162,8 @@ public class TrestleObjectReader implements ITrestleObjectReader {
                     }
                     return value.getObject();
                 })
-                .doOnSuccess(success -> this.ontology.returnAndCommitTransaction(trestleTransaction))
-                .doOnError(error -> this.ontology.returnAndAbortTransaction(trestleTransaction));
+                .doOnSuccess(success -> this.ontology.returnAndCommitTransaction(tt))
+                .doOnError(error -> this.ontology.returnAndAbortTransaction(tt));
     }
 
 
@@ -171,21 +171,18 @@ public class TrestleObjectReader implements ITrestleObjectReader {
      * Read object implementation, going to straight to the database, completely bypassing the cache
      * Returns the object state for the given valid/database {@link PointTemporal}
      *
+     * @param <T>              - Java class to return
      * @param clazz            - Java class of type T to return
      * @param individualIRI    - IRI of individual
      * @param databaseTemporal - Database temporal to filter results with
-     * @param <T>              - Java class to return
+     * @param transaction      - Optional {@link TrestleTransaction} to continue with
      * @return - {@link Single} of {@link TrestleObjectResult} {@link T} Object result of type T
      */
     @Timed
     @Metered(name = "read-trestle-object", absolute = true)
-    private <T extends @NonNull Object> Single<TrestleObjectResult<T>> readTrestleObjectImpl(Class<T> clazz, IRI individualIRI, PointTemporal<?> validTemporal, PointTemporal<?> databaseTemporal) {
+    private <T extends @NonNull Object> Single<TrestleObjectResult<T>> readTrestleObjectImpl(Class<T> clazz, IRI individualIRI, PointTemporal<?> validTemporal, PointTemporal<?> databaseTemporal, @Nullable TrestleTransaction transaction) {
         logger.trace("Reading individual {} at {}/{}", individualIRI, validTemporal, databaseTemporal);
         final OWLNamedIndividual individual = df.getOWLNamedIndividual(individualIRI);
-
-//        Do some things before opening a transaction
-        final Optional<List<OWLDataProperty>> dataProperties = this.classBuilder.getPropertyMembers(clazz);
-
 //        If no temporals are provided, perform the intersection at query time.
         final OffsetDateTime dbAtTemporal;
         final OffsetDateTime validAtTemporal;
@@ -199,6 +196,7 @@ public class TrestleObjectReader implements ITrestleObjectReader {
         final String factQuery = qb.buildObjectFactRetrievalQuery(validAtTemporal, dbAtTemporal, true, null, individual);
 
         // Build the actual query and execution
+        final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(transaction);
         final Single<List<TrestleFact<@NonNull Object>>> factsFlowable = this.ontology.executeSPARQLResults(factQuery)
                 .map(result -> {
                     final OWLDataPropertyAssertionAxiom assertion = df.getOWLDataPropertyAssertionAxiom(
@@ -232,7 +230,9 @@ public class TrestleObjectReader implements ITrestleObjectReader {
                     } else {
                         return mergedFlow;
                     }
-                });
+                })
+                .doOnSuccess(success -> this.ontology.returnAndCommitTransaction(tt))
+                .doOnError(error -> this.ontology.returnAndAbortTransaction(tt));
     }
 
     @Override
@@ -396,7 +396,7 @@ public class TrestleObjectReader implements ITrestleObjectReader {
         return this.ontology.getIndividualObjectProperty(individualIRI, relation.getIRI())
                 .flatMap(objectRelation -> {
                     final OWLNamedIndividual objectIndividual = objectRelation.getObject().asOWLNamedIndividual();
-                    return this.readTrestleObject(clazz, objectIndividual.getIRI(), false, validAt, dbAt).toFlowable();
+                    return this.readTrestleObject(clazz, objectIndividual.getIRI(), false, validAt, dbAt, tt).toFlowable();
                 })
                 .filter(Objects::nonNull)
                 .doOnError(error -> this.ontology.returnAndAbortTransaction(tt))

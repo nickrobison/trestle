@@ -144,7 +144,7 @@ public class RegionalizationTests {
 
     public void computeEdges(String county, Set<Edge> computedEdges) throws TrestleClassException, MissingOntologyEntity {
 
-        final TigerCountyObject self = reasoner.readTrestleObject(TigerCountyObject.class, county, VALID_AT, null).blockingGet();
+        final TigerCountyObject self = reasoner.readTrestleObject(TigerCountyObject.class, county, VALID_AT, null, ).blockingGet();
         final List<TigerCountyObject> spatiallyAdjacentObjects = reasoner.getRelatedObjects(TigerCountyObject.class, county,
                 ObjectRelation.SPATIAL_MEETS,
                 VALID_AT, null)

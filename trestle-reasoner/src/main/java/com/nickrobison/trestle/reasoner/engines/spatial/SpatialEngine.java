@@ -236,7 +236,7 @@ public class SpatialEngine implements ITrestleSpatialEngine {
         logger.debug("Opening transaction with {} others still running. {} comitted", this.ontology.getCurrentlyOpenTransactions(), this.ontology.getCommittedTransactionCount());
         return this.ontology.executeSPARQLResults(spatialIntersection)
                 .map(result -> IRI.create(result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID()))
-                .flatMapSingle(iri -> this.objectReader.readTrestleObject(clazz, iri, false, atTemporal, dbTemporal))
+                .flatMapSingle(iri -> this.objectReader.readTrestleObject(clazz, iri, false, atTemporal, dbTemporal, trestleTransaction))
                 .doOnComplete(() -> {
                     logger.debug("Closing transaction, {} are still open", this.ontology.getOpenedTransactionCount());
                     this.ontology.returnAndCommitTransaction(trestleTransaction);

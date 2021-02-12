@@ -16,7 +16,6 @@ import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeException;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.events.TrestleEvent;
 import com.nickrobison.trestle.types.events.TrestleEventType;
-import io.reactivex.rxjava3.core.Flowable;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
@@ -25,8 +24,6 @@ import org.junit.jupiter.api.Test;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -66,26 +63,26 @@ public class TrestleFactTests extends AbstractReasonerTest {
         List<TrestleEvent> events = reasoner.getIndividualEvents(v1.getClass(), v1.id).toList().blockingGet();
         assertAll(() -> assertEquals(1, events.size(), "Should only have created event"),
                 () -> assertEquals(v1.getValidFrom(), events.get(0).getAtTemporal(), "CREATED event should equal valid from"));
-        final TestClasses.FactVersionTest v1Return = reasoner.readTrestleObject(v1.getClass(), tp.classParser.getIndividual(v1).getIRI(), false).blockingGet();
+        final TestClasses.FactVersionTest v1Return = reasoner.readTrestleObject(v1.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, null).blockingGet();
         assertEquals(v1, v1Return, "Should be equal to V1");
         reasoner.writeTrestleObject(v2);
         final List<TrestleEvent> events2 = reasoner.getIndividualEvents(v2.getClass(), v2.id).toList().blockingGet();
         assertAll(() -> assertEquals(1, events2.size(), "Should only have created event"),
                 () -> assertEquals(v1.getValidFrom(), events2.get(0).getAtTemporal(), "CREATED event should equal V1 Valid from"));
 
-        final TestClasses.FactVersionTest v2Return = reasoner.readTrestleObject(v2.getClass(), tp.classParser.getIndividual(v1).getIRI(), false).blockingGet();
+        final TestClasses.FactVersionTest v2Return = reasoner.readTrestleObject(v2.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, null).blockingGet();
         assertEquals(v2, v2Return, "Should be equal to V2");
         reasoner.writeTrestleObject(v3);
-        final TestClasses.FactVersionTest v3Return = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false).blockingGet();
+        final TestClasses.FactVersionTest v3Return = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, null).blockingGet();
         assertEquals(v3, v3Return, "Should be equal to V3");
 //        Try for specific points in time
-        final TestClasses.FactVersionTest v1ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(1990, 3, 26), null).blockingGet();
+        final TestClasses.FactVersionTest v1ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(1990, 3, 26), null, null).blockingGet();
         assertEquals(v1, v1ReturnHistorical, "Historical query should be equal to V1");
-        final TestClasses.FactVersionTest v2ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(1999, 3, 26), null).blockingGet();
+        final TestClasses.FactVersionTest v2ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(1999, 3, 26), null, null).blockingGet();
         assertEquals(v2, v2ReturnHistorical, "Historical query should be equal to V2");
-        final TestClasses.FactVersionTest v3ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(2016, 3, 26), null).blockingGet();
+        final TestClasses.FactVersionTest v3ReturnHistorical = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, LocalDate.of(2016, 3, 26), null, null).blockingGet();
         assertEquals(v3, v3ReturnHistorical, "Historical query should be equal to V3");
-        assertThrows(NoValidStateException.class, () -> reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), true, LocalDate.of(1980, 3, 26), null));
+        assertThrows(NoValidStateException.class, () -> reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), true, LocalDate.of(1980, 3, 26), null, null));
 
 //        Check to make sure we have all the facts
         final TrestleIndividual trestleIndividual = reasoner.getTrestleIndividual("test-object").blockingGet();

@@ -51,7 +51,6 @@ import com.typesafe.config.ConfigFactory;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Supplier;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -381,13 +380,13 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //    ----------------------------
 
     @Override
-    public <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache) {
-        return this.objectReader.readTrestleObject(clazz, individualIRI, bypassCache);
+    public <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable TrestleTransaction transaction) {
+        return this.objectReader.readTrestleObject(clazz, individualIRI, bypassCache, transaction);
     }
 
     @Override
-    public @io.reactivex.rxjava3.annotations.NonNull <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt) {
-        return this.objectReader.readTrestleObject(clazz, individualIRI, bypassCache, validAt, databaseAt);
+    public @io.reactivex.rxjava3.annotations.NonNull <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt, @Nullable TrestleTransaction transaction) {
+        return this.objectReader.readTrestleObject(clazz, individualIRI, bypassCache, validAt, databaseAt, null);
     }
 
     @Override
@@ -689,7 +688,7 @@ public class TrestleReasonerImpl implements TrestleReasoner {
             final List<T> individualList = equivalentIndividuals
                     .stream()
                     .map(individual -> {
-                        return this.objectReader.readTrestleObject(clazz, individual.getIRI(), false, queryTemporal, null).blockingGet();
+                        return this.objectReader.readTrestleObject(clazz, individual.getIRI(), false, queryTemporal, null, trestleTransaction).blockingGet();
                     })
                     .collect(Collectors.toList());
             this.ontology.returnAndCommitTransaction(trestleTransaction);
