@@ -536,7 +536,16 @@ public abstract class RDF4JOntology extends TransactingOntology {
      * @return - {@link RepositoryConnection} associated with the given transaction
      */
     protected RepositoryConnection getThreadConnection() {
-        @Nullable final RepositoryConnection repositoryConnection = this.tc.get();
+
+        final @Nullable RepositoryConnection repositoryConnection;
+
+        // Try to get from the thread transaction object first, then from the thread itself
+        final TrestleTransaction threadTransactionObject = this.getThreadTransactionObject();
+        if (threadTransactionObject == null) {
+            repositoryConnection = this.tc.get();
+        } else {
+            repositoryConnection = threadTransactionObject.getConnection();
+        }
         if (repositoryConnection == null) {
             throw new IllegalStateException("Thread has null repository connection, did a transaction not get opened?");
         }
