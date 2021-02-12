@@ -18,6 +18,9 @@ import com.nickrobison.trestle.reasoner.threading.TrestleExecutorFactory;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorService;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.locationtech.jts.geom.*;
@@ -163,17 +166,17 @@ public class AggregationEngine {
     /**
      * Build the spatial adjacency graph for a given class.
      *
+     * @param <T>         - {@link T} type parameter for object class
+     * @param <B>         - {@link B} type parameter for return type from {@link Computable} function
      * @param clazz       - Java {@link Class} of objects to retrieve
      * @param objectID    - {@link String} ID of object to begin graph computation with
      * @param edgeCompute - {@link Computable} function to use for computing edge weights
      * @param filter      - {@link Filterable} function to use for determining whether or not to compute the given node
      * @param validAt     - {@link Temporal} optional validAt restriction
      * @param dbAt        - {@link Temporal} optional dbAt restriction
-     * @param <T>         - {@link T} type parameter for object class
-     * @param <B>         - {@link B} type parameter for return type from {@link Computable} function
-     * @return - {@link AdjacencyGraph} for object
+     * @return - {@link Single} {@link AdjacencyGraph} for object
      */
-    public <T extends @NonNull Object, B extends Number> AdjacencyGraph<T, B> buildSpatialGraph(Class<T> clazz, String objectID, Computable<T, T, B> edgeCompute, Filterable<T> filter, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
+    public <T extends @NonNull Object, B extends Number> Single<AdjacencyGraph<T, B>> buildSpatialGraph(Class<T> clazz, String objectID, Computable<T, T, B> edgeCompute, Filterable<T> filter, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
         final AdjacencyGraph<T, B> adjacencyGraph = new AdjacencyGraph<>();
         final IRI startIRI = parseStringToIRI(this.reasonerPrefix, objectID);
 
@@ -181,41 +184,76 @@ public class AggregationEngine {
         Queue<String> individualQueue = new ArrayDeque<>();
         individualQueue.add(startIRI.toString());
 
-        while (!individualQueue.isEmpty()) {
-            final String fromID = individualQueue.poll();
-            if (fromID == null) {
-                continue;
-            }
-            visited.add(fromID);
+        final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(false);
 
-            try {
-//            Get the initial individual
-                final T from = this.reader.readTrestleObject(clazz, fromID, validAt, dbAt).blockingGet();
 
-//            Get everything it touches
-                final List<Edge<T, B>> relatedEdges = this.reader.getRelatedObjects(clazz, fromID, ObjectRelation.SPATIAL_MEETS, validAt, dbAt).toList().blockingGet()
-                        .stream()
-                        .filter(filter::filter)
+        return Flowable.fromIterable(individualQueue)
+                .takeWhile(Objects::nonNull)
+                .doOnEach(notification -> visited.add(notification.getValue()))
+                .flatMapCompletable(fromID -> {
+                    final Single<T> initialSingle = this.reader.readTrestleObject(clazz, fromID, validAt, dbAt);
+
+                    return initialSingle
+                            .flatMapCompletable(from -> {
+                                final Flowable<Edge<T, B>> relatedObjectsFlow = this.reader.getRelatedObjects(clazz, fromID, ObjectRelation.SPATIAL_MEETS, validAt, dbAt)
+                                        .filter(filter::filter)
 //                        Remove self
-                        .filter(related -> !this.parser.getIndividual(related).toStringID().equals(startIRI.toString()))
-                        .map(related -> new Edge<>(from, related, edgeCompute.compute(from, related)))
-                        .collect(Collectors.toList());
+                                        .filter(related -> !this.parser.getIndividual(related).toStringID().equals(startIRI.toString()))
+                                        .map(related -> new Edge<>(from, related, edgeCompute.compute(from, related))).publish().autoConnect(2);
 
-//            Add everything to the graph
-                relatedEdges.forEach(adjacencyGraph::addEdge);
-//                Only add things we haven't seen before
-                relatedEdges
-                        .stream()
-                        .map(edge -> this.parser.getIndividual(edge.to))
-                        .map(OWLIndividual::toStringID)
-                        .filter(individual -> !visited.contains(individual))
-                        .forEach(individualQueue::add);
-            } catch (TrestleClassException | MissingOntologyEntity | NoValidStateException e) {
-                logger.error("Can't read individual", e);
-            }
-        }
+                                final Single<AdjacencyGraph<T, B>> adjacencyGraphSingle = relatedObjectsFlow.collectInto(adjacencyGraph, AdjacencyGraph::addEdge);
 
-        return adjacencyGraph;
+                                final Single<Queue<String>> individualCompletable = relatedObjectsFlow
+                                        .map(edge -> this.parser.getIndividual(edge.to))
+                                        .map(OWLIndividual::toStringID)
+                                        .filter(individual -> !visited.contains(individual))
+                                        .collectInto(individualQueue, Queue::add);
+
+                                return Completable.fromSingle(adjacencyGraphSingle);
+                            });
+                })
+                .andThen(Single.just(adjacencyGraph))
+                .doOnSuccess(success -> this.ontology.returnAndCommitTransaction(tt))
+                .doOnError(error -> this.ontology.returnAndAbortTransaction(tt));
+//
+//        while (!individualQueue.isEmpty()) {
+//            final String fromID = individualQueue.poll();
+//            if (fromID == null) {
+//                continue;
+//            }
+//            visited.add(fromID);
+//
+//            try {
+////            Get the initial individual
+//
+//
+//                final T from = this.reader.readTrestleObject(clazz, fromID, validAt, dbAt).blockingGet();
+//
+//
+////            Get everything it touches
+//                final List<Edge<T, B>> relatedEdges = this.reader.getRelatedObjects(clazz, fromID, ObjectRelation.SPATIAL_MEETS, validAt, dbAt).toList().blockingGet()
+//                        .stream()
+//                        .filter(filter::filter)
+////                        Remove self
+//                        .filter(related -> !this.parser.getIndividual(related).toStringID().equals(startIRI.toString()))
+//                        .map(related -> new Edge<>(from, related, edgeCompute.compute(from, related)))
+//                        .collect(Collectors.toList());
+//
+////            Add everything to the graph
+//                relatedEdges.forEach(adjacencyGraph::addEdge);
+////                Only add things we haven't seen before
+//                relatedEdges
+//                        .stream()
+//                        .map(edge -> this.parser.getIndividual(edge.to))
+//                        .map(OWLIndividual::toStringID)
+//                        .filter(individual -> !visited.contains(individual))
+//                        .forEach(individualQueue::add);
+//            } catch (TrestleClassException | MissingOntologyEntity | NoValidStateException e) {
+//                logger.error("Can't read individual", e);
+//            }
+//        }
+//
+//        return adjacencyGraph;
     }
 
     private String buildAggregationQuery(Class<?> clazz, OWLClass datasetClass, IRI factIRI, Class<?> factDatatype, AggregationRestriction restriction, @Nullable AggregationOperation operation, OffsetDateTime atTemporal, OffsetDateTime dbTemporal) {

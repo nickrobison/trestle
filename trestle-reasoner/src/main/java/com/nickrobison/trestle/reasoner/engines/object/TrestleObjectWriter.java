@@ -242,7 +242,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
 
 //        Write the overlap
         final OWLClassAssertionAxiom overlapClassAssertion = df.getOWLClassAssertionAxiom(df.getOWLClass(trestleOverlapIRI), overlapIndividual);
-        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
+//        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
 
         return this.ontology.createIndividual(overlapClassAssertion)
                 .andThen(Completable.defer(() -> {
@@ -255,9 +255,9 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
                     final OWLObjectProperty overlapProperty = df.getOWLObjectProperty(overlapOfIRI);
                     return this.writeIndirectObjectProperty(overlapIndividual, subject, overlapProperty)
                             .andThen(Completable.defer(() -> this.writeIndirectObjectProperty(overlapIndividual, object, overlapProperty)));
-                }))
-                .doOnError(error -> this.ontology.returnAndAbortTransaction(trestleTransaction))
-                .doOnComplete(() -> this.ontology.returnAndCommitTransaction(trestleTransaction));
+                }));
+//                .doOnError(error -> this.ontology.returnAndAbortTransaction(trestleTransaction))
+//                .doOnComplete(() -> this.ontology.returnAndCommitTransaction(trestleTransaction));
     }
 
     /**
