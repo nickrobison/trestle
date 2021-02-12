@@ -69,7 +69,7 @@
     "@types/cucumber": "^7.0.0",
     "@types/d3": "^6.3.0",
     "@types/file-saver": "^2.0.1",
-    "@types/jasmine": "~3.6.0",
+    "@types/jasmine": "~3.6.3",
     "@types/jasminewd2": "~2.0.3",
     "@types/lodash": "^4.14.168",
     "@types/mapbox-gl": "^2.0.2",
