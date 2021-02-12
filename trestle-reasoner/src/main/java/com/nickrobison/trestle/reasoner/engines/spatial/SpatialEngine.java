@@ -42,6 +42,7 @@ import javax.measure.quantity.Length;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -232,14 +233,21 @@ public class SpatialEngine implements ITrestleSpatialEngine {
 //        String spatialIntersection;
         logger.debug("Running spatial intersection at {}", atTemporal);
         final String spatialIntersection = qb.buildTemporalSpatialIntersection(owlClass, wktBuffer, atTemporal, dbTemporal);
-        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         logger.debug("Opening transaction with {} others still running. {} comitted", this.ontology.getCurrentlyOpenTransactions(), this.ontology.getCommittedTransactionCount());
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         return this.ontology.executeSPARQLResults(spatialIntersection)
                 .map(result -> IRI.create(result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID()))
-                .flatMapSingle(iri -> this.objectReader.readTrestleObject(clazz, iri, false, atTemporal, dbTemporal, trestleTransaction))
+                // Once we get the intersecting object IDs, we need to combine them into a single list
+                // Otherwise, the nested SPARQL queries collide and block
+                // Even if we return a million elements, that's probably fine because it's just a list of IDs
+                .toList()
+                .flattenStreamAsFlowable(Collection::stream)
+                .flatMapSingle(iri -> {
+                    return this.objectReader.readTrestleObject(clazz, iri, false, atTemporal, dbTemporal, trestleTransaction);
+                })
                 .doOnComplete(() -> {
-                    logger.debug("Closing transaction, {} are still open", this.ontology.getOpenedTransactionCount());
                     this.ontology.returnAndCommitTransaction(trestleTransaction);
+                    logger.debug("Closing transaction, {} are still open", this.ontology.getCurrentlyOpenTransactions());
                 })
                 .doOnError(error -> this.ontology.returnAndAbortTransaction(trestleTransaction));
     }

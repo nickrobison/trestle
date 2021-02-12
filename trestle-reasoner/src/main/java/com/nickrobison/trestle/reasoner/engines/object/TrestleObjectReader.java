@@ -122,7 +122,6 @@ public class TrestleObjectReader implements ITrestleObjectReader {
     @Override
     public <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt, @Nullable TrestleTransaction transaction) {
         logger.debug("Reading {}", individualIRI);
-
         //        Contains class?
         if (!this.engineUtils.checkRegisteredClass(clazz)) {
             logger.error("Class {} is not registered", clazz.getName());
