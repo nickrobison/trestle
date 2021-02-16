@@ -120,18 +120,17 @@ public class GAULAnalyzer {
 
         Map<String, Integer> lifetimes = new HashMap<>();
 
-        final ProgressBar pb = new ProgressBar("Calculating object lifetime length", members.size());
-        pb.start();
+        try (ProgressBar pb = new ProgressBar("Calculating object lifetime length", members.size())) {
 
-        for (String member : members) {
-            final TrestleObjectHeader header = this.reasoner.readObjectHeader(GAULObject.class, member).orElseThrow(() -> new IllegalStateException("Should have member header"));
-            if (!header.continuing()) {
-                final Integer yearsBetween = GAULAnalyzer.adjustedYearsBetween(header.getExistsFrom(), header.getExistsTo());
-                lifetimes.put(member, yearsBetween);
-                pb.step();
+            for (String member : members) {
+                final TrestleObjectHeader header = this.reasoner.readObjectHeader(GAULObject.class, member).orElseThrow(() -> new IllegalStateException("Should have member header"));
+                if (!header.continuing()) {
+                    final Integer yearsBetween = GAULAnalyzer.adjustedYearsBetween(header.getExistsFrom(), header.getExistsTo());
+                    lifetimes.put(member, yearsBetween);
+                    pb.step();
+                }
             }
         }
-        pb.stop();
         GAULAnalyzer.writeMapToFile(lifetimes, "%s,%d\n", this.filePath);
     }
 
@@ -176,34 +175,34 @@ public class GAULAnalyzer {
         }
 
 //        Create a progress base
-        final ProgressBar pb = new ProgressBar("Analyzing Individuals:", results.size());
-        pb.start();
+        Set<GAULAnalyzer.AlgorithmResult> orphanedResults;
+        try (ProgressBar pb = new ProgressBar("Analyzing Individuals:", results.size())) {
 
 //        Now, process the results
 
-        Set<GAULAnalyzer.AlgorithmResult> orphanedResults = new HashSet<>();
-        Set<TrestleIndividual> orphanedIndividuals = new HashSet<>();
+            orphanedResults = new HashSet<>();
+            Set<TrestleIndividual> orphanedIndividuals = new HashSet<>();
 
-        for (GAULAnalyzer.AlgorithmResult result : results) {
-            try {
-                final TrestleIndividual trestleIndividual = this.reasoner.getTrestleIndividual(result.getID());
-                final Optional<String> anyRelation = trestleIndividual.getRelations()
-                        .stream()
-                        .map(TrestleRelation::getType)
-//                    Split Filter
-                        .filter(relation -> (relation.contains("SPLIT") || relation.contains("MERGE")))
-                        .findAny();
-                if (!anyRelation.isPresent()) {
-                    orphanedResults.add(result);
-                    orphanedIndividuals.add(trestleIndividual);
+            for (GAULAnalyzer.AlgorithmResult result : results) {
+                try {
+                    final TrestleIndividual trestleIndividual = this.reasoner.getTrestleIndividual(result.getID());
+                    final Optional<String> anyRelation = trestleIndividual.getRelations()
+                            .stream()
+                            .map(TrestleRelation::getType)
+    //                    Split Filter
+                            .filter(relation -> (relation.contains("SPLIT") || relation.contains("MERGE")))
+                            .findAny();
+                    if (!anyRelation.isPresent()) {
+                        orphanedResults.add(result);
+                        orphanedIndividuals.add(trestleIndividual);
+                    }
+                } catch (TrestleMissingIndividualException e) {
+                    System.err.println(String.format("Could not find %s", e.getIndividual()));
+    //                Just don't fail
                 }
-            } catch (TrestleMissingIndividualException e) {
-                System.err.println(String.format("Could not find %s", e.getIndividual()));
-//                Just don't fail
+                pb.step();
             }
-            pb.step();
         }
-        pb.stop();
 
         System.out.println(String.format("========== (%s) Orphaned ADM2 Entities=======", orphanedResults.size()));
         orphanedResults
