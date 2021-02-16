@@ -58,21 +58,21 @@ public class TrestleFactTests extends AbstractReasonerTest {
                 "test value two");
 
 //        Write each, then validate
-        reasoner.writeTrestleObject(v1);
+        reasoner.writeTrestleObject(v1).blockingAwait();
 //        Check that events exist
         List<TrestleEvent> events = reasoner.getIndividualEvents(v1.getClass(), v1.id).toList().blockingGet();
         assertAll(() -> assertEquals(1, events.size(), "Should only have created event"),
                 () -> assertEquals(v1.getValidFrom(), events.get(0).getAtTemporal(), "CREATED event should equal valid from"));
         final TestClasses.FactVersionTest v1Return = reasoner.readTrestleObject(v1.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, null).blockingGet();
         assertEquals(v1, v1Return, "Should be equal to V1");
-        reasoner.writeTrestleObject(v2);
+        reasoner.writeTrestleObject(v2).blockingAwait();
         final List<TrestleEvent> events2 = reasoner.getIndividualEvents(v2.getClass(), v2.id).toList().blockingGet();
         assertAll(() -> assertEquals(1, events2.size(), "Should only have created event"),
                 () -> assertEquals(v1.getValidFrom(), events2.get(0).getAtTemporal(), "CREATED event should equal V1 Valid from"));
 
         final TestClasses.FactVersionTest v2Return = reasoner.readTrestleObject(v2.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, null).blockingGet();
         assertEquals(v2, v2Return, "Should be equal to V2");
-        reasoner.writeTrestleObject(v3);
+        reasoner.writeTrestleObject(v3).blockingAwait();
         final TestClasses.FactVersionTest v3Return = reasoner.readTrestleObject(v3.getClass(), tp.classParser.getIndividual(v1).getIRI(), false, null).blockingGet();
         assertEquals(v3, v3Return, "Should be equal to V3");
 //        Try for specific points in time
@@ -89,8 +89,8 @@ public class TrestleFactTests extends AbstractReasonerTest {
         assertEquals(7, trestleIndividual.getFacts().size(), "Should have 5 facts over the lifetime of the object");
 
 //        Try to manually add a new value
-        reasoner.addFactToTrestleObject(v3.getClass(), "test-object", "testValue", "test value three", LocalDate.of(2007, 3, 26), null, null);
-        reasoner.addFactToTrestleObject(v3.getClass(), "test-object", "wkt", "POINT(1.71255092695307 -30.572028714467507)", LocalDate.of(2017, 1, 1), null);
+        reasoner.addFactToTrestleObject(v3.getClass(), "test-object", "testValue", "test value three", LocalDate.of(2007, 3, 26), null, null).blockingAwait();
+        reasoner.addFactToTrestleObject(v3.getClass(), "test-object", "wkt", "POINT(1.71255092695307 -30.572028714467507)", LocalDate.of(2017, 1, 1), null).blockingAwait();
 
 //        Try for invalid fact name
         assertThrows(IllegalArgumentException.class, () -> reasoner.getFactValues(v3.getClass(), "test-object", "missing-fact", null, null, null));
@@ -115,10 +115,10 @@ public class TrestleFactTests extends AbstractReasonerTest {
 
 //        Change method and try again
         this.reasoner.getMergeEngine().changeDefaultMergeStrategy(MergeStrategy.ExistingFacts);
-        reasoner.writeTrestleObject(updatedFactClass);
+        reasoner.writeTrestleObject(updatedFactClass).blockingAwait();
         final TestClasses.GAULTestClass updatedObject = reasoner.readTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", LocalDate.of(1989, 5, 15), null).blockingGet();
         assertEquals(updatedFactClass, updatedObject);
-        reasoner.addFactToTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", "wkt", "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))", LocalDate.of(1989, 5, 14), null, null);
+        reasoner.addFactToTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", "wkt", "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))", LocalDate.of(1989, 5, 14), null, null).blockingAwait();
         final TestClasses.GAULTestClass newWKT = new TestClasses.GAULTestClass(9944, "test-fact-object", LocalDate.of(1989, 03, 26).atStartOfDay(), LocalDate.of(1990, 03, 26).atStartOfDay(), "POLYGON ((30.71255092695307 -25.572028714467507, 30.71255092695307 -24.57695170392701, 34.23641567304696 -24.57695170392701, 34.23641567304696 -25.572028714467507, 30.71255092695307 -25.572028714467507))");
         final TestClasses.GAULTestClass updatedWKT = reasoner.readTrestleObject(TestClasses.GAULTestClass.class, "test-fact-object", LocalDate.of(1989, 5, 15), null).blockingGet();
         assertEquals(newWKT, updatedWKT);

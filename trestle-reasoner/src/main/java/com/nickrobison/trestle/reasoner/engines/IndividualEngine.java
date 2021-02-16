@@ -132,7 +132,7 @@ public class IndividualEngine {
 
         // Get the facts
         final Single<List<TrestleFact<Object>>> factSingle = ontology.getIndividualObjectProperty(individual, hasFactIRI)
-                .flatMapSingle(fact -> buildTrestleFact(fact.getObject().asOWLNamedIndividual(), null)).toList();
+                .flatMapSingle(fact -> buildTrestleFact(fact.getObject().asOWLNamedIndividual(), trestleTransaction)).toList();
 
         // Get the relationships
         String query = this.qb.buildIndividualRelationQuery(individual);

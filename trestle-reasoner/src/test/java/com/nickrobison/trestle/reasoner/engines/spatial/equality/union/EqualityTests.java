@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SuppressWarnings({"ConstantConditions", "initialization.fields.uninitialized"})
+@SuppressWarnings({"ConstantConditions", "initialization.fields.uninitialized", "OptionalGetWithoutIsPresent"})
 @Tag("integration")
 public class EqualityTests extends AbstractReasonerTest {
 
@@ -89,13 +89,11 @@ public class EqualityTests extends AbstractReasonerTest {
 
     @Test
     public void testEqualityWalk() {
-
-
 //        What is obj1 equal to in 2013?
         final List<OWLNamedIndividual> equivalentObjects = unionWalker.getEquivalentIndividuals(EqualityTestClass.class, obj1Individual, LocalDate.of(2013, 3, 11));
         assertAll(() -> assertEquals(5, equivalentObjects.size(), "Should only have 5 equivalent objects in 2013"),
                 () -> assertTrue(equivalentObjects.contains(obj2Individual), "Should have Obj2"),
-                () -> assertTrue(!equivalentObjects.contains(obj8Individual), "Should not have Obj8"));
+                () -> assertFalse(equivalentObjects.contains(obj8Individual), "Should not have Obj8"));
 
         final List<OWLNamedIndividual> obj2EqObjects = unionWalker.getEquivalentIndividuals(EqualityTestClass.class, obj2Individual, LocalDate.of(2015, 3, 11));
         assertAll(() -> assertEquals(2, obj2EqObjects.size(), "Should have 2 equivalent objects"),
@@ -105,19 +103,19 @@ public class EqualityTests extends AbstractReasonerTest {
         final List<OWLNamedIndividual> eqObjects2 = unionWalker.getEquivalentIndividuals(EqualityTestClass.class, obj1Individual, LocalDate.of(2014, 3, 11));
         assertAll(() -> assertEquals(6, eqObjects2.size(), "Should have 6 equivalent objects in 2014"),
                 () -> assertTrue(eqObjects2.contains(obj8Individual), "Should have obj8"),
-                () -> assertTrue(!eqObjects2.contains(obj2Individual), "Should not have Obj2"));
+                () -> assertFalse(eqObjects2.contains(obj2Individual), "Should not have Obj2"));
 
 //        2015
         final List<OWLNamedIndividual> eqObjects3 = unionWalker.getEquivalentIndividuals(EqualityTestClass.class, obj1Individual, LocalDate.of(2015, 3, 11));
         assertAll(() -> assertEquals(6, eqObjects3.size(), "Should have 6 equivalent objects in 2015"),
                 () -> assertTrue(eqObjects3.contains(obj8Individual), "Should have obj8"),
-                () -> assertTrue(!eqObjects3.contains(obj2Individual), "Should not have Obj2"));
+                () -> assertFalse(eqObjects3.contains(obj2Individual), "Should not have Obj2"));
 
 //        2016
         final List<OWLNamedIndividual> eqObjects4 = unionWalker.getEquivalentIndividuals(EqualityTestClass.class, obj1Individual, LocalDate.of(2016, 3, 11));
         assertAll(() -> assertEquals(5, eqObjects4.size(), "Should have 5 equivalent objects in 2016"),
                 () -> assertTrue(eqObjects4.contains(obj9Individual), "Should have Obj9"),
-                () -> assertTrue(!eqObjects4.contains(obj6Individual), "Should not have Obj6"));
+                () -> assertFalse(eqObjects4.contains(obj6Individual), "Should not have Obj6"));
 
         final List<OWLNamedIndividual> eqObjects56 = unionWalker.getEquivalentIndividuals(EqualityTestClass.class, Arrays.asList(obj5Individual, obj6Individual), LocalDate.of(2016, 3, 11));
         assertAll(() -> assertEquals(1, eqObjects56.size(), "Should only have 1 equivalent object"),
@@ -155,7 +153,7 @@ public class EqualityTests extends AbstractReasonerTest {
         final List<OWLNamedIndividual> eqObjects2013 = unionWalker.getEquivalentIndividuals(EqualityTestClass.class, Arrays.asList(obj7Individual, obj8Individual, obj3Individual, obj4Individual, obj9Individual), LocalDate.of(2013, 3, 11));
         assertAll(() -> assertEquals(5, eqObjects2013.size(), "Should have equivalent objects in 2013"),
                 () -> assertTrue(eqObjects2013.contains(obj2Individual), "Should have obj2 as an equivalent object"),
-                () -> assertTrue(!eqObjects2013.contains(obj7Individual), "Obj7 should not be a possible option"));
+                () -> assertFalse(eqObjects2013.contains(obj7Individual), "Obj7 should not be a possible option"));
 
 //        2016 -> 2012
         final List<OWLNamedIndividual> eqObjects2012 = unionWalker.getEquivalentIndividuals(EqualityTestClass.class, Arrays.asList(obj7Individual, obj8Individual, obj3Individual, obj4Individual, obj9Individual), LocalDate.of(2012, 3, 11));
@@ -195,7 +193,7 @@ public class EqualityTests extends AbstractReasonerTest {
 
 //        Try with an error
         final Optional<List<EqualityTestClass>> obj29Error = this.reasoner.getEquivalentObjects(EqualityTestClass.class, Arrays.asList(obj2Individual.getIRI(), obj9Individual.getIRI()), LocalDate.of(2014, 3, 11));
-        assertTrue(!obj29Error.isPresent(), "Should have empty optional due to error");
+        assertFalse(obj29Error.isPresent(), "Should have empty optional due to error");
 
     }
 
@@ -206,14 +204,10 @@ public class EqualityTests extends AbstractReasonerTest {
         List<TestClasses.ESRIPolygonTest> splitObjects = new ArrayList<>();
 //        Read in the individuals
         final InputStream originalStream = EqualityTestClass.class.getClassLoader().getResourceAsStream("98103.csv");
-        final BufferedReader originalReader = new BufferedReader(new InputStreamReader(originalStream, StandardCharsets.UTF_8));
-        try {
+        try (originalStream; BufferedReader originalReader = new BufferedReader(new InputStreamReader(originalStream, StandardCharsets.UTF_8))) {
             final String[] firstLine = originalReader.readLine().split(";");
             originalObject = new TestClasses.ESRIPolygonTest(Integer.parseInt(firstLine[0]), (Polygon) GeometryEngine.geometryFromWkt(firstLine[1], 0, Geometry.Type.Polygon), LocalDate.of(2001, 1, 1));
             splitObjects.add(originalObject);
-        } finally {
-            originalReader.close();
-            originalStream.close();
         }
 
 //        Read in the dissolved ones
@@ -236,14 +230,10 @@ public class EqualityTests extends AbstractReasonerTest {
         final TestClasses.ESRIPolygonTest northSeattle;
         List<TestClasses.ESRIPolygonTest> nsUnionObjects = new ArrayList<>();
         final InputStream northSeattleIS = EqualityTestClass.class.getClassLoader().getResourceAsStream("northseattle.csv");
-        final BufferedReader northSeattleReader = new BufferedReader(new InputStreamReader(northSeattleIS, StandardCharsets.UTF_8));
-        try {
+        try (northSeattleIS; BufferedReader northSeattleReader = new BufferedReader(new InputStreamReader(northSeattleIS, StandardCharsets.UTF_8))) {
             final String[] firstLine = northSeattleReader.readLine().split(";");
             northSeattle = new TestClasses.ESRIPolygonTest(Integer.parseInt(firstLine[0]), (Polygon) GeometryEngine.geometryFromWkt(firstLine[1], 0, Geometry.Type.Polygon), LocalDate.of(2002, 1, 1));
             nsUnionObjects.add(northSeattle);
-        } finally {
-            northSeattleReader.close();
-            northSeattleIS.close();
         }
 
         final SharedTestUtils.ITestClassConstructor<TestClasses.ESRIPolygonTest, String> esriSplitConstructor = (line -> {
