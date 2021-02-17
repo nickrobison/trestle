@@ -78,34 +78,34 @@ public class IntegrationEvaluator {
         }
 
 //        Create a progress base
-        final ProgressBar pb = new ProgressBar("Analyzing Individuals:", results.size());
-        pb.start();
+        Set<AlgorithmResult> orphanedResults;
+        try (ProgressBar pb = new ProgressBar("Analyzing Individuals:", results.size())) {
 
 //        Now, process the results
 
-        Set<AlgorithmResult> orphanedResults = new HashSet<>();
-        Set<TrestleIndividual> orphanedIndividuals = new HashSet<>();
+            orphanedResults = new HashSet<>();
+            Set<TrestleIndividual> orphanedIndividuals = new HashSet<>();
 
-        for (AlgorithmResult result : results) {
-            try {
-                final TrestleIndividual trestleIndividual = this.reasoner.getTrestleIndividual(result.getID());
-                final Optional<String> anyRelation = trestleIndividual.getRelations()
-                        .stream()
-                        .map(TrestleRelation::getType)
-//                    Split Filter
-                        .filter(relation -> (relation.contains("SPLIT") || relation.contains("MERGE")))
-                        .findAny();
-                if (!anyRelation.isPresent()) {
-                    orphanedResults.add(result);
-                    orphanedIndividuals.add(trestleIndividual);
+            for (AlgorithmResult result : results) {
+                try {
+                    final TrestleIndividual trestleIndividual = this.reasoner.getTrestleIndividual(result.getID());
+                    final Optional<String> anyRelation = trestleIndividual.getRelations()
+                            .stream()
+                            .map(TrestleRelation::getType)
+    //                    Split Filter
+                            .filter(relation -> (relation.contains("SPLIT") || relation.contains("MERGE")))
+                            .findAny();
+                    if (!anyRelation.isPresent()) {
+                        orphanedResults.add(result);
+                        orphanedIndividuals.add(trestleIndividual);
+                    }
+                } catch (TrestleMissingIndividualException e) {
+                    System.err.println(String.format("Could not find %s", e.getIndividual()));
+    //                Just don't fail
                 }
-            } catch (TrestleMissingIndividualException e) {
-                System.err.println(String.format("Could not find %s", e.getIndividual()));
-//                Just don't fail
+                pb.step();
             }
-            pb.step();
         }
-        pb.stop();
 
         System.out.println(String.format("========== (%s) Orphaned ADM2 Entities=======", orphanedResults.size()));
         orphanedResults
