@@ -197,8 +197,8 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
     }
 
     @Override
-    public Completable writeObjectRelationship(Object subject, Object object, ObjectRelation relation) {
-        return this.writeObjectProperty(subject, object, df.getOWLObjectProperty(relation.getIRI()));
+    public Completable writeObjectRelationship(Object subject, Object object, ObjectRelation relation, @Nullable TrestleTransaction transaction) {
+        return this.writeObjectProperty(subject, object, df.getOWLObjectProperty(relation.getIRI()), transaction);
     }
 
     @Override
@@ -701,16 +701,17 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
      * @param subject  - Java {@link Object} to write as subject of assertion
      * @param object   - Java {@link Object} to write as object of assertion
      * @param property - {@link OWLObjectProperty} to assert between the two objects
+     * @param transaction - {@link TrestleTransaction} optional transaction to continue with
      * @return {@link Completable} - when finished
      */
-    private Completable writeObjectProperty(Object subject, Object object, OWLObjectProperty property) {
+    private Completable writeObjectProperty(Object subject, Object object, OWLObjectProperty property, @Nullable TrestleTransaction transaction) {
         logger.debug("Writing relationship {} between {} (subject) and {} (object)", property, subject, object);
         final OWLNamedIndividual subjectIndividual = this.classParser.getIndividual(subject);
         final OWLNamedIndividual objectIndividual = this.classParser.getIndividual(object);
         final OWLObjectPropertyAssertionAxiom objectRelationshipAssertion = df.getOWLObjectPropertyAssertionAxiom(property,
                 subjectIndividual,
                 objectIndividual);
-        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(transaction, true);
         return this.ontology.writeIndividualObjectProperty(objectRelationshipAssertion)
                 .doOnError(err -> this.ontology.returnAndAbortTransaction(trestleTransaction))
                 .doOnComplete(() -> this.ontology.returnAndCommitTransaction(trestleTransaction));

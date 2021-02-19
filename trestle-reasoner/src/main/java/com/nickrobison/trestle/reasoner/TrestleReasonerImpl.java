@@ -4,7 +4,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.nickrobison.metrician.Metrician;
-import com.nickrobison.trestle.common.TrestlePair;
 import com.nickrobison.trestle.exporter.ITrestleExporter;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.ReasonerPrefix;
@@ -32,7 +31,6 @@ import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentE
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
-import com.nickrobison.trestle.reasoner.engines.temporal.TemporalComparisonReport;
 import com.nickrobison.trestle.reasoner.engines.temporal.TemporalEngine;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
@@ -453,8 +451,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public <T extends @NonNull Object> Flowable<T> spatialIntersectObject(T inputObject, double buffer, @Nullable Temporal temporalAt, Temporal dbAt) {
-        return this.spatialEngine.spatialIntersectObject(inputObject, buffer, temporalAt, null);
+    public <T extends @NonNull Object> Flowable<T> spatialIntersectObject(T inputObject, double buffer, @Nullable Temporal temporalAt, Temporal dbAt, @Nullable TrestleTransaction transaction) {
+        return this.spatialEngine.spatialIntersectObject(inputObject, buffer, temporalAt, null, transaction);
     }
 
     @Override
@@ -463,8 +461,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public <T extends @NonNull Object> Flowable<T> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit, Temporal temporalAt, Temporal dbAt) {
-        return this.spatialEngine.spatialIntersectObject(inputObject, buffer, bufferUnit, temporalAt, null);
+    public <T extends @NonNull Object> Flowable<T> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit, Temporal temporalAt, Temporal dbAt, @Nullable TrestleTransaction transaction) {
+        return this.spatialEngine.spatialIntersectObject(inputObject, buffer, bufferUnit, temporalAt, null, transaction);
     }
 
     @Override
@@ -478,8 +476,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public <T extends @NonNull Object> Flowable<T> spatialIntersect(Class<T> clazz, String wkt, double buffer, Unit<Length> bufferUnit, Temporal validAt, Temporal dbAt) {
-        return this.spatialEngine.spatialIntersect(clazz, wkt, buffer, bufferUnit, validAt, null);
+    public <T extends @NonNull Object> Flowable<T> spatialIntersect(Class<T> clazz, String wkt, double buffer, Unit<Length> bufferUnit, Temporal validAt, Temporal dbAt, @Nullable TrestleTransaction transaction) {
+        return this.spatialEngine.spatialIntersect(clazz, wkt, buffer, bufferUnit, validAt, null, transaction);
     }
 
     @Override
@@ -563,8 +561,8 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public Completable writeObjectRelationship(Object subject, Object object, ObjectRelation relation) {
-        return this.objectWriter.writeObjectRelationship(subject, object, relation);
+    public Completable writeObjectRelationship(Object subject, Object object, ObjectRelation relation, @Nullable TrestleTransaction transaction) {
+        return this.objectWriter.writeObjectRelationship(subject, object, relation, transaction);
     }
 
     @Override
@@ -705,161 +703,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     public <T> Completable calculateSpatialAndTemporalRelationships(Class<T> clazz, String individual, @Nullable Temporal validAt) throws TrestleClassException, MissingOntologyEntity {
         final RelationCalculator<T> calculator = new RelationCalculator<T>(ontology, this.reasonerPrefix, this.objectReader, this.objectWriter, this.spatialEngine, this.relationTracker, this.temporalEngine, this.trestleParser, clazz, individual, validAt);
         return calculator.calculate();
-//        final IRI individualIRI = parseStringToIRI(this.reasonerPrefix, individual);
-//
-////        Read the object first
-//        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
-//        return this.objectReader.readTrestleObject(clazz, individual, validAt, null)
-//                .flatMapCompletable(trestleObject -> {
-//                    return this.spatialEngine.spatialIntersectObject(trestleObject, 1, validAt, null)
-//                            .filter(object -> {
-//                                final IRI intersectedIRI = this.trestleParser.classParser.getIndividual(object).getIRI();
-////                        If we've already computed these two, don't do them again.
-////                        Or, if the objects are the same, skip them
-//                                if (this.relationTracker.hasRelation(individualIRI, intersectedIRI) || intersectedIRI.equals(individualIRI)) {
-//                                    logger.debug("Already computed relationships between {} and {}", individualIRI, intersectedIRI);
-//                                    return false;
-//                                }
-//                                return true;
-//                            })
-//                            .map(intersectedObject -> {
-//                                logger.debug("Writing relationships between {} and {}", individualIRI, this.trestleParser.classParser.getIndividual(intersectedObject));
-//                                final SpatialComparisonReport spatialComparisonReport = this.compareTrestleObjects(trestleObject, intersectedObject, 0.9);
-//                                final TemporalComparisonReport temporalComparisonReport = this.temporalEngine.compareObjects(trestleObject, intersectedObject);
-//                                return new TrestlePair<>(intersectedObject, new TrestlePair<>(spatialComparisonReport, temporalComparisonReport));
-//                            })
-//                            .filter(Objects::nonNull)
-//                            .filter(pair -> !pair.getRight().getLeft().getRelations().isEmpty())
-//                            .flatMapCompletable(cPair -> {
-//                                return Completable.complete();
-////                                final T intersectedObject = cPair.getLeft();
-////                                final SpatialComparisonReport spatialComparisonReport = cPair.getRight().getLeft();
-////                                final TemporalComparisonReport temporalComparisonReport = cPair.getRight().getRight();
-////                                final IRI intersectedObjectID = parseStringToIRI(this.reasonerPrefix, spatialComparisonReport.getObjectBID());
-////
-////                                //                Write the relationships
-////                                final Completable relationsCompletable = Observable.fromIterable(spatialComparisonReport.getRelations())
-////                                        .flatMapCompletable(relation -> {
-////                                            logger.trace("Writing spatial relationship {}", relation);
-////                                            return this.writeObjectRelationship(trestleObject, intersectedObject, relation);
-////                                        });
-////
-////                                final Completable spatialComparisonCompletable = Single.just(spatialComparisonReport.getSpatialOverlap())
-////                                        .flatMapMaybe(overlap -> {
-////                                            if (overlap.isPresent()) {
-////                                                return Maybe.just(overlap);
-////                                            }
-////                                            return Maybe.empty();
-////                                        })
-////                                        .map(Optional::get)
-////                                        .flatMapCompletable(overlap -> {
-////                                            logger.trace("Writing spatial overlaps {}", overlap);
-////                                            return this.writeSpatialOverlap(trestleObject, intersectedObject, overlap);
-////                                        });
-////
-////
-//////                Write overlaps
-//////                                spatialComparisonReport.getSpatialOverlap().ifPresent(overlap -> {
-//////                                    logger.debug("Writing spatial overlap");
-//////                                    this.writeSpatialOverlap(trestleObject, intersectedObject, overlap);
-//////                                });
-////
-////                                final Completable temporalCompletable = Observable.fromIterable(temporalComparisonReport.getRelations())
-////                                        .flatMapCompletable(tRelation -> {
-////                                            logger.debug("Writing temporal relationship {}", tRelation);
-////                                            return this.writeObjectRelationship(trestleObject, intersectedObject, tRelation);
-////                                        });
-////
-////                                //            Temporal relations
-//////                                temporalComparisonReport.getRelations().forEach(tRelation -> {
-//////                                    logger.debug("Writing temporal relationship {}", tRelation);
-//////                                    this.writeObjectRelationship(trestleObject, intersectedObject, tRelation);
-//////                                });
-////                                return Completable.mergeArray(relationsCompletable, spatialComparisonCompletable, temporalCompletable)
-////                                        .andThen(Completable.defer(() -> {
-////                                            this.relationTracker.addRelation(individualIRI, intersectedObjectID);
-////                                            return Completable.complete();
-////                                        }));
-//                            });
-//                })
-//                .doOnComplete(() -> this.ontology.returnAndCommitTransaction(trestleTransaction))
-//                .doOnError(error -> this.ontology.returnAndAbortTransaction(trestleTransaction));
-
-//
-//        final T trestleObject = this.objectReader.readTrestleObject(clazz, individual, validAt, null).blockingGet();
-////        Intersect it
-//        final Optional<List<T>> intersectedObjects = Optional.of(this.spatialEngine.spatialIntersectObject(trestleObject, 1, validAt, null).toList().blockingGet());
-////        Now, compute the relationships (I'm fine doing this on an alternate thread, but it should return a completable future, rather than blocking the thread
-//        // TODO(nickrobison): TRESTLE-733 - Make this better with RxJava
-//        if (intersectedObjects.isPresent()) {
-//            final List<CompletableFuture<@Nullable TrestlePair<T, TrestlePair<SpatialComparisonReport, TemporalComparisonReport>>>> comparisonFutures = intersectedObjects.get()
-//                    .stream()
-//                    .map(intersectedObject -> CompletableFuture.supplyAsync(() -> {
-//                        final IRI intersectedIRI = this.trestleParser.classParser.getIndividual(intersectedObject).getIRI();
-////                        If we've already computed these two, don't do them again.
-////                        Or, if the objects are the same, skip them
-//                        if (this.relationTracker.hasRelation(individualIRI, intersectedIRI) || intersectedIRI.equals(individualIRI)) {
-//                            logger.debug("Already computed relationships between {} and {}", individualIRI, intersectedIRI);
-//                            return null;
-//                        }
-//                        logger.debug("Writing relationships between {} and {}", individualIRI, this.trestleParser.classParser.getIndividual(intersectedObject));
-//                        final SpatialComparisonReport spatialComparisonReport = this.compareTrestleObjects(trestleObject, intersectedObject, 0.9);
-//                        final TemporalComparisonReport temporalComparisonReport = this.temporalEngine.compareObjects(trestleObject, intersectedObject);
-//                        return new TrestlePair<>(intersectedObject, new TrestlePair<>(spatialComparisonReport, temporalComparisonReport));
-//                    }, this.comparisonThreadPool))
-//                    .collect(Collectors.toList());
-//
-//            final CompletableFuture<List<@Nullable TrestlePair<T, TrestlePair<SpatialComparisonReport, TemporalComparisonReport>>>> comparisonFuture = sequenceCompletableFutures(comparisonFutures);
-//
-//
-////            Write all the relationships in a single transaction
-////            TODO(nickrobison): This should not be on the main thread.
-//
-//            try {
-////                Filter out null objects and those that have no spatial interactions
-//                final List<@Nullable TrestlePair<T, TrestlePair<SpatialComparisonReport, TemporalComparisonReport>>> comparisons = comparisonFuture
-//                        .get()
-//                        .stream()
-//                        .filter(Objects::nonNull)
-//                        .filter(pair -> !pair.getRight().getLeft().getRelations().isEmpty())
-//                        .collect(Collectors.toList());
-//
-//                comparisons.forEach(cPair -> {
-//                    final T intersectedObject = cPair.getLeft();
-//                    final SpatialComparisonReport spatialComparisonReport = cPair.getRight().getLeft();
-//                    final TemporalComparisonReport temporalComparisonReport = cPair.getRight().getRight();
-//                    final IRI intersectedObjectID = parseStringToIRI(this.reasonerPrefix, spatialComparisonReport.getObjectBID());
-//
-//                    //                Write the relationships
-//                    spatialComparisonReport.getRelations().forEach(relation -> {
-//                        logger.trace("Writing spatial relationship {}", relation);
-//                        this.writeObjectRelationship(trestleObject, intersectedObject, relation);
-//                    });
-//
-////                Write overlaps
-//                    spatialComparisonReport.getSpatialOverlap().ifPresent(overlap -> {
-//                        logger.debug("Writing spatial overlap");
-//                        this.writeSpatialOverlap(trestleObject, intersectedObject, overlap);
-//                    });
-//
-//                    //            Temporal relations
-//                    temporalComparisonReport.getRelations().forEach(tRelation -> {
-//                        logger.debug("Writing temporal relationship {}", tRelation);
-//                        this.writeObjectRelationship(trestleObject, intersectedObject, tRelation);
-//                    });
-//                    this.relationTracker.addRelation(individualIRI, intersectedObjectID);
-//
-//                });
-//                this.ontology.returnAndCommitTransaction(trestleTransaction);
-//            } catch (InterruptedException e) {
-//                logger.error("Interrupted while computing relationships for {}", individualIRI, e);
-//                Thread.currentThread().interrupt();
-//                this.ontology.returnAndAbortTransaction(trestleTransaction);
-//            } catch (ExecutionException e) {
-//                logger.error("Cannot compute relationships for {}", individualIRI, ExceptionUtils.getRootCause(e));
-//                this.ontology.returnAndAbortTransaction(trestleTransaction);
-//            }
-//        }
     }
 
     @Override

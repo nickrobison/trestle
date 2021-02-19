@@ -3,6 +3,7 @@ package com.nickrobison.trestle.reasoner.engines.object;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
+import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.events.TrestleEventType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import io.reactivex.rxjava3.core.Completable;
@@ -92,9 +93,10 @@ public interface ITrestleObjectWriter {
      *  @param subject  - Java {@link Object} to write as subject of relationship
      * @param object   - Java {@link Object} to write as object of relationship
      * @param relation - {@link ObjectRelation} between the two object
+     * @param transaction
      * @return
      */
-    Completable writeObjectRelationship(Object subject, Object object, ObjectRelation relation);
+    Completable writeObjectRelationship(Object subject, Object object, ObjectRelation relation, @Nullable TrestleTransaction transaction);
 
     /**
      * Create a spatial overlap association between two objects.

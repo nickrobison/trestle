@@ -9,7 +9,6 @@ import com.nickrobison.trestle.types.relations.ObjectRelation;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.functions.Supplier;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Geometry;
@@ -22,7 +21,6 @@ import org.semanticweb.owlapi.model.OWLObjectPropertyAssertionAxiom;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import static com.nickrobison.trestle.common.StaticIRI.hasRelationIRI;
@@ -64,9 +62,9 @@ public class CollectionEnginesTest extends AbstractReasonerTest {
         assertEquals(4, this.reasoner.getCollections().toList().blockingGet().size(), "Should have all the collections and the demo");
 
         //        Add a relation between one and two
-        this.reasoner.writeObjectRelationship(first, second, ObjectRelation.SPATIAL_MEETS).blockingAwait();
+        this.reasoner.writeObjectRelationship(first, second, ObjectRelation.SPATIAL_MEETS, null).blockingAwait();
 //        And one and three
-        this.reasoner.writeObjectRelationship(first, third, ObjectRelation.SPATIAL_MEETS).blockingAwait();
+        this.reasoner.writeObjectRelationship(first, third, ObjectRelation.SPATIAL_MEETS, null).blockingAwait();
 
 //        Check for adjacency
         assertAll(() -> assertTrue(this.reasoner.collectionsAreAdjacent(FIRST_COLLECTION, SECOND_COLLECTION, 0.5).blockingGet(), "First and second should be adjacent"),

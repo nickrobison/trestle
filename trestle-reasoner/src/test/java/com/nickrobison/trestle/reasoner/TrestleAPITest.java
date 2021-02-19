@@ -23,7 +23,6 @@ import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import java.io.File;
 import java.io.IOException;
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -69,8 +68,8 @@ public class TrestleAPITest extends AbstractReasonerTest {
             }
         });
 //        Try to write some relations between two objects
-        reasoner.writeObjectRelationship(classObjects.get(1), classObjects.get(0), ObjectRelation.SPATIAL_MEETS).blockingAwait();
-        reasoner.writeObjectRelationship(classObjects.get(1), classObjects.get(3), ObjectRelation.DURING).blockingAwait();
+        reasoner.writeObjectRelationship(classObjects.get(1), classObjects.get(0), ObjectRelation.SPATIAL_MEETS, null).blockingAwait();
+        reasoner.writeObjectRelationship(classObjects.get(1), classObjects.get(3), ObjectRelation.DURING, null).blockingAwait();
 
         classObjects.parallelStream().forEach(object -> {
             final OWLNamedIndividual owlNamedIndividual = tp.classParser.getIndividual(object);
@@ -204,7 +203,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
         assertEquals(ancuabe, ancuabe2, "Should be equal");
 
 //        Check the spatial intersection
-        List<@NonNull Object> intersectedObjects = reasoner.spatialIntersectObject(ancuabe1, 100.0, OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null).toList().blockingGet();
+        List<@NonNull Object> intersectedObjects = reasoner.spatialIntersectObject(ancuabe1, 100.0, OffsetDateTime.of(LocalDate.of(1990, 3, 26).atStartOfDay(), ZoneOffset.UTC), null, null).toList().blockingGet();
         assertTrue(intersectedObjects.size() > 0, "Should have more than 1 object");
 //
 ////        Big intersection

@@ -302,7 +302,7 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
             // do something here
             logger.info("found approximate equality between GAULObjects {} and {}", newGAULObject.getID(), matchedObject.getID());
 //            Write a spatial equals
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.SPATIAL_EQUALS);
+            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.SPATIAL_EQUALS, );
         }
 
 //         Spatial interaction
@@ -324,7 +324,7 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
                 .getRelations()
                 .stream()
                 .filter(relation -> !relation.equals(ObjectRelation.SPATIAL_EQUALS))
-                .forEach(relation -> reasoner.writeObjectRelationship(newGAULObject, matchedObject, relation));
+                .forEach(relation -> reasoner.writeObjectRelationship(newGAULObject, matchedObject, relation, ));
 
 //        Try it in the other direction
         final SpatialComparisonReport inverseSpatialReport = this.reasoner.compareTrestleObjects(matchedObject, newGAULObject, configEqualityCutoff);
@@ -334,20 +334,20 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
                 .getRelations()
                 .stream()
                 .filter(relation -> !relation.equals(ObjectRelation.SPATIAL_EQUALS))
-                .forEach(relation -> reasoner.writeObjectRelationship(matchedObject, newGAULObject, relation));
+                .forEach(relation -> reasoner.writeObjectRelationship(matchedObject, newGAULObject, relation, ));
 
 //        Temporals?
         final TemporalComparisonReport temporalComparisonReport = this.reasoner.getTemporalEngine().compareObjects(newGAULObject, matchedObject);
         temporalComparisonReport
                 .getRelations()
-                .forEach(relation -> reasoner.writeObjectRelationship(newGAULObject, matchedObject, relation));
+                .forEach(relation -> reasoner.writeObjectRelationship(newGAULObject, matchedObject, relation, ));
 
 //        Try in the other direction
 
         final TemporalComparisonReport inverseTemporalRelations = this.reasoner.getTemporalEngine().compareObjects(matchedObject, newGAULObject);
         inverseTemporalRelations
                 .getRelations()
-                .forEach(relation -> reasoner.writeObjectRelationship(matchedObject, newGAULObject, relation));
+                .forEach(relation -> reasoner.writeObjectRelationship(matchedObject, newGAULObject, relation, ));
 
 ////        Does one start the other?
 //        if (TemporalUtils.compareTemporals(newGAULObject.getStartDate(), matchedObject.getStartDate()) == 0) {

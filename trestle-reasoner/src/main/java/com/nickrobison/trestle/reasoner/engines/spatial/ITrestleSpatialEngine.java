@@ -5,6 +5,7 @@ import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentE
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
+import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -143,9 +144,10 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      * @param buffer      - Additional buffer to build around object. 0 is no buffer (defaults to {@link si.uom.SI#METRE})
      * @param temporalAt  - Temporal of intersecting time point
      * @param dbAt        - Optional {@link Temporal} to specify database time
+     * @param transaction
      * @return - {@link Optional} {@link List} of {@link T}
      */
-    <T extends @NonNull Object> Flowable<T> spatialIntersectObject(T inputObject, double buffer, @Nullable Temporal temporalAt, @Nullable Temporal dbAt);
+    <T extends @NonNull Object> Flowable<T> spatialIntersectObject(T inputObject, double buffer, @Nullable Temporal temporalAt, @Nullable Temporal dbAt, @Nullable TrestleTransaction transaction);
 
     /**
      * Spatial Intersect Object with records in the database valid at that given time
@@ -157,9 +159,10 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      * @param bufferUnit  - {@link Unit} of {@link Length} buffer units
      * @param temporalAt  - Temporal of intersecting time point
      * @param dbAt        - Optional {@link Temporal} to specify database time
+     * @param transaction
      * @return - {@link Optional} {@link List} of {@link T}
      */
-    <T extends @NonNull Object> Flowable<T> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit, @Nullable Temporal temporalAt, @Nullable Temporal dbAt);
+    <T extends @NonNull Object> Flowable<T> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit, @Nullable Temporal temporalAt, @Nullable Temporal dbAt, @Nullable TrestleTransaction transaction);
 
     /**
      * * Spatial Intersect Object with most recent records in the database
@@ -211,9 +214,10 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      * @param bufferUnit - {@link Unit} of {@link Length} buffer units
      * @param validAt    - Optional {@link Temporal} to specify intersection time
      * @param dbAt       - Optional {@link Temporal} to specify database time
+     * @param transaction
      * @return - {@link Optional} {@link List} of intersected objects of type {@link T}
      */
-    <T extends @NonNull Object> Flowable<T> spatialIntersect(Class<T> clazz, String wkt, double buffer, Unit<Length> bufferUnit, @Nullable Temporal validAt, @Nullable Temporal dbAt);
+    <T extends @NonNull Object> Flowable<T> spatialIntersect(Class<T> clazz, String wkt, double buffer, Unit<Length> bufferUnit, @Nullable Temporal validAt, @Nullable Temporal dbAt, @Nullable TrestleTransaction transaction);
 
     /**
      * Calculate {@link UnionEqualityResult} for the given {@link List} of individual IRIs

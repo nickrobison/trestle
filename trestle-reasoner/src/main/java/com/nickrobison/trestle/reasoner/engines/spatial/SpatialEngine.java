@@ -158,7 +158,7 @@ public class SpatialEngine implements ITrestleSpatialEngine {
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
         return this.ontology.executeSPARQLResults(intersectQuery)
                 .map(result -> result.unwrapIndividual("m"))
-                .flatMapSingle(individual -> this.individualEngine.getTrestleIndividual(individual.asOWLNamedIndividual()))
+                .flatMapSingle(individual -> this.individualEngine.getTrestleIndividual(individual.asOWLNamedIndividual(), trestleTransaction))
                 .doOnComplete(() -> this.ontology.returnAndCommitTransaction(trestleTransaction))
                 .doOnError(error -> this.ontology.returnAndAbortTransaction(trestleTransaction));
     }
@@ -166,50 +166,50 @@ public class SpatialEngine implements ITrestleSpatialEngine {
 
     @Override
     public <T extends @NonNull Object> Flowable<T> spatialIntersectObject(T inputObject, double buffer) {
-        return spatialIntersectObject(inputObject, buffer, SI.METRE, null, null);
+        return spatialIntersectObject(inputObject, buffer, SI.METRE, null, null, null);
     }
 
     @Override
     public <T extends @NonNull Object> Flowable<T> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit) {
-        return spatialIntersectObject(inputObject, buffer, bufferUnit, null, null);
+        return spatialIntersectObject(inputObject, buffer, bufferUnit, null, null, null);
     }
 
     @Override
-    public <T extends @NonNull Object> Flowable<T> spatialIntersectObject(T inputObject, double buffer, @Nullable Temporal temporalAt, @Nullable Temporal dbAt) {
-        return spatialIntersectObject(inputObject, buffer, SI.METRE, temporalAt, null);
+    public <T extends @NonNull Object> Flowable<T> spatialIntersectObject(T inputObject, double buffer, @Nullable Temporal temporalAt, @Nullable Temporal dbAt, @Nullable TrestleTransaction transaction) {
+        return spatialIntersectObject(inputObject, buffer, SI.METRE, temporalAt, null, transaction);
     }
 
     @Override
-    public <T extends @NonNull Object> Flowable<T> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit, @Nullable Temporal temporalAt, @Nullable Temporal dbAt) {
+    public <T extends @NonNull Object> Flowable<T> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit, @Nullable Temporal temporalAt, @Nullable Temporal dbAt, @Nullable TrestleTransaction transaction) {
         // Reproject the input object into WGS 84, which is what the underlying ontologies use
         final Geometry projectedGeom = SpatialEngineUtils.reprojectObject(inputObject, this.tp.classParser.getClassProjection(inputObject.getClass()), 4326, this.geometryCache);
         final WKTWriter writer = new WKTWriter();
         final String wkt = writer.write(projectedGeom);
         //noinspection unchecked
-        return spatialIntersect((Class<T>) inputObject.getClass(), wkt, buffer, bufferUnit, temporalAt, null);
+        return spatialIntersect((Class<T>) inputObject.getClass(), wkt, buffer, bufferUnit, temporalAt, null, transaction);
     }
 
     @Override
     public <T extends @NonNull Object> Flowable<T> spatialIntersect(Class<T> clazz, String wkt, double buffer) {
-        return spatialIntersect(clazz, wkt, buffer, SI.METRE, null, null);
+        return spatialIntersect(clazz, wkt, buffer, SI.METRE, null, null, null);
     }
 
 
     @Override
     public <T extends @NonNull Object> Flowable<T> spatialIntersect(Class<T> clazz, String wkt, double buffer, Unit<Length> bufferUnit) {
-        return spatialIntersect(clazz, wkt, buffer, bufferUnit, null, null);
+        return spatialIntersect(clazz, wkt, buffer, bufferUnit, null, null, null);
     }
 
     @Override
     public <T extends @NonNull Object> Flowable<T> spatialIntersect(Class<T> clazz, String wkt, double buffer, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
-        return spatialIntersect(clazz, wkt, buffer, SI.METRE, validAt, null);
+        return spatialIntersect(clazz, wkt, buffer, SI.METRE, validAt, null, null);
     }
 
     @Override
     @Timed(name = "spatial-intersect-timer")
     @Metered(name = "spatial-intersect-meter")
     @SuppressWarnings({"override.return.invalid"})
-    public <T extends @NonNull Object> Flowable<T> spatialIntersect(Class<T> clazz, String wkt, double buffer, Unit<Length> bufferUnit, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
+    public <T extends @NonNull Object> Flowable<T> spatialIntersect(Class<T> clazz, String wkt, double buffer, Unit<Length> bufferUnit, @Nullable Temporal validAt, @Nullable Temporal dbAt, @Nullable TrestleTransaction transaction) {
         final OWLClass owlClass = this.tp.classParser.getObjectClass(clazz);
 
         final OffsetDateTime atTemporal;
@@ -233,8 +233,7 @@ public class SpatialEngine implements ITrestleSpatialEngine {
 //        String spatialIntersection;
         logger.debug("Running spatial intersection at {}", atTemporal);
         final String spatialIntersection = qb.buildTemporalSpatialIntersection(owlClass, wktBuffer, atTemporal, dbTemporal);
-        logger.debug("Opening transaction with {} others still running. {} comitted", this.ontology.getCurrentlyOpenTransactions(), this.ontology.getCommittedTransactionCount());
-        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(transaction);
         return this.ontology.executeSPARQLResults(spatialIntersection)
                 .map(result -> IRI.create(result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID()))
                 // Once we get the intersecting object IDs, we need to combine them into a single list
@@ -242,9 +241,7 @@ public class SpatialEngine implements ITrestleSpatialEngine {
                 // Even if we return a million elements, that's probably fine because it's just a list of IDs
                 .toList()
                 .flattenStreamAsFlowable(Collection::stream)
-                .flatMapSingle(iri -> {
-                    return this.objectReader.readTrestleObject(clazz, iri, false, atTemporal, dbTemporal, trestleTransaction);
-                })
+                .flatMapSingle(iri -> this.objectReader.readTrestleObject(clazz, iri, false, atTemporal, dbTemporal, trestleTransaction))
                 .doOnComplete(() -> {
                     this.ontology.returnAndCommitTransaction(trestleTransaction);
                     logger.debug("Closing transaction, {} are still open", this.ontology.getCurrentlyOpenTransactions());

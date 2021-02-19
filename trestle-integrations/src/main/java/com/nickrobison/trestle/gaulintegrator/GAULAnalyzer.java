@@ -99,7 +99,7 @@ public class GAULAnalyzer {
         try (ProgressBar pb = new ProgressBar("Calculating Size Distribution", members.size())) {
             for (final String member : members) {
                 final TrestleObjectHeader header = this.reasoner.readObjectHeader(GAULObject.class, member).blockingGet();
-                final GAULObject gaulObject = this.reasoner.readTrestleObject(GAULObject.class, member, header.getExistsFrom(), null, ).blockingGet();
+                final GAULObject gaulObject = this.reasoner.readTrestleObject(GAULObject.class, member, header.getExistsFrom(), null, null).blockingGet();
     //            final double area = gaulObject.getShapePolygon().calculateArea2D();
                 final String wktValue = gaulObject.getPolygonAsWKT();
                 final Geometry read = new WKTReader().read(wktValue);

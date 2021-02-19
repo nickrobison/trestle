@@ -7,6 +7,7 @@ import com.nickrobison.trestle.reasoner.AbstractReasonerTest;
 import com.nickrobison.trestle.reasoner.TestClasses;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import io.reactivex.rxjava3.core.Completable;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Geometry;
@@ -16,13 +17,14 @@ import java.io.IOException;
 import java.util.List;
 
 import static com.nickrobison.trestle.SharedTestUtils.readFromShapeFiles;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Created by nickrobison on 7/25/18.
  */
 @Tag("integration")
-//@Disabled // Disabled until we can have more than one spatial test running at the same time.
+@Disabled // Disabled until we can have more than one spatial test running at the same time.
 public class AggregationEngineTests extends AbstractReasonerTest {
 
     @Test
@@ -35,7 +37,7 @@ public class AggregationEngineTests extends AbstractReasonerTest {
 
         final List<TestClasses.KCProjectionTestClass> kingCountyShapes = readFromShapeFiles("king_county/kc_tract_10.shp", kcConstructor);
         kingCountyShapes
-                .parallelStream()
+                .stream()
                 .forEach(county -> {
                     try {
                         this.reasoner.writeTrestleObject(county)
@@ -46,13 +48,13 @@ public class AggregationEngineTests extends AbstractReasonerTest {
                     }
                 });
         final KCCalculator comp = new KCCalculator();
-//
-////        Compute the adjacency graph
-//        final AggregationEngine.AdjacencyGraph<TestClasses.KCProjectionTestClass, Double> graph = this.reasoner.getAggregationEngine().buildSpatialGraph(TestClasses.KCProjectionTestClass.class,
-//                Long.toString(kingCountyShapes.get(0).getObjectid()), comp,
-//                (a) -> true, null, null).blockingGet();
-//
-//        assertFalse(graph.getEdges().isEmpty(), "Should have edges");
+
+//        Compute the adjacency graph
+        final AggregationEngine.AdjacencyGraph<TestClasses.KCProjectionTestClass, Double> graph = this.reasoner.getAggregationEngine().buildSpatialGraph(TestClasses.KCProjectionTestClass.class,
+                Long.toString(kingCountyShapes.get(0).getObjectid()), comp,
+                (a) -> true, null, null).blockingGet();
+
+        assertFalse(graph.getEdges().isEmpty(), "Should have edges");
     }
 
     @Override
