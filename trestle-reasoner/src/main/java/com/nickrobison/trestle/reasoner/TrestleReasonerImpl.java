@@ -52,7 +52,6 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Supplier;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -288,17 +287,17 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public List<TrestleResult> executeSPARQLSelect(String queryString) {
+    public Flowable<TrestleResult> executeSPARQLSelect(String queryString) {
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-        final List<TrestleResult> resultSet = this.ontology.executeSPARQLResults(queryString).toList().blockingGet();
-        this.ontology.returnAndCommitTransaction(trestleTransaction);
-        return resultSet;
+        return this.ontology.executeSPARQLResults(queryString)
+                .doOnComplete(() -> this.ontology.returnAndCommitTransaction(trestleTransaction))
+                .doOnError(error -> this.ontology.returnAndAbortTransaction(trestleTransaction));
     }
 
     @Override
-    public Set<OWLNamedIndividual> getInstances(Class inputClass) {
+    public Flowable<OWLNamedIndividual> getInstances(Class inputClass) {
         final OWLClass owlClass = trestleParser.classParser.getObjectClass(inputClass);
-        return this.ontology.getInstances(owlClass, true).collect((Supplier<HashSet<OWLNamedIndividual>>) HashSet::new, HashSet::add).blockingGet();
+        return this.ontology.getInstances(owlClass, true);
     }
 
     @Override
@@ -711,12 +710,12 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public List<String> searchForIndividual(String individualIRI) {
+    public Flowable<String> searchForIndividual(String individualIRI) {
         return searchForIndividual(individualIRI, null, null);
     }
 
     @Override
-    public List<String> searchForIndividual(String individualIRI, @Nullable String datasetClass, @Nullable Integer limit) {
+    public Flowable<String> searchForIndividual(String individualIRI, @Nullable String datasetClass, @Nullable Integer limit) {
         final OWLClass owlClass;
         if (datasetClass != null) {
             owlClass = df.getOWLClass(parseStringToIRI(reasonerPrefix, datasetClass));
@@ -726,19 +725,24 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
         final String query = qb.buildIndividualSearchQuery(individualIRI, owlClass, limit);
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-
-        try {
-            final List<String> results = ontology.executeSPARQLResults(query).toList().blockingGet()
-                    .stream()
-                    .map(result -> result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID())
-                    .collect(Collectors.toList());
-            this.ontology.returnAndCommitTransaction(trestleTransaction);
-            return results;
-        } catch (Exception e) {
-            logger.error("Problem searching for {}", individualIRI, e);
-            this.ontology.returnAndAbortTransaction(trestleTransaction);
-            return ExceptionUtils.rethrow(e);
-        }
+        return this.ontology.executeSPARQLResults(query)
+                .map(result -> result.unwrapIndividual("m"))
+                .map(OWLIndividual::toStringID)
+                .doOnComplete(() -> this.ontology.returnAndCommitTransaction(trestleTransaction))
+                .doOnError(error -> this.ontology.returnAndAbortTransaction(trestleTransaction));
+//
+//        try {
+//            final List<String> results = ontology.executeSPARQLResults(query).toList().blockingGet()
+//                    .stream()
+//                    .map(result -> result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID())
+//                    .collect(Collectors.toList());
+//            this.ontology.returnAndCommitTransaction(trestleTransaction);
+//            return results;
+//        } catch (Exception e) {
+//            logger.error("Problem searching for {}", individualIRI, e);
+//            this.ontology.returnAndAbortTransaction(trestleTransaction);
+//            return ExceptionUtils.rethrow(e);
+//        }
     }
 
     @Override
@@ -793,21 +797,17 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public Set<String> getAvailableDatasets() {
+    public Flowable<String> getAvailableDatasets() {
 
         final String datasetQuery = qb.buildDatasetQuery();
-        final List<TrestleResult> resultSet = ontology.executeSPARQLResults(datasetQuery).toList().blockingGet();
-        Set<OWLClass> datasetsInOntology = resultSet
-                .stream()
-                .map(result -> df.getOWLClass(result.getIndividual("dataset").orElseThrow(() -> new RuntimeException("dataset is null")).toStringID()))
-                .collect(Collectors.toSet());
-
-        return this.trestleParser.classRegistry
-                .getRegisteredOWLClasses()
-                .stream()
-                .filter(datasetsInOntology::contains)
-                .map(individual -> individual.getIRI().getShortForm())
-                .collect(Collectors.toSet());
+        return ontology.executeSPARQLResults(datasetQuery)
+                .map(result -> df.getOWLClass(result.unwrapIndividual("dataset").toStringID()))
+                .collect((Supplier<HashSet<OWLClass>>) HashSet::new, HashSet::add)
+                .flattenStreamAsFlowable(datasetsInOntology -> trestleParser.classRegistry
+                        .getRegisteredOWLClasses()
+                        .stream()
+                        .filter(datasetsInOntology::contains)
+                        .map(individual -> individual.getIRI().getShortForm()));
     }
 
     @Override
@@ -828,12 +828,10 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public List<String> getDatasetMembers(Class<?> clazz) {
+    public Flowable<String> getDatasetMembers(Class<?> clazz) {
         final OWLClass objectClass = this.trestleParser.classParser.getObjectClass(clazz);
-        return this.ontology.getInstances(objectClass, true).toList().blockingGet()
-                .stream()
-                .map(OWLIndividual::toStringID)
-                .collect(Collectors.toList());
+        return this.ontology.getInstances(objectClass, true)
+                .map(OWLIndividual::toStringID);
     }
 
     @Override

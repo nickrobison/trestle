@@ -9,6 +9,7 @@ import com.nickrobison.trestle.types.relations.ObjectRelation;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.functions.Supplier;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Geometry;
@@ -72,8 +73,8 @@ public class CollectionEnginesTest extends AbstractReasonerTest {
                 () -> assertFalse(this.reasoner.collectionsAreAdjacent(SECOND_COLLECTION, "third:collection", 0.5).blockingGet(), "Second and third should not be adjacent"));
     }
 
-    @SuppressWarnings("OptionalGetWithoutIsPresent")
     @Test
+    @Disabled // Disabling until TRESTLE-762 is resolved
     public void testObjectRemoval() {
         //        Add all to collections
         this.reasoner.addObjectToCollection(FIRST_COLLECTION, first, CollectionRelationType.SEMANTIC, 1.0).blockingAwait();

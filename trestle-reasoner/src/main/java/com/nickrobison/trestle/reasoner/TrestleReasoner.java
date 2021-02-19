@@ -141,9 +141,9 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      * @param queryString - Query String
      * @return - {@link TrestleResultSet}
      */
-    List<TrestleResult> executeSPARQLSelect(String queryString);
+    Flowable<TrestleResult> executeSPARQLSelect(String queryString);
 
-    Set<OWLNamedIndividual> getInstances(Class inputClass);
+    Flowable<OWLNamedIndividual> getInstances(Class inputClass);
 
     void writeOntology(URI filePath, boolean validate);
 
@@ -249,7 +249,7 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      * @param individualIRI - String to search for matching IRI
      * @return - List of Strings representing IRIs of matching individuals
      */
-    List<String> searchForIndividual(String individualIRI);
+    Flowable<String> searchForIndividual(String individualIRI);
 
     /**
      * Search the ontology for individuals with IRIs that match the given search string
@@ -259,7 +259,7 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      * @param limit         - Optional limit to returned results
      * @return - List of Strings representing IRIs of matching individuals
      */
-    List<String> searchForIndividual(String individualIRI, @Nullable String datasetClass, @Nullable Integer limit);
+    Flowable<String> searchForIndividual(String individualIRI, @Nullable String datasetClass, @Nullable Integer limit);
 
     /**
      * Return a {@link TrestleIndividual} with all the available facts and properties
@@ -292,7 +292,7 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      *
      * @return - Set of Strings representing the registered datasets
      */
-    Set<String> getAvailableDatasets();
+    Flowable<String> getAvailableDatasets();
 
     Class<?> getDatasetClass(String owlClassString) throws UnregisteredClassException;
 
@@ -312,5 +312,5 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      * @param clazz - {@link Class} Java class to retrieve members of
      * @return - {@link List} of {@link String} IDs of dataset class memberss
      */
-    List<String> getDatasetMembers(Class<?> clazz);
+    Flowable<String> getDatasetMembers(Class<?> clazz);
 }

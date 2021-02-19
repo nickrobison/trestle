@@ -29,7 +29,6 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -64,7 +63,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
             try {
                 reasoner.writeTrestleObject(object).blockingAwait();
             } catch (TrestleClassException | MissingOntologyEntity e) {
-                e.printStackTrace();
+                fail(e);
             }
         });
 //        Try to write some relations between two objects
@@ -89,7 +88,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
 
 //        Search for some matching individuals
         final IRI gaul_jts_test = IRI.create(OVERRIDE_PREFIX, "GAUL_JTS_Test");
-        List<String> individuals = reasoner.searchForIndividual("43", gaul_jts_test.toString(), null);
+        List<String> individuals = reasoner.searchForIndividual("43", gaul_jts_test.toString(), null).toList().blockingGet();
         assertEquals(1, individuals.size(), "Should only have 1 individual in the JTS class");
 
         reasoner.getMetricsEngine().exportData(new File("./target/api-test-metrics.csv"));
@@ -179,7 +178,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
         });
 
 //        Validate Results
-        final Set<OWLNamedIndividual> gaulInstances = reasoner.getInstances(TestClasses.GAULTestClass.class);
+        final List<OWLNamedIndividual> gaulInstances = reasoner.getInstances(TestClasses.GAULTestClass.class).toList().blockingGet();
         assertEquals(200, gaulInstances.size(), "Wrong number of GAUL records from instances method");
 
 //        Try to read one out.
@@ -190,7 +189,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
         assertEquals(LocalDate.of(1990, 1, 1).atStartOfDay(), ancuabe.time, "Times should match");
 
 //        Try to read out the datasets
-        final Set<String> availableDatasets = reasoner.getAvailableDatasets();
+        final List<String> availableDatasets = reasoner.getAvailableDatasets().toList().blockingGet();
         assertTrue(availableDatasets.size() > 0, "Should have dataset");
 
         String datasetClassID = availableDatasets.stream()

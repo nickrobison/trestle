@@ -259,31 +259,6 @@ public class TrestleObjectReader implements ITrestleObjectReader {
                 .firstElement()
                 .doOnComplete(() -> this.ontology.returnAndCommitTransaction(trestleTransaction))
                 .doOnError(error -> this.ontology.returnAndAbortTransaction(trestleTransaction));
-//
-//
-//        try {
-//            final String headerQuery = this.qb.buildObjectHeaderQuery(objectClass, df.getOWLNamedIndividual(individualIRI));
-//            final List<TrestleResult> trestleResultSet = this.ontology.executeSPARQLResults(headerQuery).toList().blockingGet();
-//            return trestleResultSet
-//                    .stream()
-//                    .map(result -> {
-//                        final Optional<OWLLiteral> existsToLiteral = result.getLiteral("et");
-//                        final @Nullable Temporal existsTo;
-//                        //noinspection OptionalIsPresent
-//                        if (existsToLiteral.isPresent()) {
-//                            existsTo = parseToTemporal(existsToLiteral.get(), OffsetDateTime.class);
-//                        } else {
-//                            existsTo = null;
-//                        }
-//                        return new TrestleObjectHeader(
-//                                result.unwrapIndividual("m").toStringID(),
-//                                parseToTemporal(result.unwrapLiteral("ef"), OffsetDateTime.class),
-//                                existsTo);
-//                    })
-//                    .findFirst();
-//        } finally {
-//            this.ontology.returnAndCommitTransaction(trestleTransaction);
-//        }
     }
 
     @Override
@@ -328,23 +303,6 @@ public class TrestleObjectReader implements ITrestleObjectReader {
                 .map(literal -> this.handleLiteral(clazz, datatype, literal))
                 .doOnError(err -> this.ontology.returnAndAbortTransaction(tt))
                 .doOnComplete(() -> this.ontology.returnAndCommitTransaction(tt));
-
-
-//        try {
-//            final String historyQuery = this.qb.buildFactHistoryQuery(individual, factName, start, end, db);
-//            final List<TrestleResult> resultSet = this.ontology.executeSPARQLResults(historyQuery).toList().blockingGet();
-//            final List<Object> results = resultSet
-//                    .stream()
-//                    .map(result -> result.unwrapLiteral("value"))
-//                    .map(literal -> this.handleLiteral(clazz, datatype, literal))
-//                    .collect(Collectors.toList());
-//            this.ontology.returnAndCommitTransaction(tt);
-//            return results;
-//        } catch (Exception e) {
-//            logger.error("Cannot get values for fact {} with datatype {}", factName, datatype, e);
-//            this.ontology.returnAndAbortTransaction(tt);
-//            return ExceptionUtils.rethrow(e.getCause());
-//        }
     }
 
     @Override
@@ -369,21 +327,6 @@ public class TrestleObjectReader implements ITrestleObjectReader {
                 .map(literal -> this.handleLiteral(clazz, datatype, literal))
                 .doOnError(err -> this.ontology.returnAndAbortTransaction(tt))
                 .doOnComplete(() -> this.ontology.returnAndCommitTransaction(tt));
-//
-//
-//        try {
-//            final List<Object> results = this.ontology.executeSPARQLResults(factValueQuery).toList().blockingGet()
-//                    .stream()
-//                    .map(result -> result.unwrapLiteral("o"))
-//                    .map(literal -> this.handleLiteral(clazz, datatype, literal))
-//                    .collect(Collectors.toList());
-//            this.ontology.returnAndCommitTransaction(tt);
-//            return results;
-//        } catch (Exception e) {
-//            logger.error("Cannot get values for fact {} on dataset {}", factName, datasetClass, e);
-//            this.ontology.returnAndAbortTransaction(tt);
-//            return ExceptionUtils.rethrow(e.getCause());
-//        }
     }
 
     @Override
@@ -400,38 +343,6 @@ public class TrestleObjectReader implements ITrestleObjectReader {
                 .filter(Objects::nonNull)
                 .doOnError(error -> this.ontology.returnAndAbortTransaction(tt))
                 .doOnComplete(() -> this.ontology.returnAndCommitTransaction(tt));
-
-//        try {
-//
-//            final Optional<List<OWLObjectPropertyAssertionAxiom>> objectProperties = Optional.of(this.ontology.getIndividualObjectProperty(individualIRI, relation.getIRI()).toList().blockingGet());
-//            //noinspection ConstantConditions - Will remove this soon
-//            if (objectProperties.isPresent()) {
-//                final List<T> properties = objectProperties
-//                        .get()
-//                        .stream()
-//                        .map(objectRelation -> {
-//                            final OWLNamedIndividual objectIndividual = objectRelation.getObject().asOWLNamedIndividual();
-//                            try {
-//                                return this.readTrestleObject(clazz, objectIndividual.getIRI(), false, validAt, dbAt);
-//                            } catch (NoValidStateException e) {
-//                                logger.debug("Cannot read {} at {} and {}", objectIndividual, validAt, dbAt);
-//                                return null;
-//                            }
-//                        })
-//                        .filter(Objects::nonNull)
-//                        .collect(Collectors.toList());
-//
-//                this.ontology.returnAndCommitTransaction(tt);
-//                return properties;
-//            } else {
-//                this.ontology.returnAndCommitTransaction(tt);
-//                return Collections.emptyList();
-//            }
-//        } catch (Exception e) {
-//            logger.error("Error when getting related objects for {}", individualIRI, e);
-//            this.ontology.returnAndAbortTransaction(tt);
-//            return ExceptionUtils.rethrow(e.getCause());
-//        }
     }
 
 

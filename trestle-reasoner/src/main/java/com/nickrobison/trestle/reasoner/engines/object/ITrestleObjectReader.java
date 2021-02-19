@@ -167,7 +167,7 @@ public interface ITrestleObjectReader {
      */
     Flowable<Object> sampleFactValues(Class<?> clazz, String factName, long sampleLimit);
 
-    @io.reactivex.rxjava3.annotations.NonNull Flowable<Object> sampleFactValues(Class<?> clazz, OWLDataProperty factName, long sampleLimit);
+    Flowable<Object> sampleFactValues(Class<?> clazz, OWLDataProperty factName, long sampleLimit);
 
     /**
      * Get Objects which satistify the given {@link ObjectRelation} for the specified individual
@@ -183,5 +183,5 @@ public interface ITrestleObjectReader {
      * @return - {@link List} of {@link T} objects which satisfy the given object relationship
      * @since 0.9
      */
-    @io.reactivex.rxjava3.annotations.NonNull <T> Flowable<T> getRelatedObjects(Class<T> clazz, String identifier, ObjectRelation relation, @Nullable Temporal validAt, @Nullable Temporal dbAt);
+    <T> Flowable<T> getRelatedObjects(Class<T> clazz, String identifier, ObjectRelation relation, @Nullable Temporal validAt, @Nullable Temporal dbAt);
 }

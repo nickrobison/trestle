@@ -73,7 +73,7 @@ public class AggregationEngine {
 
     }
 
-    public <T extends @NonNull Object> Optional<Geometry> aggregateDataset(Class<T> clazz, AggregationRestriction restriction, @Nullable AggregationOperation operation) {
+    public <T extends @NonNull Object> Single<Geometry> aggregateDataset(Class<T> clazz, AggregationRestriction restriction, @Nullable AggregationOperation operation) {
         final OffsetDateTime atTemporal = OffsetDateTime.now();
         final OffsetDateTime dbTemporal = OffsetDateTime.now();
 
@@ -95,70 +95,21 @@ public class AggregationEngine {
 
 
         final String intersectionQuery = buildAggregationQuery(clazz, objectClass, factIRI, factDatatype, restriction, operation, atTemporal, dbTemporal);
-
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-        try {
-//            First, do the TS intersection, to figure out a list of individuals to aggregate with
-            final CompletableFuture<Geometry> unionGeomFuture = CompletableFuture.supplyAsync(() -> {
-                final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-                final Instant start = Instant.now();
-                try {
-                    logger.debug("Performing aggregation restriction query");
-                    return this.ontology.executeSPARQLResults(intersectionQuery).toList().blockingGet();
-                } finally {
-                    logger.debug("Finished, took {} ms", Duration.between(start, Instant.now()).toMillis());
-                    this.ontology.returnAndCommitTransaction(tt);
-                }
-            }, this.aggregationPool)
-                    .thenApply(resultSet -> resultSet
-                            .stream()
-                            .map(result -> result.unwrapIndividual("m"))
-                            .map(AsOWLNamedIndividual::asOWLNamedIndividual)
-                            .collect(Collectors.toList()))
-                    .thenApply(individuals -> individuals
-                            .stream()
-                            .map(HasIRI::getIRI)
-                            .map(individual -> CompletableFuture.supplyAsync(() -> {
-                                final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
-                                try {
-                                    return this.reader.readTrestleObject(clazz, individual, false, null, null, tt);
-                                } catch (NoValidStateException e) {
-                                    logger.warn("Cannot read {}", individual, e);
-                                    return null;
-                                } finally {
-                                    this.ontology.returnAndCommitTransaction(tt);
-                                }
-                            }, this.aggregationPool))
-                            .collect(Collectors.toList()))
-                    .thenCompose(LambdaUtils::sequenceCompletableFutures)
-                    .thenApply((objects) -> {
-                        logger.debug("Intersection complete, performing union with {} objects", objects.size());
-                        return objects
-                                .stream()
-                                .filter(Objects::nonNull)
-                                .map((obj) -> SpatialEngineUtils.buildObjectGeometry(obj, classProjection))
-                                .collect(Collectors.toList());
-                    })
-                    .thenApply((geoms) -> {
-                        logger.debug("Performing actual spatial union.");
-                        final List<Polygon> jtsExteriorRings = SpatialEngineUtils.getJTSExteriorRings(geoms, classProjection);
-                        return new GeometryCollection(jtsExteriorRings.toArray(new Geometry[0]), new GeometryFactory(new PrecisionModel(), classProjection)).union();
-                    });
-//            Now we need to combine everything into a multi geometry
-
-
-            final Geometry unionGeom = unionGeomFuture.get();
-            this.ontology.returnAndCommitTransaction(trestleTransaction);
-            return Optional.of(unionGeom);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            this.ontology.returnAndAbortTransaction(trestleTransaction);
-            return Optional.empty();
-        } catch (ExecutionException e) {
-            this.ontology.returnAndAbortTransaction(trestleTransaction);
-            e.printStackTrace();
-            return Optional.empty();
-        }
+        return this.ontology.executeSPARQLResults(intersectionQuery)
+                .map(result -> result.unwrapIndividual("m"))
+                .map(AsOWLNamedIndividual::asOWLNamedIndividual)
+                .map(HasIRI::getIRI)
+                .flatMapSingle(individual -> this.reader.readTrestleObject(clazz, individual, false, null, null, trestleTransaction))
+                .map((obj) -> SpatialEngineUtils.buildObjectGeometry(obj, classProjection))
+                .toList()
+                .map(geoms -> {
+                    logger.debug("Performing actual spatial union.");
+                    final List<Polygon> jtsExteriorRings = SpatialEngineUtils.getJTSExteriorRings(geoms, classProjection);
+                    return new GeometryCollection(jtsExteriorRings.toArray(new Geometry[0]), new GeometryFactory(new PrecisionModel(), classProjection)).union();
+                })
+                .doOnSuccess(success -> this.ontology.returnAndCommitTransaction(trestleTransaction))
+                .doOnError(error -> this.ontology.returnAndAbortTransaction(trestleTransaction));
     }
 
     /**
@@ -213,45 +164,6 @@ public class AggregationEngine {
                 .andThen(Single.just(adjacencyGraph))
                 .doOnSuccess(success -> this.ontology.returnAndCommitTransaction(tt))
                 .doOnError(error -> this.ontology.returnAndAbortTransaction(tt));
-//
-//        while (!individualQueue.isEmpty()) {
-//            final String fromID = individualQueue.poll();
-//            if (fromID == null) {
-//                continue;
-//            }
-//            visited.add(fromID);
-//
-//            try {
-////            Get the initial individual
-//
-//
-//                final T from = this.reader.readTrestleObject(clazz, fromID, validAt, dbAt).blockingGet();
-//
-//
-////            Get everything it touches
-//                final List<Edge<T, B>> relatedEdges = this.reader.getRelatedObjects(clazz, fromID, ObjectRelation.SPATIAL_MEETS, validAt, dbAt).toList().blockingGet()
-//                        .stream()
-//                        .filter(filter::filter)
-////                        Remove self
-//                        .filter(related -> !this.parser.getIndividual(related).toStringID().equals(startIRI.toString()))
-//                        .map(related -> new Edge<>(from, related, edgeCompute.compute(from, related)))
-//                        .collect(Collectors.toList());
-//
-////            Add everything to the graph
-//                relatedEdges.forEach(adjacencyGraph::addEdge);
-////                Only add things we haven't seen before
-//                relatedEdges
-//                        .stream()
-//                        .map(edge -> this.parser.getIndividual(edge.to))
-//                        .map(OWLIndividual::toStringID)
-//                        .filter(individual -> !visited.contains(individual))
-//                        .forEach(individualQueue::add);
-//            } catch (TrestleClassException | MissingOntologyEntity | NoValidStateException e) {
-//                logger.error("Can't read individual", e);
-//            }
-//        }
-//
-//        return adjacencyGraph;
     }
 
     private String buildAggregationQuery(Class<?> clazz, OWLClass datasetClass, IRI factIRI, Class<?> factDatatype, AggregationRestriction restriction, @Nullable AggregationOperation operation, OffsetDateTime atTemporal, OffsetDateTime dbTemporal) {

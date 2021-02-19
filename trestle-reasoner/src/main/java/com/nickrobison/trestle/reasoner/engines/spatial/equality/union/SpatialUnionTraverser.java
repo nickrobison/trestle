@@ -88,6 +88,7 @@ public class SpatialUnionTraverser {
 
 //        Start the transaction
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
+
         try {
 //            TemporalDirection temporalDirection = null;
             Set<STObjectWrapper> stObjects = new HashSet<>(subjects.size());
