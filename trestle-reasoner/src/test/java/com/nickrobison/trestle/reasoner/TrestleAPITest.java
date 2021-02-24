@@ -102,13 +102,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
                 .parallelStream()
                 .forEach(object -> {
                     final OWLNamedIndividual owlNamedIndividual = tp.classParser.getIndividual(object);
-                    try {
-                        reasoner.readTrestleObject(object.getClass(), owlNamedIndividual.getIRI(), false, null).blockingGet();
-                    } catch (Exception e) {
-                        if (!(e instanceof TrestleMissingIndividualException)) {
-                            fail(e);
-                        }
-                    }
+                    assertThrows(TrestleMissingIndividualException.class, () -> reasoner.readTrestleObject(object.getClass(), owlNamedIndividual.getIRI(), true, null).blockingGet());
                 });
 
 

@@ -69,14 +69,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.Temporal;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.IRIUtils.parseStringToIRI;
-import static com.nickrobison.trestle.common.LambdaUtils.sequenceCompletableFutures;
 import static com.nickrobison.trestle.common.StaticIRI.*;
 import static com.nickrobison.trestle.reasoner.utils.ConfigValidator.ValidateConfig;
 
@@ -598,6 +595,10 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                                 return this.ontology.removeIndividual(individual)
                                         .doOnComplete(() -> this.ontology.returnAndCommitTransaction(tt))
                                         .doOnError(error -> this.ontology.returnAndAbortTransaction(tt));
+                            }))
+                            .andThen(Completable.defer(() -> {
+                                this.trestleCache.deleteTrestleIndividual(individual);
+                                return Completable.complete();
                             }))
                             .doOnComplete(() -> this.ontology.returnAndCommitTransaction(transaction))
                             .doOnError(error -> this.ontology.returnAndAbortTransaction(transaction));

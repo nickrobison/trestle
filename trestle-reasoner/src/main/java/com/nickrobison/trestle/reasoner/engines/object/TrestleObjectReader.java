@@ -138,8 +138,8 @@ public class TrestleObjectReader implements ITrestleObjectReader {
                 parseTemporalToOntologyDateTime(validTemporal.getIdTemporal(), ZoneOffset.UTC),
                 parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC));
 
-//        Try from cache first
-        final boolean isCacheable = this.classRegister.isCacheable(clazz);
+//        Try from cache first, unless we've manually set the bypass
+        final boolean isCacheable = this.classRegister.isCacheable(clazz) && !bypassCache;
         @Nullable T individual = null;
         if (isCacheable) {
             individual = this.trestleCache.getTrestleObject(clazz, trestleIRI);
