@@ -189,8 +189,8 @@ public class EqualityTests extends AbstractReasonerTest {
         final @NonNull List<EqualityTestClass> obj1Empty = this.reasoner.getEquivalentObjects(EqualityTestClass.class, obj7Individual.getIRI(), LocalDate.of(2013, 3, 11)).toList().blockingGet();
         assertTrue(obj1Empty.isEmpty(), "Should have empty result set");
 
-//        Try with an error. Address with TRESTLE-763
-//        assertThrows(IllegalStateException.class, () -> this.reasoner.getEquivalentObjects(EqualityTestClass.class, Arrays.asList(obj2Individual.getIRI(), obj9Individual.getIRI()), LocalDate.of(2014, 3, 11)).toList().blockingGet());
+//        Try with an error.
+        assertThrows(IllegalStateException.class, () -> this.reasoner.getEquivalentObjects(EqualityTestClass.class, Arrays.asList(obj2Individual.getIRI(), obj9Individual.getIRI()), LocalDate.of(2014, 3, 11)).toList().blockingGet());
     }
 
     @Test

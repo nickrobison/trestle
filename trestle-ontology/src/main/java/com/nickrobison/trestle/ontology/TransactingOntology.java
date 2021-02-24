@@ -143,20 +143,12 @@ abstract class TransactingOntology implements ITrestleOntology {
 
     @Override
     public void returnAndAbortTransaction(TrestleTransaction transaction) {
-        //        If the transaction state is inherited, don't rollback
-        if (!threadTransactionInherited.get()) {
-            final TrestleTransaction trestleTransaction = threadTransactionObject.get();
-            if (trestleTransaction != null) {
-                if (trestleTransaction.equals(transaction)) {
-                    logger.trace("Transaction object {} owns transaction, aborting", transaction.getTransactionID());
-                    this.unlockAndAbort(transaction.isWriteTransaction(), Boolean.TRUE);
-                    threadTransactionObject.set(null);
-                } else {
-                    logger.trace("Transaction {} doesn't own transaction, not aborting", transaction.getTransactionID());
-                }
-            } else {
-                logger.warn("Null transaction object, transaction {} not aborting", transaction.getTransactionID());
-            }
+        if (transaction.isRoot()) {
+            logger.trace("Transaction object {} owns transaction, aborting", transaction.getTransactionID());
+            this.unlockAndAbort(transaction.isWriteTransaction(), Boolean.TRUE);
+            threadTransactionObject.set(null);
+            //                    Clear the logging context
+            MDC.remove(TRANSACTION);
         } else {
             logger.trace("Transaction {} inherited state, not aborting", transaction.getTransactionID());
         }
