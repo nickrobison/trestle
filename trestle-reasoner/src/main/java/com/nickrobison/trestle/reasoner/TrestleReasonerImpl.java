@@ -660,42 +660,49 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public <T> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, OWLNamedIndividual individual, Temporal queryTemporal) {
+    public <T> Flowable<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, OWLNamedIndividual individual, Temporal queryTemporal) {
         return this.spatialEngine.getEquivalentIndividuals(clazz, individual, queryTemporal);
     }
 
     @Override
-    public <T> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, List<OWLNamedIndividual> individual, Temporal queryTemporal) {
-        return this.spatialEngine.getEquivalentIndividuals(clazz, individual, queryTemporal);
+    public <T> Flowable<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, List<OWLNamedIndividual> individual, Temporal queryTemporal, @Nullable TrestleTransaction transaction) {
+        return this.spatialEngine.getEquivalentIndividuals(clazz, individual, queryTemporal, transaction);
     }
 
     @Override
-    public <T extends @NonNull Object> Optional<List<T>> getEquivalentObjects(Class<T> clazz, IRI individual, Temporal queryTemporal) {
+    public <T extends @NonNull Object> Flowable<T> getEquivalentObjects(Class<T> clazz, IRI individual, Temporal queryTemporal) {
         return getEquivalentObjects(clazz, Collections.singletonList(individual), queryTemporal);
     }
 
     @Override
-    public <T extends @NonNull Object> Optional<List<T>> getEquivalentObjects(Class<T> clazz, List<IRI> individuals, Temporal queryTemporal) {
+    public <T extends @NonNull Object> Flowable<T> getEquivalentObjects(Class<T> clazz, List<IRI> individuals, Temporal queryTemporal) {
         final List<OWLNamedIndividual> individualSubjects = individuals
                 .stream()
                 .map(df::getOWLNamedIndividual)
                 .collect(Collectors.toList());
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-        try {
-            final List<OWLNamedIndividual> equivalentIndividuals = this.spatialEngine.getEquivalentIndividuals(clazz, individualSubjects, queryTemporal);
-            final List<T> individualList = equivalentIndividuals
-                    .stream()
-                    .map(individual -> {
-                        return this.objectReader.readTrestleObject(clazz, individual.getIRI(), false, queryTemporal, null, trestleTransaction).blockingGet();
-                    })
-                    .collect(Collectors.toList());
-            this.ontology.returnAndCommitTransaction(trestleTransaction);
-            return Optional.of(individualList);
-        } catch (Exception e) {
-            this.ontology.returnAndAbortTransaction(trestleTransaction);
-            logger.error("Unable to get equivalent objects for {} at {}", individuals, queryTemporal, e);
-            return Optional.empty();
-        }
+        return this.spatialEngine.getEquivalentIndividuals(clazz, individualSubjects, queryTemporal, trestleTransaction)
+                .flatMapSingle(individual -> this.objectReader.readTrestleObject(clazz, individual.getIRI(), false, queryTemporal, null, trestleTransaction))
+                .doOnComplete(() -> this.ontology.returnAndCommitTransaction(trestleTransaction))
+                .doOnError(error -> this.ontology.returnAndAbortTransaction(trestleTransaction));
+//
+//
+//
+//        try {
+//            final List<OWLNamedIndividual> equivalentIndividuals = this.spatialEngine.getEquivalentIndividuals(clazz, individualSubjects, queryTemporal).toList().blockingGet();
+//            final List<T> individualList = equivalentIndividuals
+//                    .stream()
+//                    .map(individual -> {
+//                        return this.objectReader.readTrestleObject(clazz, individual.getIRI(), false, queryTemporal, null, trestleTransaction).blockingGet();
+//                    })
+//                    .collect(Collectors.toList());
+//            this.ontology.returnAndCommitTransaction(trestleTransaction);
+//            return Optional.of(individualList);
+//        } catch (Exception e) {
+//            this.ontology.returnAndAbortTransaction(trestleTransaction);
+//            logger.error("Unable to get equivalent objects for {} at {}", individuals, queryTemporal, e);
+//            return Optional.empty();
+//        }
     }
 
     @Override

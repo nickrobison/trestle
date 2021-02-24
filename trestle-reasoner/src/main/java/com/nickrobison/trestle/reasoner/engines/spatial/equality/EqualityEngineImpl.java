@@ -4,7 +4,10 @@ import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.SpatialUn
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.SpatialUnionTraverser;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
+import com.nickrobison.trestle.transactions.TrestleTransaction;
+import io.reactivex.rxjava3.core.Flowable;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,12 +53,12 @@ public class EqualityEngineImpl implements EqualityEngine {
     }
 
     @Override
-    public <T extends @NonNull Object> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, OWLNamedIndividual individual, Temporal queryTemporal) {
+    public <T extends @NonNull Object> Flowable<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, OWLNamedIndividual individual, Temporal queryTemporal) {
         return this.unionWalker.traverseUnion(clazz, individual, queryTemporal);
     }
 
     @Override
-    public <T extends @NonNull Object> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, List<OWLNamedIndividual> individual, Temporal queryTemporal) {
-        return this.unionWalker.traverseUnion(clazz, individual, queryTemporal);
+    public <T extends @NonNull Object> Flowable<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, List<OWLNamedIndividual> individual, Temporal queryTemporal, @Nullable TrestleTransaction transaction) {
+        return this.unionWalker.traverseUnion(clazz, individual, queryTemporal, transaction);
     }
 }

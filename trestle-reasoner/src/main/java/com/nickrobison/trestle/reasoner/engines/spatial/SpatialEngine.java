@@ -386,14 +386,14 @@ public class SpatialEngine implements ITrestleSpatialEngine {
 
     @Override
     @Timed
-    public <T extends @NonNull Object> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, OWLNamedIndividual individual, Temporal queryTemporal) {
+    public <T extends @NonNull Object> Flowable<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, OWLNamedIndividual individual, Temporal queryTemporal) {
         return this.equalityEngine.getEquivalentIndividuals(clazz, individual, queryTemporal);
     }
 
     @Override
     @Timed
-    public <T extends @NonNull Object> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, List<OWLNamedIndividual> individual, Temporal queryTemporal) {
-        return this.equalityEngine.getEquivalentIndividuals(clazz, individual, queryTemporal);
+    public <T extends @NonNull Object> Flowable<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, List<OWLNamedIndividual> individual, Temporal queryTemporal, @Nullable TrestleTransaction transaction) {
+        return this.equalityEngine.getEquivalentIndividuals(clazz, individual, queryTemporal, transaction);
     }
 
     /**

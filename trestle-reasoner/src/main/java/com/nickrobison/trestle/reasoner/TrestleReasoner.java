@@ -194,25 +194,25 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      * Get a {@link List} of objects that are equivalent to given individual at the given time point
      * If no objects satisfy the equality constraints and an empty {@link List} is returned
      *
+     * @param <T>           - Type parameter
      * @param clazz         - {@link Class} of input individuals
      * @param individual    - Individual {@link IRI}
      * @param queryTemporal - {@link Temporal} of query point
-     * @param <T>           - Type parameter
      * @return - {@link Optional} {@link List} of {@link T} objects
      */
-    <T extends @NonNull Object> Optional<List<T>> getEquivalentObjects(Class<T> clazz, IRI individual, Temporal queryTemporal);
+    <T extends @NonNull Object> Flowable<T> getEquivalentObjects(Class<T> clazz, IRI individual, Temporal queryTemporal);
 
     /**
      * Get a {@link List} of objects that are equivalent to given {@link List} of individuals at the given time point
      * If no objects satisfy the equality constraints and an empty {@link List} is returned
      *
+     * @param <T>           - Type parameter
      * @param clazz         - {@link Class} of input individuals
      * @param individuals   - {@link List} of individual {@link IRI}
      * @param queryTemporal - {@link Temporal} of query point
-     * @param <T>           - Type parameter
      * @return - {@link Optional} {@link List} of {@link T} objects
      */
-    <T extends @NonNull Object> Optional<List<T>> getEquivalentObjects(Class<T> clazz, List<IRI> individuals, Temporal queryTemporal);
+    <T extends @NonNull Object> Flowable<T> getEquivalentObjects(Class<T> clazz, List<IRI> individuals, Temporal queryTemporal);
 
     /**
      * Compute the spatial and temporal relationships between the given individual and any other individuals which intersect the individual.
