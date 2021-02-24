@@ -13,6 +13,7 @@ import com.nickrobison.trestle.reasoner.engines.temporal.TemporalComparisonRepor
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.types.relations.CollectionRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
+import io.reactivex.rxjava3.annotations.NonNull;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -59,7 +60,7 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
     private LocalDate configEndDate;
     private TrestleReasoner reasoner;
     private File metricsFile;
-//    Controls the granularity of the union matcher
+    //    Controls the granularity of the union matcher
     private double configEqualityCutoff;
 
     @Override
@@ -125,19 +126,19 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
 
 //            See if there's a collection that spatially intersects the object
             try {
-                final Optional<Set<String>> collectionIRIs = reasoner.STIntersectCollection(newGAULObject.getPolygonAsWKT(), 0, 0.7, null, null);
+                final @NonNull List<String> collectionIRIs = reasoner.STIntersectCollection(newGAULObject.getPolygonAsWKT(), 0, 0.7, null, null).toList().blockingGet();
 
 
 //            If true, get all the collection members
                 final String collectionIRI = String.format("%s:collection", newGAULObject.getObjectID());
-                if (!collectionIRIs.orElse(new HashSet<>()).isEmpty()) {
+                if (!collectionIRI.isEmpty()) {
                     logger.warn("{}-{}-{} has collection members", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
-                    collectionIRIs.get().forEach(collection -> processCollectionMembers(newGAULObject, matchedObjects, collection));
+                    collectionIRIs.forEach(collection -> processCollectionMembers(newGAULObject, matchedObjects, collection));
                 } else {
                     logger.warn("{}-{}-{} getting intersected objects", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
 //            If no, find objects to intersect
-                    reasoner.spatialIntersectObject(newGAULObject, 0)
-                            .ifPresent(matchedObjects::addAll);
+                    final List<GAULObject> gaulObjects = reasoner.spatialIntersectObject(newGAULObject, 0).toList().blockingGet();
+                    matchedObjects.addAll(gaulObjects);
 
 //                Go ahead the create the new collection
                     logger.info("{}-{}-{} creating new collection", newGAULObject.getGaulCode(), newGAULObject.getObjectName(), newGAULObject.getStartDate());
@@ -214,39 +215,37 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
      *
      * @param gaulObject      - input object to parse
      * @param matchCollection - Match collection to add collection members to, if we should
-     * @param collectionIRI      - String IRI of collection to retrieve membership of
+     * @param collectionIRI   - String IRI of collection to retrieve membership of
      */
     private void processCollectionMembers(GAULObject gaulObject, List<GAULObject> matchCollection, String collectionIRI) {
         //                        Here, we want to grab all the collectionIRI members
-        final Optional<List<GAULObject>> collectionMembers = reasoner.getCollectionMembers(GAULObject.class, collectionIRI, 0.0, null, gaulObject.getStartDate());
+        final @NonNull List<GAULObject> collectionMembers = reasoner.getCollectionMembers(GAULObject.class, collectionIRI, 0.0, null, gaulObject.getStartDate()).toList().blockingGet();
 
 //                        If we have collection members, process them to see if we need to check them for membership
-        if (collectionMembers.isPresent()) {
-//                      Now add the collection relations
+        //                      Now add the collection relations
 //                      Union the existing members, and see if we have any overlap
 //            We need to convert to JTS, in order to properly handle the Union.
 //                Get the exterior rings, of the input objects, in order to handle any holes
-            final List<org.locationtech.jts.geom.Polygon> exteriorRings = getExteriorRings(gaulObject);
-            final org.locationtech.jts.geom.Geometry inputGeometry = new GeometryCollection(exteriorRings.toArray(new org.locationtech.jts.geom.Geometry[0]), geometryFactory).union();
+        final List<org.locationtech.jts.geom.Polygon> exteriorRings = getExteriorRings(gaulObject);
+        final org.locationtech.jts.geom.Geometry inputGeometry = new GeometryCollection(exteriorRings.toArray(new org.locationtech.jts.geom.Geometry[0]), geometryFactory).union();
 
 //            Create a new Geometry Collection, and union it
-            List<org.locationtech.jts.geom.Polygon> exteriorPolygonsToUnion = new ArrayList<>();
-            for (GAULObject object : collectionMembers.get()) {
-                getExteriorRings(exteriorPolygonsToUnion, object);
-            }
-            final org.locationtech.jts.geom.Geometry collectionUnionGeom = new GeometryCollection(exteriorPolygonsToUnion.toArray(new org.locationtech.jts.geom.Geometry[0]), geometryFactory)
-                    .union();
+        List<org.locationtech.jts.geom.Polygon> exteriorPolygonsToUnion = new ArrayList<>();
+        for (GAULObject object : collectionMembers) {
+            getExteriorRings(exteriorPolygonsToUnion, object);
+        }
+        final org.locationtech.jts.geom.Geometry collectionUnionGeom = new GeometryCollection(exteriorPolygonsToUnion.toArray(new org.locationtech.jts.geom.Geometry[0]), geometryFactory)
+                .union();
 
-            final double unionArea = collectionUnionGeom.getArea();
-            final double inputArea = gaulObject.getShapePolygon().calculateArea2D();
-            double greaterArea = inputArea >= unionArea ? inputArea : unionArea;
+        final double unionArea = collectionUnionGeom.getArea();
+        final double inputArea = gaulObject.getShapePolygon().calculateArea2D();
+        double greaterArea = inputArea >= unionArea ? inputArea : unionArea;
 
 //            final double intersectionArea = operatorIntersection.execute(gaulObject.getShapePolygon(), exteriorGeom, inputSR, null).calculateArea2D() / greaterArea;
-            final double intersectionArea = collectionUnionGeom.intersection(inputGeometry).getArea() / greaterArea;
-            if (intersectionArea > 0.0) {
-                reasoner.addObjectToCollection(collectionIRI, gaulObject, CollectionRelationType.SPATIAL, intersectionArea);
-                matchCollection.addAll(collectionMembers.get());
-            }
+        final double intersectionArea = collectionUnionGeom.intersection(inputGeometry).getArea() / greaterArea;
+        if (intersectionArea > 0.0) {
+            reasoner.addObjectToCollection(collectionIRI, gaulObject, CollectionRelationType.SPATIAL, intersectionArea);
+            matchCollection.addAll(collectionMembers);
         }
     }
 
@@ -302,7 +301,7 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
             // do something here
             logger.info("found approximate equality between GAULObjects {} and {}", newGAULObject.getID(), matchedObject.getID());
 //            Write a spatial equals
-            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.SPATIAL_EQUALS, );
+            reasoner.writeObjectRelationship(newGAULObject, matchedObject, ObjectRelation.SPATIAL_EQUALS, null);
         }
 
 //         Spatial interaction
@@ -324,7 +323,7 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
                 .getRelations()
                 .stream()
                 .filter(relation -> !relation.equals(ObjectRelation.SPATIAL_EQUALS))
-                .forEach(relation -> reasoner.writeObjectRelationship(newGAULObject, matchedObject, relation, ));
+                .forEach(relation -> reasoner.writeObjectRelationship(newGAULObject, matchedObject, relation, null));
 
 //        Try it in the other direction
         final SpatialComparisonReport inverseSpatialReport = this.reasoner.compareTrestleObjects(matchedObject, newGAULObject, configEqualityCutoff);
@@ -334,20 +333,20 @@ public class GAULReducer extends Reducer<GAULMapperKey, MapperOutput, LongWritab
                 .getRelations()
                 .stream()
                 .filter(relation -> !relation.equals(ObjectRelation.SPATIAL_EQUALS))
-                .forEach(relation -> reasoner.writeObjectRelationship(matchedObject, newGAULObject, relation, ));
+                .forEach(relation -> reasoner.writeObjectRelationship(matchedObject, newGAULObject, relation, null));
 
 //        Temporals?
         final TemporalComparisonReport temporalComparisonReport = this.reasoner.getTemporalEngine().compareObjects(newGAULObject, matchedObject);
         temporalComparisonReport
                 .getRelations()
-                .forEach(relation -> reasoner.writeObjectRelationship(newGAULObject, matchedObject, relation, ));
+                .forEach(relation -> reasoner.writeObjectRelationship(newGAULObject, matchedObject, relation, null));
 
 //        Try in the other direction
 
         final TemporalComparisonReport inverseTemporalRelations = this.reasoner.getTemporalEngine().compareObjects(matchedObject, newGAULObject);
         inverseTemporalRelations
                 .getRelations()
-                .forEach(relation -> reasoner.writeObjectRelationship(matchedObject, newGAULObject, relation, ));
+                .forEach(relation -> reasoner.writeObjectRelationship(matchedObject, newGAULObject, relation, null));
 
 ////        Does one start the other?
 //        if (TemporalUtils.compareTemporals(newGAULObject.getStartDate(), matchedObject.getStartDate()) == 0) {

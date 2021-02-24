@@ -63,7 +63,7 @@ public class ExportResource {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         }
         try {
-            final File dataSetObjects = this.reasoner.exportDataSetObjects(datasetClass, request.getIndividuals(), dataType);
+            final File dataSetObjects = this.reasoner.exportDataSetObjects(datasetClass, request.getIndividuals(), dataType).blockingGet();
             return ok(dataSetObjects).type(responseType).build();
         } catch (IOException e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();

@@ -16,6 +16,7 @@ import com.nickrobison.trestle.server.resources.requests.DatasetValueRequest;
 import com.nickrobison.trestle.server.resources.requests.IntersectRequest;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import io.dropwizard.jersey.params.NonEmptyStringParam;
+import io.reactivex.rxjava3.annotations.NonNull;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -75,7 +76,7 @@ public class VisualizationResource {
             responseContainer = "List")
     public Response searchForIndividual(@NotNull @QueryParam("name") String name, @QueryParam("dataset") NonEmptyStringParam dataset, @QueryParam("limit") Optional<Integer> limit) {
         if (!name.equals("")) {
-            final List<String> individuals = this.reasoner.searchForIndividual(name, dataset.get().orElse(null), limit.orElse(null));
+            final List<String> individuals = this.reasoner.searchForIndividual(name, dataset.get().orElse(null), limit.orElse(null)).toList().blockingGet();
             return ok(individuals).build();
         }
         return ok(new ArrayList<String>()).build();
@@ -125,14 +126,12 @@ public class VisualizationResource {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e).build();
         }
 
-        final Optional<? extends List<?>> intersectedObjects = this.reasoner.spatialIntersect(datasetClass,
+        final @NonNull List<?> intersectedObjects = this.reasoner.spatialIntersect(datasetClass,
                 read.buffer(request.getBuffer()).toString(),
                 request.getBuffer(),
-                request.getValidAt(), null);
-        return intersectedObjects.map(list -> Response.ok(list).build()).orElseGet(() -> Response
-                .status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity("Empty response from server, something went wrong")
-                .build());
+                request.getValidAt(), null).toList().blockingGet();
+
+        return Response.ok(intersectedObjects).build();
     }
 
     @POST
@@ -150,9 +149,9 @@ public class VisualizationResource {
 //                Do a piecewise comparison for each individual
             logger.debug("Beginning piecewise comparison");
             final Instant compareStart = Instant.now();
-            final Optional<List<SpatialComparisonReport>> spatialComparisonReports = this.reasoner.compareTrestleObjects("GAUL", request.getCompare(), request.getCompareAgainst(), 4326, MATCH_THRESHOLD);
+            final @NonNull List<SpatialComparisonReport> spatialComparisonReports = this.reasoner.compareTrestleObjects("GAUL", request.getCompare(), request.getCompareAgainst(), 4326, MATCH_THRESHOLD).toList().blockingGet();
             logger.debug("Comparison took {} ms", Duration.between(compareStart, Instant.now()).toMillis());
-            spatialComparisonReports.ifPresent(comparisonReport::addAllReports);
+            comparisonReport.addAllReports(spatialComparisonReports);
 
 //            Filter out objects that don't overlap with the base individual, and do the union calculation
             final List<String> compareIndividuals = comparisonReport.getReports()
@@ -167,7 +166,7 @@ public class VisualizationResource {
             //        Look for spatial union
             logger.debug("Executing union");
             final Instant unionStart = Instant.now();
-            final Optional<UnionContributionResult> objectUnionEqualityResult = this.reasoner.calculateSpatialUnionWithContribution("GAUL", compareIndividuals, 4326, MATCH_THRESHOLD);
+            final Optional<UnionContributionResult> objectUnionEqualityResult = Optional.ofNullable(this.reasoner.calculateSpatialUnionWithContribution("GAUL", compareIndividuals, 4326, MATCH_THRESHOLD).blockingGet());
             logger.debug("Union computation took {} ms", Duration.between(unionStart, Instant.now()).toMillis());
             objectUnionEqualityResult.ifPresent(comparisonReport::setUnion);
 

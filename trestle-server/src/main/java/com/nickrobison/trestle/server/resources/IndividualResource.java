@@ -11,6 +11,7 @@ import com.nickrobison.trestle.server.modules.ManagedReasoner;
 import com.nickrobison.trestle.server.resources.requests.IntersectRequest;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
+import io.reactivex.rxjava3.annotations.NonNull;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -66,7 +67,7 @@ public class IndividualResource {
     })
     public Response getIndividual(@NotNull @QueryParam("name") String individualName) {
         try {
-            final TrestleIndividual trestleIndividual = this.reasoner.getTrestleIndividual(individualName);
+            final TrestleIndividual trestleIndividual = this.reasoner.getTrestleIndividual(individualName).blockingGet();
             return ok(this.buildIndividualFromJSON(trestleIndividual)).build();
         } catch (TrestleMissingIndividualException e) {
             return Response.status(Response.Status.NOT_FOUND).entity(String.format("Cannot find individual %s", individualName)).build();
@@ -102,21 +103,16 @@ public class IndividualResource {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e).build();
         }
 
-        final Optional<List<TrestleIndividual>> trestleIndividuals = this.reasoner.spatialIntersectIndividuals(datasetClass,
+        final @NonNull List<TrestleIndividual> trestleIndividuals = this.reasoner.spatialIntersectIndividuals(datasetClass,
                 geom.toString(),
                 request.getBuffer(),
                 request.getValidAt(),
-                request.getDatabaseAt());
-        if (trestleIndividuals.isPresent()) {
-            final List<ObjectNode> builtIndividuals = trestleIndividuals.get()
+                request.getDatabaseAt()).toList().blockingGet();
+            final List<ObjectNode> builtIndividuals = trestleIndividuals
                     .stream()
                     .map(this::buildIndividualFromJSON)
                     .collect(Collectors.toList());
             return Response.ok(builtIndividuals).build();
-        }
-        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity("Unable get intersected individuals")
-                .build();
     }
 
     private Class<?> getClassFromRequest(IntersectRequest request) throws UnregisteredClassException {

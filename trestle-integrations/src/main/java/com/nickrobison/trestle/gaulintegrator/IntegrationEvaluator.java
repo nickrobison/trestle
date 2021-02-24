@@ -88,7 +88,7 @@ public class IntegrationEvaluator {
 
             for (AlgorithmResult result : results) {
                 try {
-                    final TrestleIndividual trestleIndividual = this.reasoner.getTrestleIndividual(result.getID());
+                    final TrestleIndividual trestleIndividual = this.reasoner.getTrestleIndividual(result.getID()).blockingGet();
                     final Optional<String> anyRelation = trestleIndividual.getRelations()
                             .stream()
                             .map(TrestleRelation::getType)

@@ -92,14 +92,14 @@ public class GAULAnalyzer {
     }
 
     private void evaluateSize() throws IOException, TrestleClassException, MissingOntologyEntity, ParseException {
-        final List<String> members = this.reasoner.getDatasetMembers(GAULObject.class);
+        final List<String> members = this.reasoner.getDatasetMembers(GAULObject.class).toList().blockingGet();
 
         Map<String, Double> sizeDistribution = new HashMap<>();
 
         try (ProgressBar pb = new ProgressBar("Calculating Size Distribution", members.size())) {
             for (final String member : members) {
                 final TrestleObjectHeader header = this.reasoner.readObjectHeader(GAULObject.class, member).blockingGet();
-                final GAULObject gaulObject = this.reasoner.readTrestleObject(GAULObject.class, member, header.getExistsFrom(), null, null).blockingGet();
+                final GAULObject gaulObject = this.reasoner.readTrestleObject(GAULObject.class, member, header.getExistsFrom(), null).blockingGet();
     //            final double area = gaulObject.getShapePolygon().calculateArea2D();
                 final String wktValue = gaulObject.getPolygonAsWKT();
                 final Geometry read = new WKTReader().read(wktValue);
@@ -115,7 +115,7 @@ public class GAULAnalyzer {
     }
 
     private void objectLifetimes() throws IOException {
-        final List<String> members = this.reasoner.getDatasetMembers(GAULObject.class);
+        final List<String> members = this.reasoner.getDatasetMembers(GAULObject.class).toList().blockingGet();
 
         Map<String, Integer> lifetimes = new HashMap<>();
 
@@ -184,7 +184,7 @@ public class GAULAnalyzer {
 
             for (GAULAnalyzer.AlgorithmResult result : results) {
                 try {
-                    final TrestleIndividual trestleIndividual = this.reasoner.getTrestleIndividual(result.getID());
+                    final TrestleIndividual trestleIndividual = this.reasoner.getTrestleIndividual(result.getID()).blockingGet();
                     final Optional<String> anyRelation = trestleIndividual.getRelations()
                             .stream()
                             .map(TrestleRelation::getType)
