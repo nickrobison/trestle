@@ -65,7 +65,7 @@ public interface EqualityEngine {
      * @param clazz         - {@link Class} of generic type
      * @param individual    - {@link OWLNamedIndividual} individual to determine equality for
      * @param queryTemporal - {@link Temporal} point in time to determine equality
-     * @return - {@link List} of {@link OWLNamedIndividual}
+     * @return - {@link java.util.concurrent.Flow} of {@link OWLNamedIndividual}
      */
     <T extends @NonNull Object> Flowable<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, OWLNamedIndividual individual, Temporal queryTemporal);
 
@@ -77,8 +77,8 @@ public interface EqualityEngine {
      * @param clazz         - {@link Class} of generic type
      * @param individual    - {@link List} of {@link OWLNamedIndividual} individuals to determine equality for
      * @param queryTemporal - {@link Temporal} point in time to determine equality
-     * @param transaction
-     * @return - {@link List} of {@link OWLNamedIndividual}
+     * @param transaction - {@link TrestleTransaction} to continue with
+     * @return - {@link Flowable} of {@link OWLNamedIndividual}
      */
     <T extends @NonNull Object> Flowable<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, List<OWLNamedIndividual> individual, Temporal queryTemporal, @Nullable TrestleTransaction transaction);
 }

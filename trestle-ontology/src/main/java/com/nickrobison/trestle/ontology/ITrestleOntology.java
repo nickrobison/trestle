@@ -59,6 +59,7 @@ public interface ITrestleOntology {
      * Store an OWLNamedIndividual in the ontology from a given classAxiom
      *
      * @param owlClassAssertionAxiom - Class axiom to store in the ontology with RDF.type relation
+     * @return - {@link Completable} when finished
      */
     Completable createIndividual(OWLClassAssertionAxiom owlClassAssertionAxiom);
 
@@ -67,6 +68,7 @@ public interface ITrestleOntology {
      *
      * @param individual - OWLNamedIndividual to store in ontology
      * @param owlClass   - OWLClass to associate individual with
+     * @return - {@link Completable} when finished
      */
     Completable createIndividual(OWLNamedIndividual individual, OWLClass owlClass);
 
@@ -75,6 +77,7 @@ public interface ITrestleOntology {
      *
      * @param individualIRI - IRI of OWLIndividual
      * @param classIRI      - IRI of OWLClass
+     * @return - {@link Completable} when finished
      */
     Completable createIndividual(IRI individualIRI, IRI classIRI);
 
@@ -83,6 +86,7 @@ public interface ITrestleOntology {
      *
      * @param subClass   - OWLClass to associated with super-class
      * @param superClass - OWLClass to assocate sub-class to
+     * @return - {@link Completable} when finished
      */
     Completable associateOWLClass(OWLClass subClass, OWLClass superClass);
 
@@ -90,6 +94,7 @@ public interface ITrestleOntology {
      * Create a subclass association directly from OWL Axiom
      *
      * @param subClassOfAxiom - OWLSubClassOfAxiom to create in ontology
+     * @return - {@link Completable} when finished
      */
     Completable associateOWLClass(OWLSubClassOfAxiom subClassOfAxiom);
 
@@ -98,6 +103,7 @@ public interface ITrestleOntology {
      * Determines if the property is an Object or Data Property
      *
      * @param property - Property to store in the model
+     * @return - {@link Completable} when finished
      */
     Completable createProperty(OWLProperty property);
 
@@ -108,6 +114,7 @@ public interface ITrestleOntology {
      * @param dataPropertyIRI  - IRI of OWLDataProperty to associate with individual
      * @param owlLiteralString - String of raw data property value
      * @param owlLiteralIRI    - IRI of OWLDatatype of raw property value
+     * @return - {@link Completable} when finished
      */
     Completable writeIndividualDataProperty(IRI individualIRI, IRI dataPropertyIRI, String owlLiteralString, IRI owlLiteralIRI);
 
@@ -117,6 +124,7 @@ public interface ITrestleOntology {
      * @param individual - OWLNameIndividual to associate property
      * @param property   - OWLDataProperty to associate with individual
      * @param value      - OWLLiteral value of data property
+     * @return - {@link Completable} when finished
      */
     Completable writeIndividualDataProperty(OWLNamedIndividual individual, OWLDataProperty property, OWLLiteral value);
 
@@ -125,6 +133,7 @@ public interface ITrestleOntology {
      * Creates the data property if it doesn't exist
      *
      * @param dataProperty - Data property axiom to store in the more
+     * @return - {@link Completable} when finished
      */
     Completable writeIndividualDataProperty(OWLDataPropertyAssertionAxiom dataProperty);
 
@@ -134,6 +143,7 @@ public interface ITrestleOntology {
      * @param owlSubject  - OWLNamedIndividual subject
      * @param propertyIRI - IRI of OWLObjectProperty
      * @param owlObject   - OWLNamedIndividual object
+     * @return - {@link Completable} when finished
      */
     Completable writeIndividualObjectProperty(OWLNamedIndividual owlSubject, IRI propertyIRI, OWLNamedIndividual owlObject);
 
@@ -143,6 +153,7 @@ public interface ITrestleOntology {
      * @param owlSubject  - IRI of OWLNamedIndividual subject
      * @param owlProperty - IRI of OWLObjectProperty
      * @param owlObject   - IRI of OWLNamedIndividual object
+     * @return - {@link Completable} when finished
      */
     Completable writeIndividualObjectProperty(IRI owlSubject, IRI owlProperty, IRI owlObject);
 
@@ -150,6 +161,7 @@ public interface ITrestleOntology {
      * Create object association between two OWLNamedIndividuals
      *
      * @param property - OWLObjectPropertyAssertionAxiom defining relationship between the two objects
+     * @return - {@link Completable} when finished
      */
     Completable writeIndividualObjectProperty(OWLObjectPropertyAssertionAxiom property);
 
@@ -157,6 +169,7 @@ public interface ITrestleOntology {
      * Removes a given OWL individual and all related assertions
      *
      * @param individual - OWLNamedIndividual to remove
+     * @return - {@link Completable} when finished
      */
     Completable removeIndividual(OWLNamedIndividual individual);
 
@@ -168,6 +181,7 @@ public interface ITrestleOntology {
      * @param subject  - {@link OWLNamedIndividual} subject
      * @param property - {@link OWLObjectProperty} property
      * @param object   - {@link OWLNamedIndividual} optional object
+     * @return - {@link Completable} when finished
      */
     Completable removeIndividualObjectProperty(OWLNamedIndividual subject, OWLObjectProperty property, @Nullable OWLNamedIndividual object);
 
@@ -178,6 +192,7 @@ public interface ITrestleOntology {
      * @param individual - {@link OWLNamedIndividual} of subject
      * @param property   - {@link OWLDataProperty} of property
      * @param literal    - {@link OWLLiteral} optional literal value to remove
+     * @return - {@link Completable} when finished
      */
     Completable removeIndividualDataProperty(OWLNamedIndividual individual, OWLDataProperty property, @Nullable OWLLiteral literal);
 
@@ -185,7 +200,7 @@ public interface ITrestleOntology {
      * Check whether the ontology contains an individual with the given IRI
      *
      * @param individualIRI - IRI of individual to check
-     * @return - boolean, individual exists?
+     * @return - {@link Single} {@code true} individual exists. {@code false} individual does not exist
      */
     Single<Boolean> containsResource(IRI individualIRI);
 
@@ -193,7 +208,7 @@ public interface ITrestleOntology {
      * Check whether the underlying model contains the given OWLEntity
      *
      * @param individual - OWLNamedObject to verify existence
-     * @return - boolean object exists?
+     * @return - {@link Single} {@code true} individual exists. {@code false} individual does not exist
      */
     Single<Boolean> containsResource(OWLNamedObject individual);
 
@@ -397,6 +412,7 @@ public interface ITrestleOntology {
      * Execute a writing SPARQL query, without returning a {@link TrestleResultSet}
      *
      * @param queryString - SPARQL Query String
+     * @return - {@link Completable} when finished
      */
     Completable executeUpdateSPARQL(String queryString);
 
@@ -417,6 +433,12 @@ public interface ITrestleOntology {
      */
     TrestleTransaction createandOpenNewTransaction(@Nullable TrestleTransaction transactionObject);
 
+    /**
+     * Create a new {@link TrestleTransaction}
+     *
+     * @param write - {@code true} create write transaction. {@code false} create read-only transaction
+     * @return - {@link TrestleTransaction}
+     */
     TrestleTransaction createandOpenNewTransaction(boolean write);
 
     /**

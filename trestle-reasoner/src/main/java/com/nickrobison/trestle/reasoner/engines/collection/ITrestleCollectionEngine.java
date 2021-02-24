@@ -8,8 +8,8 @@ import io.reactivex.rxjava3.core.Single;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
 
-import javax.measure.quantity.Length;
 import javax.measure.Unit;
+import javax.measure.quantity.Length;
 import java.time.temporal.Temporal;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +32,7 @@ public interface ITrestleCollectionEngine {
      * that have a relation strength above the given cutoff value
      *
      * @param individual       - {@link String} ID of individual to return relations for
-     * @param collectionID        - Nullable {@link String} of collection ID to filter members of
+     * @param collectionID     - Nullable {@link String} of collection ID to filter members of
      * @param relationStrength - {@link double} Cutoff value of minimum relation strength
      * @return - {@link Optional} {@link Map} of String IRI representations of related collections
      */
@@ -73,21 +73,22 @@ public interface ITrestleCollectionEngine {
      *
      * @param <T>                  - Generic type {@link T} of returned object
      * @param clazz                - Input {@link Class} to retrieve from collection
-     * @param collectionID            - {@link String} ID of collection to retrieve
+     * @param collectionID         - {@link String} ID of collection to retrieve
      * @param strength             - {@link Double} Strength parameter to filter weak associations
      * @param spatialIntersection  - Optional spatial intersection to restrict results
      * @param temporalIntersection - Optional temporal intersection to restrict results
-     * @return - {@link Optional} {@link List} of Objects
+     * @return - {@link Flowable} {@link List} of Objects
      */
     @NonNull <T> Flowable<T> getCollectionMembers(Class<T> clazz, String collectionID, double strength, @Nullable String spatialIntersection, @Nullable Temporal temporalIntersection);
 
     /**
      * Write an object into the database, as a member of a given collection
-     *  @param collectionIRI   - {@link String} ID of collection to add object to
-     * @param inputObject  - {@link Object} to write into database
-     * @param relationType - {@link CollectionRelationType}
-     * @param strength     - {@link Double} Strength parameter of relation
-     * @return
+     *
+     * @param collectionIRI - {@link String} ID of collection to add object to
+     * @param inputObject   - {@link Object} to write into database
+     * @param relationType  - {@link CollectionRelationType}
+     * @param strength      - {@link Double} Strength parameter of relation
+     * @return - {@link Completable} when finished
      */
     Completable addObjectToCollection(String collectionIRI, Object inputObject, CollectionRelationType relationType, double strength);
 
@@ -95,17 +96,18 @@ public interface ITrestleCollectionEngine {
      * Remove the specified Trestle_Collection
      *
      * @param collectionIRI - {@link String} Collection ID
-     * @return
+     * @return - {@link Completable} when finished
      */
     Completable removeCollection(String collectionIRI);
 
     /**
      * Remove a given Trestle_Object from the Trestle_Collection
      * Optionally, if removing the object causes the Collection to be empty, remove the collection.
-     * @param collectionIRI - {@link String} Collection ID
-     * @param inputObject - {@link Object} Java object to add to collection
+     *
+     * @param collectionIRI         - {@link String} Collection ID
+     * @param inputObject           - {@link Object} Java object to add to collection
      * @param removeEmptyCollection - {@code true} Remove Collection if it's empty. {@code false} Leave empty collection
-     * @return
+     * @return - {@link Completable} when finished
      */
     Completable removeObjectFromCollection(String collectionIRI, Object inputObject, boolean removeEmptyCollection);
 
@@ -114,13 +116,13 @@ public interface ITrestleCollectionEngine {
      * Requires that Spatial and Temporal relationships be generated for the underlying Trestle_Objects.
      * Specifically, looks for {@link com.nickrobison.trestle.types.relations.ObjectRelation#SPATIAL_MEETS} on any of the collection members.
      * If relationships have not been generated, consider {@link ITrestleCollectionEngine#STIntersectCollection(String, double, double, Temporal, Temporal)}
-     *
+     * <p>
      * The associated strength parameter is applied symmetrically across both collections.
      *
      * @param subjectCollectionID - {@link String} ID of collection to query
-     * @param objectCollectionID - {@link String} ID collection to determine intersection with
-     * @param strength - {@link Double} strength parameter to filter weak associations
-     * @return - {@code true} Collections are adjacent. {@code false} Collections are not adjacent.
+     * @param objectCollectionID  - {@link String} ID collection to determine intersection with
+     * @param strength            - {@link Double} strength parameter to filter weak associations
+     * @return - {@link Single} {@code true} Collections are adjacent. {@code false} Collections are not adjacent.
      */
     Single<Boolean> collectionsAreAdjacent(String subjectCollectionID, String objectCollectionID, double strength);
 }

@@ -183,7 +183,7 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      *  @param type          - {@link TrestleEventType} to add to individual
      * @param individual    - {@link OWLNamedIndividual} individual to add event to
      * @param eventTemporal - {@link Temporal} temporal to use for event
-     * @return
+     * @return - {@link Completable} when finished
      */
     Completable addTrestleObjectEvent(TrestleEventType type, OWLNamedIndividual individual, Temporal eventTemporal);
 
@@ -224,7 +224,7 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      * @param validAt    - {@link Temporal} optional temporal to specify when to compute the spatial relationships
      * @throws MissingOntologyEntity - throws if the given individual isn't in the Database
      * @throws TrestleClassException - throws if the class isn't registered with the Reasoner
-     * @return
+     * @return - {@link Completable} when finished
      */
     <T> Completable calculateSpatialAndTemporalRelationships(Class<T> clazz, String individual, @Nullable Temporal validAt) throws TrestleClassException, MissingOntologyEntity;
 

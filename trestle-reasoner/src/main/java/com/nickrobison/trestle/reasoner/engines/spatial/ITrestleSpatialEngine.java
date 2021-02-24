@@ -92,7 +92,7 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      * @param buffer  - {@link Double} buffer to extend around buffer. 0 is no buffer (defaults to {@link si.uom.SI#METRE})
      * @param validAt - {@link Temporal} valid at restriction
      * @param dbAt    - {@link Temporal} database at restriction
-     * @return - {@link Optional} {@link List} of {@link TrestleIndividual}
+     * @return - {@link Flowable} of {@link TrestleIndividual}
      */
     Flowable<TrestleIndividual> spatialIntersectIndividuals(Class<@NonNull ?> clazz, String wkt, double buffer, @Nullable Temporal validAt, @Nullable Temporal dbAt);
 
@@ -108,7 +108,7 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      * @param bufferUnit - {@link Unit} of {@link Length} buffer units
      * @param validAt    - {@link Temporal} valid at restriction
      * @param dbAt       - {@link Temporal} database at restriction
-     * @return - {@link Optional} {@link List} of {@link TrestleIndividual}
+     * @return - {@link Flowable} of {@link TrestleIndividual}
      */
     Flowable<TrestleIndividual> spatialIntersectIndividuals(Class<@NonNull ?> clazz, String wkt, double buffer, Unit<Length> bufferUnit, @Nullable Temporal validAt, @Nullable Temporal dbAt);
 
@@ -119,7 +119,7 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      * @param <T>         - Type to specialize method
      * @param inputObject - Object to intersect
      * @param buffer      - Additional buffer (in meters). 0 is no buffer (defaults to {@link si.uom.SI#METRE})
-     * @return - {@link Optional} {@link List} of {@link T}
+     * @return - {@link Flowable} of {@link T}
      */
     <T extends @NonNull Object> Flowable<T> spatialIntersectObject(T inputObject, double buffer);
 
@@ -131,7 +131,7 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      * @param inputObject - Object to intersect
      * @param buffer      - Additional buffer (in meters). 0 is no buffer.
      * @param bufferUnit  - {@link Unit} of {@link Length} buffer units
-     * @return - {@link Optional} {@link List} of {@link T}
+     * @return - {@link Flowable} of {@link T}
      */
     <T extends @NonNull Object> Flowable<T> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit);
 
@@ -144,8 +144,8 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      * @param buffer      - Additional buffer to build around object. 0 is no buffer (defaults to {@link si.uom.SI#METRE})
      * @param temporalAt  - Temporal of intersecting time point
      * @param dbAt        - Optional {@link Temporal} to specify database time
-     * @param transaction
-     * @return - {@link Optional} {@link List} of {@link T}
+     * @param transaction - {@link TrestleTransaction} to continue with
+     * @return - {@link Flowable} of {@link T}
      */
     <T extends @NonNull Object> Flowable<T> spatialIntersectObject(T inputObject, double buffer, @Nullable Temporal temporalAt, @Nullable Temporal dbAt, @Nullable TrestleTransaction transaction);
 
@@ -159,8 +159,8 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      * @param bufferUnit  - {@link Unit} of {@link Length} buffer units
      * @param temporalAt  - Temporal of intersecting time point
      * @param dbAt        - Optional {@link Temporal} to specify database time
-     * @param transaction
-     * @return - {@link Optional} {@link List} of {@link T}
+     * @param transaction - {@link TrestleTransaction} to continue with
+     * @return - {@link Flowable} of {@link T}
      */
     <T extends @NonNull Object> Flowable<T> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit, @Nullable Temporal temporalAt, @Nullable Temporal dbAt, @Nullable TrestleTransaction transaction);
 
@@ -172,7 +172,7 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      * @param clazz - Input {@link Class} of type {@link T}
      * @param wkt    - WKT {@link String} to intersect objects with
      * @param buffer - {@link Double} of buffer around WKT string. 0 is no buffer (defaults to {@link si.uom.SI#METRE})
-     * @return - {@link Optional} {@link List} of intersected objects of type {@link T}
+     * @return - {@link Flowable} of intersected objects of type {@link T}
      */
     <T extends @NonNull Object> Flowable<T> spatialIntersect(Class<T> clazz, String wkt, double buffer);
 
@@ -185,7 +185,7 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      * @param wkt        - WKT {@link String} to intersect objects with
      * @param buffer     - {@link Double} of buffer around WKT string
      * @param bufferUnit - {@link Unit} of {@link Length} buffer units
-     * @return - {@link Optional} {@link List} of intersected objects of type {@link T}
+     * @return - {@link Flowable} of intersected objects of type {@link T}
      */
     <T extends @NonNull Object> Flowable<T> spatialIntersect(Class<T> clazz, String wkt, double buffer, Unit<Length> bufferUnit);
 
@@ -199,7 +199,7 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      * @param buffer  - {@link Double} of buffer around WKT string
      * @param validAt - Optional {@link Temporal} to specify intersection time
      * @param dbAt    - Optional {@link Temporal} to specify database time
-     * @return - {@link Optional} {@link List} of intersected objects of type {@link T}
+     * @return - {@link Flowable} of intersected objects of type {@link T}
      */
     <T extends @NonNull Object> Flowable<T> spatialIntersect(Class<T> clazz, String wkt, double buffer, @Nullable Temporal validAt, @Nullable Temporal dbAt);
 
@@ -214,8 +214,8 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      * @param bufferUnit - {@link Unit} of {@link Length} buffer units
      * @param validAt    - Optional {@link Temporal} to specify intersection time
      * @param dbAt       - Optional {@link Temporal} to specify database time
-     * @param transaction
-     * @return - {@link Optional} {@link List} of intersected objects of type {@link T}
+     * @param transaction - {@link TrestleTransaction} to continue with
+     * @return - {@link Flowable} of intersected objects of type {@link T}
      */
     <T extends @NonNull Object> Flowable<T> spatialIntersect(Class<T> clazz, String wkt, double buffer, Unit<Length> bufferUnit, @Nullable Temporal validAt, @Nullable Temporal dbAt, @Nullable TrestleTransaction transaction);
 
@@ -226,7 +226,7 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      * @param individualIRIs - {@link List} of Individual IRIs
      * @param inputSRID      - EPSG code to determine union projection
      * @param matchThreshold - {@link Double} cutoff to determine minimum match percentage
-     * @return - {@link Optional} {@link UnionEqualityResult}
+     * @return - {@link Maybe} {@link UnionEqualityResult}
      */
     Maybe<UnionContributionResult> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSRID, double matchThreshold);
 
@@ -252,7 +252,7 @@ public interface ITrestleSpatialEngine extends EqualityEngine, ContainmentEngine
      * @param comparisonObjectIDs - @{link List} of {@link String} IDs of comparison objects
      * @param inputSR             - {@link SpatialReference} input spatial reference
      * @param matchThreshold      - {@link Double} cutoff for all fuzzy matches
-     * @return - {@link Optional} {@link List} of {@link SpatialComparisonReport}
+     * @return - {@link Flowable} of {@link SpatialComparisonReport}
      */
     Flowable<SpatialComparisonReport> compareTrestleObjects(String datasetID, String objectAID, List<String> comparisonObjectIDs, int inputSR, double matchThreshold);
 }
