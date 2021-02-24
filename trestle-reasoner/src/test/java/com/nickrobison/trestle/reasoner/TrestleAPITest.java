@@ -7,6 +7,7 @@ import com.nickrobison.trestle.SharedTestUtils;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.exceptions.NoValidStateException;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
+import com.nickrobison.trestle.reasoner.exceptions.TrestleMissingIndividualException;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.TrestleRelation;
 import com.nickrobison.trestle.types.events.TrestleEvent;
@@ -90,6 +91,19 @@ public class TrestleAPITest extends AbstractReasonerTest {
         final IRI gaul_jts_test = IRI.create(OVERRIDE_PREFIX, "GAUL_JTS_Test");
         List<String> individuals = reasoner.searchForIndividual("43", gaul_jts_test.toString(), null).toList().blockingGet();
         assertEquals(1, individuals.size(), "Should only have 1 individual in the JTS class");
+
+        // Remove them and make sure they're gone
+        classObjects
+                .parallelStream()
+                .forEach(object -> this.reasoner.removeIndividual(object));
+
+        classObjects
+                .parallelStream()
+                .forEach(object -> {
+                    final OWLNamedIndividual owlNamedIndividual = tp.classParser.getIndividual(object);
+                    assertThrows(TrestleMissingIndividualException.class, () -> reasoner.readTrestleObject(object.getClass(), owlNamedIndividual.getIRI(), false, null).blockingGet());
+                });
+
 
         reasoner.getMetricsEngine().exportData(new File("./target/api-test-metrics.csv"));
     }

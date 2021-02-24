@@ -2,7 +2,7 @@ package com.nickrobison.trestle.reasoner.engines;
 
 import com.codahale.metrics.annotation.Timed;
 import com.nickrobison.trestle.common.exceptions.TrestleMissingFactException;
-import com.nickrobison.trestle.common.exceptions.TrestleMissingIndividualException;
+import com.nickrobison.trestle.reasoner.exceptions.TrestleMissingIndividualException;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.annotations.metrics.Metriced;

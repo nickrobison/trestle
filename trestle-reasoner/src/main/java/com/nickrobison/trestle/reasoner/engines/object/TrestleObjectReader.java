@@ -3,7 +3,7 @@ package com.nickrobison.trestle.reasoner.engines.object;
 import com.codahale.metrics.annotation.Metered;
 import com.codahale.metrics.annotation.Timed;
 import com.nickrobison.trestle.common.TemporalUtils;
-import com.nickrobison.trestle.common.exceptions.TrestleMissingIndividualException;
+import com.nickrobison.trestle.reasoner.exceptions.TrestleMissingIndividualException;
 import com.nickrobison.trestle.iri.IRIBuilder;
 import com.nickrobison.trestle.iri.TrestleIRI;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
