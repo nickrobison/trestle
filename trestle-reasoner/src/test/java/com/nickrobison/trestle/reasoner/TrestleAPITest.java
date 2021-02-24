@@ -13,6 +13,7 @@ import com.nickrobison.trestle.types.TrestleRelation;
 import com.nickrobison.trestle.types.events.TrestleEvent;
 import com.nickrobison.trestle.types.events.TrestleEventType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
+import io.reactivex.rxjava3.core.Completable;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -95,13 +96,19 @@ public class TrestleAPITest extends AbstractReasonerTest {
         // Remove them and make sure they're gone
         classObjects
                 .parallelStream()
-                .forEach(object -> this.reasoner.removeIndividual(object));
+                .forEach(object -> this.reasoner.removeIndividuals(object).blockingAwait());
 
         classObjects
                 .parallelStream()
                 .forEach(object -> {
                     final OWLNamedIndividual owlNamedIndividual = tp.classParser.getIndividual(object);
-                    assertThrows(TrestleMissingIndividualException.class, () -> reasoner.readTrestleObject(object.getClass(), owlNamedIndividual.getIRI(), false, null).blockingGet());
+                    try {
+                        reasoner.readTrestleObject(object.getClass(), owlNamedIndividual.getIRI(), false, null).blockingGet();
+                    } catch (Exception e) {
+                        if (!(e instanceof TrestleMissingIndividualException)) {
+                            fail(e);
+                        }
+                    }
                 });
 
 

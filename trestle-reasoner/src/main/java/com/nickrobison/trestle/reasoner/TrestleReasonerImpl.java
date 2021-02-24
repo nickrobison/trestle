@@ -50,6 +50,7 @@ import com.typesafe.config.ConfigFactory;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Supplier;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -579,68 +580,66 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      *
      * @param inputObject - Individual to remove
      * @param <T>         - Type of individual to remove
+     * @return {@link Completable} when finished
      */
     @SafeVarargs
-    public final <T extends @NonNull Object> void removeIndividual(T... inputObject) {
-        // TODO(nickrobison): TRESTLE-733: Make better with RxJava
-        final List<CompletableFuture<Void>> completableFutures = Arrays.stream(inputObject)
-                .map(object -> CompletableFuture.supplyAsync(() -> trestleParser.classParser.getIndividual(object), trestleThreadPool))
-                .map(idFuture -> idFuture.thenApply(individual -> this.ontology.getAllObjectPropertiesForIndividual(individual).collect((Supplier<HashSet<OWLObjectPropertyAssertionAxiom>>) HashSet::new, HashSet::add).blockingGet()))
-                .map(propertyFutures -> propertyFutures.thenCompose(this::removeRelatedObjects))
-                .map(removedFuture -> removedFuture.thenAccept(individual -> this.ontology.removeIndividual(individual).blockingAwait()))
-                .collect(Collectors.toList());
-        final CompletableFuture<List<Void>> listCompletableFuture = sequenceCompletableFutures(completableFutures);
-        try {
-            listCompletableFuture.get();
-        } catch (InterruptedException e) {
-            logger.error("Delete interrupted", e.getCause());
-            Thread.currentThread().interrupt();
-        } catch (ExecutionException e) {
-            logger.error("Execution error", e.getCause());
-        }
+    public final <T extends @NonNull Object> Completable removeIndividuals(T... inputObject) {
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
+
+        return Observable.fromArray(inputObject)
+                .flatMapCompletable(object -> {
+                    final OWLNamedIndividual individual = trestleParser.classParser.getIndividual(object);
+                    final TrestleTransaction transaction = this.ontology.createandOpenNewTransaction(trestleTransaction);
+                    return this.ontology.getAllObjectPropertiesForIndividual(individual)
+                            .toList()
+                            .flatMapCompletable(properties -> this.removeRelatedObjects(properties, trestleTransaction))
+                            .andThen(Completable.defer(() -> {
+                                final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+                                return this.ontology.removeIndividual(individual)
+                                        .doOnComplete(() -> this.ontology.returnAndCommitTransaction(tt))
+                                        .doOnError(error -> this.ontology.returnAndAbortTransaction(tt));
+                            }))
+                            .doOnComplete(() -> this.ontology.returnAndCommitTransaction(transaction))
+                            .doOnError(error -> this.ontology.returnAndAbortTransaction(transaction));
+                })
+                .doOnComplete(() -> this.ontology.returnAndCommitTransaction(trestleTransaction))
+                .doOnError(error -> this.ontology.returnAndAbortTransaction(trestleTransaction));
     }
 
     /**
-     * Given a set of OWL Objects, remove them and return the subject as an OWLNamedIndividual
+     * Given a set of OWL Objects, remove them
      *
-     * @param objectProperties - Set of OWLObjectPropertyAssertionAxioms to remove the object assertions from the ontology
-     * @return - OWLNamedIndividual representing the subject of the object assertions
+     * @param objectProperties - {@link Collection} of {@link OWLObjectPropertyAssertionAxiom} to remove the object assertions from the ontology
+     * @param transaction      - Optional {@link TrestleTransaction} to continue with
+     * @return - {@link Completable} when finished
      */
-    private CompletableFuture<OWLNamedIndividual> removeRelatedObjects(Set<OWLObjectPropertyAssertionAxiom> objectProperties) {
-        // TODO(nickrobison): TRESTLE-733: Make better with rxJava
-        return CompletableFuture.supplyAsync(() -> {
+    private Completable removeRelatedObjects(Collection<OWLObjectPropertyAssertionAxiom> objectProperties, @Nullable TrestleTransaction transaction) {
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(transaction, true);
 
-//            Remove the facts
-            final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
-            objectProperties
-                    .stream()
-                    .filter(property -> property.getProperty().getNamedProperty().getIRI().equals(hasFactIRI))
-                    .forEach(object -> ontology.removeIndividual(object.getObject().asOWLNamedIndividual()));
+        final Flowable<OWLObjectPropertyAssertionAxiom> propertiesFlowable = Flowable.fromIterable(objectProperties).publish().autoConnect(3);
+        final Completable factsCompletable = propertiesFlowable
+                .filter(property -> property.getProperty().getNamedProperty().getIRI().equals(hasFactIRI))
+                .flatMapCompletable(propery -> this.ontology.removeIndividual(propery.getObject().asOWLNamedIndividual()));
 
-//            And the temporals, but make sure the temporal doesn't have any other dependencies
-            objectProperties
-                    .stream()
-                    .filter(property -> property.getProperty().getNamedProperty().getIRI().equals(hasTemporalIRI))
-                    .map(object -> Optional.of(ontology.getIndividualObjectProperty(object.getObject().asOWLNamedIndividual(), temporalOfIRI).toList().blockingGet()))
-                    .filter(properties -> properties.orElseThrow(RuntimeException::new).size() <= 1)
-                    .map(properties -> properties.orElseThrow(RuntimeException::new).stream().findAny())
-                    .filter(Optional::isPresent)
-                    .forEach(property -> ontology.removeIndividual(property.orElseThrow(RuntimeException::new).getObject().asOWLNamedIndividual()));
+        final Completable temporalCompletable = propertiesFlowable
+                .filter(property -> property.getProperty().getNamedProperty().getIRI().equals(hasTemporalIRI))
+                .flatMapSingle(object -> ontology.getIndividualObjectProperty(object.getObject().asOWLNamedIndividual(), temporalOfIRI).toList())
+                .filter(properties -> properties.size() <= 1)
+                .map(properties -> properties.stream().findAny())
+                .filter(Optional::isPresent)
+                .flatMapCompletable(property -> ontology.removeIndividual(property.orElseThrow(RuntimeException::new).getObject().asOWLNamedIndividual()));
 
-//            And the database time object
-            objectProperties
-                    .stream()
-                    .filter(property -> property.getProperty().getNamedProperty().getIRI().equals(databaseTimeIRI))
-                    .map(object -> Optional.of(ontology.getIndividualObjectProperty(object.getObject().asOWLNamedIndividual(), databaseTimeOfIRI).toList().blockingGet()))
-                    .filter(properties -> properties.orElseThrow(RuntimeException::new).size() <= 1)
-                    .map(properties -> properties.orElseThrow(RuntimeException::new).stream().findAny())
-                    .filter(Optional::isPresent)
-                    .forEach(property -> ontology.removeIndividual(property.orElseThrow(RuntimeException::new).getObject().asOWLNamedIndividual()));
+        final Completable dbTimeCompletable = propertiesFlowable
+                .filter(property -> property.getProperty().getNamedProperty().getIRI().equals(databaseTimeIRI))
+                .flatMapSingle(object -> ontology.getIndividualObjectProperty(object.getObject().asOWLNamedIndividual(), databaseTimeOfIRI).toList())
+                .filter(properties -> properties.size() <= 1)
+                .map(properties -> properties.stream().findAny())
+                .filter(Optional::isPresent)
+                .flatMapCompletable(property -> ontology.removeIndividual(property.orElseThrow(RuntimeException::new).getObject().asOWLNamedIndividual()));
 
-            this.ontology.returnAndCommitTransaction(trestleTransaction);
-            return objectProperties.stream().findAny().orElseThrow(RuntimeException::new).getSubject().asOWLNamedIndividual();
-        }, trestleThreadPool);
-
+        return Completable.mergeArray(factsCompletable, temporalCompletable, dbTimeCompletable)
+                .doOnComplete(() -> this.ontology.returnAndCommitTransaction(trestleTransaction))
+                .doOnError(error -> this.ontology.returnAndAbortTransaction(trestleTransaction));
     }
 
 
