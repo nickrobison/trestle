@@ -13,7 +13,7 @@
         <Logger name="org.apache.http" level="OFF"/>
         <Logger name="org.eclipse.rdf4j" level="OFF"/>
         <Logger name="org.semanticweb.owlapi" level="OFF"/>
-        <Root level="DEBUG">
+        <Root level="WARN">
             <AppenderRef ref="CA"/>
         </Root>
     </Loggers>
