@@ -685,24 +685,6 @@ public class TrestleReasonerImpl implements TrestleReasoner {
                 .flatMapSingle(individual -> this.objectReader.readTrestleObject(clazz, individual.getIRI(), false, queryTemporal, null, trestleTransaction))
                 .doOnComplete(() -> this.ontology.returnAndCommitTransaction(trestleTransaction))
                 .doOnError(error -> this.ontology.returnAndAbortTransaction(trestleTransaction));
-//
-//
-//
-//        try {
-//            final List<OWLNamedIndividual> equivalentIndividuals = this.spatialEngine.getEquivalentIndividuals(clazz, individualSubjects, queryTemporal).toList().blockingGet();
-//            final List<T> individualList = equivalentIndividuals
-//                    .stream()
-//                    .map(individual -> {
-//                        return this.objectReader.readTrestleObject(clazz, individual.getIRI(), false, queryTemporal, null, trestleTransaction).blockingGet();
-//                    })
-//                    .collect(Collectors.toList());
-//            this.ontology.returnAndCommitTransaction(trestleTransaction);
-//            return Optional.of(individualList);
-//        } catch (Exception e) {
-//            this.ontology.returnAndAbortTransaction(trestleTransaction);
-//            logger.error("Unable to get equivalent objects for {} at {}", individuals, queryTemporal, e);
-//            return Optional.empty();
-//        }
     }
 
     @Override
