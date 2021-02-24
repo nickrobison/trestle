@@ -41,8 +41,8 @@ public class TimezoneTest extends AbstractReasonerTest {
     @Test
     public void testDefaultTimeZone() throws TrestleClassException, MissingOntologyEntity {
         final DefaultTimeZone defaultTimeZone = new DefaultTimeZone(LocalDate.of(1990, 1, 1).atStartOfDay(), "default-timezone");
-        reasoner.writeTrestleObject(defaultTimeZone);
-        @NonNull final DefaultTimeZone returnedDefaultTimeZone = reasoner.readTrestleObject(DefaultTimeZone.class, "default-timezone", LocalDate.of(1990, 1, 1).atStartOfDay(), null);
+        reasoner.writeTrestleObject(defaultTimeZone).blockingAwait();
+        @NonNull final DefaultTimeZone returnedDefaultTimeZone = reasoner.readTrestleObject(DefaultTimeZone.class, "default-timezone", LocalDate.of(1990, 1, 1).atStartOfDay(), null).blockingGet();
         assertEquals(defaultTimeZone, returnedDefaultTimeZone, "Should be equal");
         assertEquals(defaultTimeZone.defaultTime, returnedDefaultTimeZone.defaultTime, "Times should match");
     }
@@ -50,8 +50,8 @@ public class TimezoneTest extends AbstractReasonerTest {
     @Test
     public void testDifferentIntervalTimeZones() throws TrestleClassException, MissingOntologyEntity {
         final DifferentIntervalTimeZones differentIntervalTimeZones = new DifferentIntervalTimeZones("different-intervals", LocalDate.of(1990, 1, 1).atStartOfDay(), LocalDate.of(1995, 1, 1).atStartOfDay());
-        reasoner.writeTrestleObject(differentIntervalTimeZones);
-        @NonNull final DifferentIntervalTimeZones returnedIntervalTimeZones = reasoner.readTrestleObject(DifferentIntervalTimeZones.class, "different-intervals", LocalDate.of(1993, 1, 1).atStartOfDay(), null);
+        reasoner.writeTrestleObject(differentIntervalTimeZones).blockingAwait();
+        @NonNull final DifferentIntervalTimeZones returnedIntervalTimeZones = reasoner.readTrestleObject(DifferentIntervalTimeZones.class, "different-intervals", LocalDate.of(1993, 1, 1).atStartOfDay(), null).blockingGet();
         assertEquals(differentIntervalTimeZones, returnedIntervalTimeZones, "Should be equal");
     }
 

@@ -6,6 +6,9 @@ import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.parser.TemporalParser;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.events.TrestleEventType;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.functions.Supplier;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
@@ -39,99 +42,81 @@ public class EventEngineImpl implements TrestleEventEngine {
     }
 
     @Override
-    public void addEvent(TrestleEventType event, OWLNamedIndividual individual, Temporal eventTemporal) {
+    public Completable addEvent(TrestleEventType event, OWLNamedIndividual individual, Temporal eventTemporal) {
         logger.debug("Adding event {} to {} at {}", event, individual, eventTemporal);
         switch (event) {
             case CREATED:
-                addTemporalEvent(TrestleEventType.CREATED, individual, eventTemporal);
-                break;
+                return addTemporalEvent(TrestleEventType.CREATED, individual, eventTemporal);
             case DESTROYED:
-                addTemporalEvent(TrestleEventType.DESTROYED, individual, eventTemporal);
-                break;
+                return addTemporalEvent(TrestleEventType.DESTROYED, individual, eventTemporal);
             default:
-                throw new IllegalArgumentException("Only CREATED or DESTROYED events are supported");
+                return Completable.error(new IllegalArgumentException("Only CREATED or DESTROYED events are supported"));
         }
     }
 
     @Override
-    public void adjustObjectEvents(List<OWLDataPropertyAssertionAxiom> objectExistenceAxioms) {
-        List<OWLDataPropertyAssertionAxiom> eventAxioms = new ArrayList<>();
-        objectExistenceAxioms.forEach(axiom -> {
-//            Move the creation event?
-            if (axiom.getProperty().asOWLDataProperty().getIRI().equals(temporalExistsFromIRI)) {
-                logger.debug("Adjusting {} event for {} to {}", TrestleEventType.CREATED, axiom.getSubject(), axiom.getObject().toString());
-                eventAxioms.add(df.getOWLDataPropertyAssertionAxiom(df.getOWLDataProperty(temporalExistsAtIRI),
-                        TrestleEventEngine.buildEventName(df, this.prefix, axiom.getSubject().asOWLNamedIndividual(), TrestleEventType.CREATED),
-                        axiom.getObject()));
-            } else if (axiom.getProperty().asOWLDataProperty().getIRI().equals(temporalExistsToIRI)) {
-                logger.debug("Adjusting {} event for {} to {}", TrestleEventType.DESTROYED, axiom.getSubject(), axiom.getObject().toString());
-                eventAxioms.add(df.getOWLDataPropertyAssertionAxiom(df.getOWLDataProperty(temporalExistsAtIRI),
-                        TrestleEventEngine.buildEventName(df, this.prefix, axiom.getSubject().asOWLNamedIndividual(), TrestleEventType.DESTROYED),
-                        axiom.getObject()));
-            }
+    public Completable adjustObjectEvents(List<OWLDataPropertyAssertionAxiom> objectExistenceAxioms) {
+        return Observable.fromIterable(objectExistenceAxioms)
+                .flatMapMaybe(axiom -> {
+                    //            Move the creation event?
+                    if (axiom.getProperty().asOWLDataProperty().getIRI().equals(temporalExistsFromIRI)) {
+                        logger.debug("Adjusting {} event for {} to {}", TrestleEventType.CREATED, axiom.getSubject(), axiom.getObject().toString());
+                        return Maybe.just(df.getOWLDataPropertyAssertionAxiom(df.getOWLDataProperty(temporalExistsAtIRI),
+                                TrestleEventEngine.buildEventName(df, this.prefix, axiom.getSubject().asOWLNamedIndividual(), TrestleEventType.CREATED),
+                                axiom.getObject()));
+                    } else if (axiom.getProperty().asOWLDataProperty().getIRI().equals(temporalExistsToIRI)) {
+                        logger.debug("Adjusting {} event for {} to {}", TrestleEventType.DESTROYED, axiom.getSubject(), axiom.getObject().toString());
+                        return Maybe.just(df.getOWLDataPropertyAssertionAxiom(df.getOWLDataProperty(temporalExistsAtIRI),
+                                TrestleEventEngine.buildEventName(df, this.prefix, axiom.getSubject().asOWLNamedIndividual(), TrestleEventType.DESTROYED),
+                                axiom.getObject()));
+                    }
+                    return Maybe.empty();
+                })
+                .toList()
+                .flatMapCompletable(axiom -> {
 //            Write the properties
-            final String updateQuery = this.qb.updateObjectProperties(eventAxioms, trestleEventIRI);
-            this.ontology.executeUpdateSPARQL(updateQuery).blockingAwait();
-        });
+                    final String updateQuery = this.qb.updateObjectProperties(axiom, trestleEventIRI);
+                    return this.ontology.executeUpdateSPARQL(updateQuery);
+                });
     }
 
     @Override
-    public void addSplitMergeEvent(TrestleEventType type, OWLNamedIndividual subject, Set<OWLNamedIndividual> objects, Temporal eventTemporal) {
+    public Completable addSplitMergeEvent(TrestleEventType type, OWLNamedIndividual subject, Set<OWLNamedIndividual> objects, Temporal eventTemporal) {
         logger.debug("Adding event {} to {} at {} with {}", type, subject, eventTemporal, objects);
         switch (type) {
             case MERGED:
-                this.addMergedEvent(subject, objects, eventTemporal);
-                break;
+                return this.addMergedEvent(subject, objects, eventTemporal);
             case SPLIT:
-                this.addSplitEvent(subject, objects, eventTemporal);
-                break;
+                return this.addSplitEvent(subject, objects, eventTemporal);
             default:
-                throw new IllegalArgumentException("Only SPLIT and MERGED events are supported");
+                return Completable.error(new IllegalArgumentException("Only SPLIT and MERGED events are supported"));
         }
     }
 
-    private void addMergedEvent(OWLNamedIndividual subject, Set<OWLNamedIndividual> objects, Temporal eventTemporal) {
+    private Completable addMergedEvent(OWLNamedIndividual subject, Set<OWLNamedIndividual> objects, Temporal eventTemporal) {
+
+        final OWLNamedIndividual eventName = TrestleEventEngine.buildEventName(df, this.prefix, subject, TrestleEventType.MERGED);
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
-        try {
-            final OWLNamedIndividual eventName = TrestleEventEngine.buildEventName(df, this.prefix, subject, TrestleEventType.MERGED);
-//            Get the start temporal of the subject
-//            final Temporal fromTemporal = this.extractTrestleObjectTemporal(subject, temporalExistsFromIRI);
-//            Write the new event
-            addTemporalEvent(TrestleEventType.MERGED, subject, eventTemporal);
-//            Add the components to the event
-            for (OWLNamedIndividual object : objects) {
-                this.ontology.writeIndividualObjectProperty(object, componentOfIRI, eventName).blockingAwait();
-            }
-        } catch (Exception e) {
-            logger.error("Missing Individual {}", subject.getIRI(), e);
-            this.ontology.returnAndAbortTransaction(trestleTransaction);
-        } finally {
-            this.ontology.returnAndCommitTransaction(trestleTransaction);
-        }
+
+        return addTemporalEvent(TrestleEventType.MERGED, subject, eventTemporal)
+                .andThen(Completable.defer(() -> Observable.fromIterable(objects)
+                        .flatMapCompletable(object -> this.ontology.writeIndividualObjectProperty(object, componentOfIRI, eventName))))
+                .doOnComplete(() -> this.ontology.returnAndCommitTransaction(trestleTransaction))
+                .doOnError(error -> this.ontology.returnAndAbortTransaction(trestleTransaction));
     }
 
-    private void addSplitEvent(OWLNamedIndividual subject, Set<OWLNamedIndividual> objects, Temporal eventTemporal) {
+    private Completable addSplitEvent(OWLNamedIndividual subject, Set<OWLNamedIndividual> objects, Temporal eventTemporal) {
+        final OWLNamedIndividual eventName = TrestleEventEngine.buildEventName(df, this.prefix, subject, TrestleEventType.SPLIT);
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
-        try {
-            final OWLNamedIndividual eventName = TrestleEventEngine.buildEventName(df, this.prefix, subject, TrestleEventType.SPLIT);
-//            Get the start temporal of the subject
-//            final Temporal fromTemporal = this.extractTrestleObjectTemporal(subject, temporalExistsToIRI);
-//            Write the new event
-            addTemporalEvent(TrestleEventType.SPLIT, subject, eventTemporal);
-//            Add the components to the event
-            for (OWLNamedIndividual object : objects) {
-                this.ontology.writeIndividualObjectProperty(object, componentOfIRI, eventName).blockingAwait();
-            }
-        } catch (Exception e) {
-            logger.error("Missing Individual {}", subject.getIRI(), e);
-            this.ontology.returnAndAbortTransaction(trestleTransaction);
-            throw new TrestleEventException(df.getOWLNamedIndividual(subject.getIRI()), "Missing individual");
-        } finally {
-            this.ontology.returnAndCommitTransaction(trestleTransaction);
-        }
+
+        return addTemporalEvent(TrestleEventType.SPLIT, subject, eventTemporal)
+                .andThen(Completable.defer(() -> Observable.fromIterable(objects)
+                        .flatMapCompletable(object -> this.ontology.writeIndividualObjectProperty(object, componentOfIRI, eventName))))
+                .doOnComplete(() -> this.ontology.returnAndCommitTransaction(trestleTransaction))
+                .doOnError(error -> this.ontology.returnAndAbortTransaction(trestleTransaction));
     }
 
-    private void addTemporalEvent(TrestleEventType event, OWLNamedIndividual individual, Temporal eventTemporal) {
+    private Completable addTemporalEvent(TrestleEventType event, OWLNamedIndividual individual, Temporal eventTemporal) {
 //        Create the axioms
         final OWLNamedIndividual eventID = TrestleEventEngine.buildEventName(df, this.prefix, individual, event);
         final OWLClassAssertionAxiom classAxiom = df.getOWLClassAssertionAxiom(df.getOWLClass(trestleEventIRI), eventID);
@@ -142,22 +127,13 @@ public class EventEngineImpl implements TrestleEventEngine {
                 individual,
                 eventID);
 
-//        Open the transaction
+//        Open the transaction (use one if it already exists, otherwise, we'll need to open a write transaction ourself
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
-        try {
-//            Create the new event
-            this.ontology.createIndividual(classAxiom).blockingAwait();
-//            Add the data property
-            this.ontology.writeIndividualDataProperty(existsAtAxiom).blockingAwait();
-            this.ontology.writeIndividualObjectProperty(objectAssertion).blockingAwait();
-//            Write the object relation
-        } catch (Exception e) {
-            logger.error("Missing ontology entity", e);
-            this.ontology.returnAndAbortTransaction(trestleTransaction);
-            throw new TrestleEventException(individual, "Missing individual");
-        } finally {
-            this.ontology.returnAndCommitTransaction(trestleTransaction);
-        }
+        return this.ontology.createIndividual(classAxiom)
+                .andThen(Completable.defer(() -> this.ontology.writeIndividualDataProperty(existsAtAxiom)))
+                .andThen(Completable.defer(() -> this.ontology.writeIndividualObjectProperty(objectAssertion)))
+                .doOnComplete(() -> this.ontology.returnAndCommitTransaction(trestleTransaction))
+                .doOnError(error -> this.ontology.returnAndAbortTransaction(trestleTransaction));
     }
 
     /**
@@ -167,7 +143,7 @@ public class EventEngineImpl implements TrestleEventEngine {
      *
      * @param individual  - {@link OWLNamedIndividual} to get temporals from
      * @param temporalIRI - {@link IRI} of temporal value to start with
-     * @return - {@link Temporal} corresponding to the value of the given {@link IRI} or {@link com.nickrobison.trestle.common.StaticIRI#temporalExistsAtIRI}
+     * @return - {@link io.reactivex.rxjava3.core.Single} {@link Temporal} corresponding to the value of the given {@link IRI} or {@link com.nickrobison.trestle.common.StaticIRI#temporalExistsAtIRI}
      */
     @SuppressWarnings({"squid:UnusedPrivateMethod"})
     // Suppressed because we may add this later, once we figure out isolation levels

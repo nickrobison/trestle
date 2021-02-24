@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * Created by detwiler on 8/31/17.
@@ -37,15 +37,15 @@ public class ContainmentTests extends AbstractReasonerTest {
         final TestClasses.ESRIPolygonTest originalObject;
 
         // Read in the individual
-        final InputStream originalStream = EqualityTests.EqualityTestClass.class.getClassLoader().getResourceAsStream("98103.csv");
-        final BufferedReader originalReader = new BufferedReader(new InputStreamReader(originalStream, StandardCharsets.UTF_8));
-        try {
-            final String[] firstLine = originalReader.readLine().split(";");
-            originalObject = new TestClasses.ESRIPolygonTest(Integer.parseInt(firstLine[0]), (Polygon) GeometryEngine.geometryFromWkt(firstLine[1], 0, Geometry.Type.Polygon), LocalDate.of(2001, 1, 1));
-            //splitObjects.add(originalObject);
-        } finally {
-            originalReader.close();
-            originalStream.close();
+        try (InputStream originalStream = EqualityTests.EqualityTestClass.class.getClassLoader().getResourceAsStream("98103.csv")) {
+            assertNotNull(originalStream);
+            try (BufferedReader originalReader = new BufferedReader(new InputStreamReader(originalStream, StandardCharsets.UTF_8))) {
+                final String[] firstLine = originalReader.readLine().split(";");
+                originalObject = new TestClasses.ESRIPolygonTest(Integer.parseInt(firstLine[0]), (Polygon) GeometryEngine.geometryFromWkt(firstLine[1], 0, Geometry.Type.Polygon), LocalDate.of(2001, 1, 1));
+                //splitObjects.add(originalObject);
+            } finally {
+                originalStream.close();
+            }
         }
 
         // Read in the dissolved ones
@@ -60,15 +60,15 @@ public class ContainmentTests extends AbstractReasonerTest {
         // test containment between original object and first split object
         ContainmentEngine engine = this.reasoner.getContainmentEngine();
         ContainmentEngine.ContainmentDirection containmentDir = engine.getApproximateContainment(originalObject, splitObjects.get(0), 0.9);
-        assertTrue(containmentDir.equals(ContainmentEngine.ContainmentDirection.CONTAINS), "Should have containment direction ContainmentDirection.CONTAINS");
+        assertEquals(ContainmentEngine.ContainmentDirection.CONTAINS, containmentDir, "Should have containment direction ContainmentDirection.CONTAINS");
 
         // test same two objects but in the opposite direction
         containmentDir = engine.getApproximateContainment(splitObjects.get(0), originalObject, 0.9);
-        assertTrue(containmentDir.equals(ContainmentEngine.ContainmentDirection.WITHIN), "Should have containment direction ContainmentDirection.WITHIN");
+        assertEquals(ContainmentEngine.ContainmentDirection.WITHIN, containmentDir, "Should have containment direction ContainmentDirection.WITHIN");
 
         //test between two split objects (neither should contain the other)
         containmentDir = engine.getApproximateContainment(splitObjects.get(0), splitObjects.get(1), 0.9);
-        assertTrue(containmentDir.equals(ContainmentEngine.ContainmentDirection.NONE), "Should have containment direction ContainmentDirection.NONE");
+        assertEquals(ContainmentEngine.ContainmentDirection.NONE, containmentDir, "Should have containment direction ContainmentDirection.NONE");
     }
 
     @Override

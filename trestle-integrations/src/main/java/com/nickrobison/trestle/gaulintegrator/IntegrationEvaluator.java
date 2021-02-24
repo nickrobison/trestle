@@ -1,6 +1,6 @@
 package com.nickrobison.trestle.gaulintegrator;
 
-import com.nickrobison.trestle.common.exceptions.TrestleMissingIndividualException;
+import com.nickrobison.trestle.reasoner.exceptions.TrestleMissingIndividualException;
 import com.nickrobison.trestle.datasets.GAULObject;
 import com.nickrobison.trestle.reasoner.TrestleBuilder;
 import com.nickrobison.trestle.reasoner.TrestleReasoner;
@@ -88,7 +88,7 @@ public class IntegrationEvaluator {
 
             for (AlgorithmResult result : results) {
                 try {
-                    final TrestleIndividual trestleIndividual = this.reasoner.getTrestleIndividual(result.getID());
+                    final TrestleIndividual trestleIndividual = this.reasoner.getTrestleIndividual(result.getID()).blockingGet();
                     final Optional<String> anyRelation = trestleIndividual.getRelations()
                             .stream()
                             .map(TrestleRelation::getType)

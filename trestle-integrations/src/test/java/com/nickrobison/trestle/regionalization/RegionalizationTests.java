@@ -97,7 +97,7 @@ public class RegionalizationTests {
 //                        5.
                         VALID_AT,
 //                        6.
-                        null);
+                        null).blockingGet();
 
 //        for (Map.Entry<String, Integer> entry : counties.entrySet()) {
 //            computeEdges(entry.getValue().toString(), computedEdges);
@@ -144,10 +144,12 @@ public class RegionalizationTests {
 
     public void computeEdges(String county, Set<Edge> computedEdges) throws TrestleClassException, MissingOntologyEntity {
 
-        final TigerCountyObject self = reasoner.readTrestleObject(TigerCountyObject.class, county, VALID_AT, null);
+        final TigerCountyObject self = reasoner.readTrestleObject(TigerCountyObject.class, county, VALID_AT, null).blockingGet();
         final List<TigerCountyObject> spatiallyAdjacentObjects = reasoner.getRelatedObjects(TigerCountyObject.class, county,
                 ObjectRelation.SPATIAL_MEETS,
                 VALID_AT, null)
+                .toList()
+                .blockingGet()
                 .stream()
                 .filter(c -> counties.containsKey(c.getCounty()))
                 .collect(Collectors.toList());
@@ -167,11 +169,11 @@ public class RegionalizationTests {
 
     public void compareClusters(Edge edge) {
 //        1.
-        String collectionA = getFirstCollection(reasoner.getRelatedCollections(edge.Aid, null, 0.1));
-        String collectionB = getFirstCollection(reasoner.getRelatedCollections(edge.Bid, null, 0.1));
+        String collectionA = getFirstCollection(reasoner.getRelatedCollections(edge.Aid, null, 0.1).blockingGet());
+        String collectionB = getFirstCollection(reasoner.getRelatedCollections(edge.Bid, null, 0.1).blockingGet());
 
         if (!collectionA.equals(collectionB)) {
-            if (reasoner.collectionsAreAdjacent(collectionA, collectionB, 0.1)) {
+            if (reasoner.collectionsAreAdjacent(collectionA, collectionB, 0.1).blockingGet()) {
                 if (edge.value >= getClusterAvgDistance(collectionA, collectionB)) {
 
                     addShortestEdgeToCluster(collectionA, collectionB);
@@ -182,6 +184,8 @@ public class RegionalizationTests {
 
 //                    3.
                     final List<String> otherCollections = reasoner.getCollections()
+                            .toList()
+                            .blockingGet()
                             .stream()
                             .filter(collection -> !(collection.equals(collectionA) || collection.equals(collectionB)))
                             .collect(Collectors.toList());
@@ -208,9 +212,8 @@ public class RegionalizationTests {
         }
     }
 
-    public String getFirstCollection(Optional<Map<String, List<String>>> collections) {
+    public String getFirstCollection(Map<String, List<String>> collections) {
         return collections
-                .orElseThrow(NOT_FOUND)
                 .keySet()
                 .stream()
                 .findFirst()
@@ -218,7 +221,7 @@ public class RegionalizationTests {
     }
 
     public List<TigerCountyObject> getCollectionObjects(String collection) {
-        return reasoner.getCollectionMembers(TigerCountyObject.class, collection, 0.1, null, VALID_AT).orElseThrow(NOT_FOUND);
+        return reasoner.getCollectionMembers(TigerCountyObject.class, collection, 0.1, null, VALID_AT).toList().blockingGet();
     }
 
     public int getClusterAvgDistance(String A, String B) {

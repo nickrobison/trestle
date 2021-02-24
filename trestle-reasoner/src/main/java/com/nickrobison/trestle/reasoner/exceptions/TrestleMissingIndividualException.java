@@ -1,4 +1,4 @@
-package com.nickrobison.trestle.common.exceptions;
+package com.nickrobison.trestle.reasoner.exceptions;
 
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 

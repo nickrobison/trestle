@@ -12,8 +12,10 @@ import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TemporalScope;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.functions.Supplier;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
@@ -54,14 +56,14 @@ public class SpatialUnionTraverser {
      * Traverse spatial union to determine individuals that are equivalent to the given {@link OWLNamedIndividual} at the given query {@link Temporal}
      * If no individuals satisfy the equality constraints, an empty {@link List} is returned
      *
+     * @param <T>           - Generic type parameter
      * @param clazz         - {@link Class} of type {@link T} of individual
      * @param subject       - {@link OWLNamedIndividual} to determine equality of
      * @param queryTemporal - {@link Temporal} traverse union to given time
-     * @param <T>           - Generic type parameter
-     * @return - {@link List} of {@link OWLNamedIndividual} that are equivalent to the given individual at the specified query time
+     * @return - {@link Flowable} of {@link OWLNamedIndividual} that are equivalent to the given individual at the specified query time
      */
-    public <T extends @NonNull Object> List<OWLNamedIndividual> traverseUnion(Class<T> clazz, OWLNamedIndividual subject, Temporal queryTemporal) {
-        return traverseUnion(clazz, Collections.singletonList(subject), queryTemporal);
+    public <T extends @NonNull Object> Flowable<OWLNamedIndividual> traverseUnion(Class<T> clazz, OWLNamedIndividual subject, Temporal queryTemporal) {
+        return traverseUnion(clazz, Collections.singletonList(subject), queryTemporal, null);
     }
 
 
@@ -69,62 +71,112 @@ public class SpatialUnionTraverser {
      * Traverse spatial union to determine individuals that are equivalent to the given {@link List} of {@link OWLNamedIndividual} at the given query {@link Temporal}
      * If no individuals satisfy the equality constraints, an empty {@link List} is returned
      *
+     * @param <T>           - Generic type parameter
      * @param clazz         - {@link Class} of type {@link T} of individual
      * @param subjects       - {@link List} of {@link OWLNamedIndividual} to determine equality of
      * @param queryTemporal - {@link Temporal} traverse union to given time
-     * @param <T>           - Generic type parameter
-     * @return - {@link List} of {@link OWLNamedIndividual} that are equivalent to the given individual at the specified query time
+     * @param transaction - {@link TrestleTransaction} optional transaction to continue with
+     * @return - {@link Flowable} of {@link OWLNamedIndividual} that are equivalent to the given individual at the specified query time
      */
     @Timed(name = "union-traversal-timer", absolute = true)
-    public <T extends @NonNull Object> List<OWLNamedIndividual> traverseUnion(Class<T> clazz, List<OWLNamedIndividual> subjects, Temporal queryTemporal) {
+    public <T extends @NonNull Object> Flowable<OWLNamedIndividual> traverseUnion(Class<T> clazz, List<OWLNamedIndividual> subjects, Temporal queryTemporal, @Nullable TrestleTransaction transaction) {
 
 //        Get the base temporal type of the input class
         final Class<? extends Temporal> temporalType = TemporalParser.getTemporalType(clazz);
 
 //        Setup the sets to hold the various objects we encounter
         final Set<STObjectWrapper> seenObjects = new HashSet<>();
-        final Queue<STObjectWrapper> invalidObjects;
+
         final Set<STObjectWrapper> validObjects = new HashSet<>();
 
 //        Start the transaction
-        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-        try {
-//            TemporalDirection temporalDirection = null;
-            Set<STObjectWrapper> stObjects = new HashSet<>(subjects.size());
-            for (OWLNamedIndividual subject : subjects) {
-                //        Get the existence temporals for the object
-                final Set<OWLDataPropertyAssertionAxiom> individualExistenceProperties = this.ontology.getAllDataPropertiesForIndividual(subject).collect((Supplier<HashSet<OWLDataPropertyAssertionAxiom>>) HashSet::new, HashSet::add).blockingGet();
-                final Optional<TemporalObject> temporals = TemporalObjectBuilder.buildTemporalFromProperties(individualExistenceProperties, temporalType, null, null);
-                final STObjectWrapper stObject = new STObjectWrapper(subject, trestleObjectIRI, temporals.orElseThrow(() -> new IllegalStateException(TEMPORALS_ERROR)));
-                stObjects.add(stObject);
-            }
+        final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(transaction);
 
-            final Optional<TemporalDirection> temporalDirection = determineQueryDirection(stObjects, queryTemporal);
-            if (!temporalDirection.isPresent()) {
-                logger.debug("All objects are valid at {}, returning self-set", queryTemporal);
-                return subjects;
-            }
-            logger.debug("Executing query in the {} direction", temporalDirection.get());
-            if (temporalDirection.get() == TemporalDirection.FORWARD) {
-                invalidObjects = new PriorityQueue<>(forwardComparator);
-            } else {
-                invalidObjects = new PriorityQueue<>(backwardComparator);
-            }
-            seenObjects.addAll(stObjects);
-            final Set<STObjectWrapper> currentInvalidObjects = getInvalidObjects(stObjects, queryTemporal);
-            invalidObjects.addAll(currentInvalidObjects);
-            final Set<STObjectWrapper> currentValidObjects = new HashSet<>(stObjects);
-            currentValidObjects.removeAll(currentInvalidObjects);
-            validObjects.addAll(currentValidObjects);
+        return Flowable.fromIterable(subjects)
+                .flatMapSingle(subject -> {
+                    return this.ontology.getAllDataPropertiesForIndividual(subject)
+                            .collect((Supplier<HashSet<OWLDataPropertyAssertionAxiom>>) HashSet::new, HashSet::add)
+                    .map(axioms -> {
+                        final Optional<TemporalObject> temporals = TemporalObjectBuilder.buildTemporalFromProperties(axioms, temporalType, null, null);
+                        return new STObjectWrapper(subject, trestleObjectIRI, temporals.orElseThrow(() -> new IllegalStateException(TEMPORALS_ERROR)));
+                    });
+                })
+                .collect((Supplier<HashSet<STObjectWrapper>>) HashSet::new, HashSet::add)
+                .flatMapPublisher(stObjects -> {
+                    final Optional<TemporalDirection> temporalDirection;
+                    try {
+                        temporalDirection = determineQueryDirection(stObjects, queryTemporal);
+                    } catch (IllegalStateException e) {
+                        return Flowable.error(e);
+                    }
 
-            final Set<STObjectWrapper> equivalence = getEquivalence(validObjects, invalidObjects, seenObjects, queryTemporal, temporalDirection.get());
-            if (!equivalence.isEmpty()) {
-                logger.debug("Found equivalence: {}", equivalence);
-            }
-            return equivalence.stream().map(STObjectWrapper::getIndividual).collect(Collectors.toList());
-        } finally {
-            this.ontology.returnAndCommitTransaction(trestleTransaction);
-        }
+                    if (temporalDirection.isEmpty()) {
+                        logger.debug("All objects are valid at {}, returning self-set", queryTemporal);
+                        return Flowable.fromIterable(subjects);
+                    }
+
+                    logger.debug("Executing query in the {} direction", temporalDirection.get());
+                    final Queue<STObjectWrapper> invalidObjects;
+                    if (temporalDirection.get() == TemporalDirection.FORWARD) {
+                        invalidObjects = new PriorityQueue<>(forwardComparator);
+                    } else {
+                        invalidObjects = new PriorityQueue<>(backwardComparator);
+                    }
+
+                    seenObjects.addAll(stObjects);
+                    final Set<STObjectWrapper> currentInvalidObjects = getInvalidObjects(stObjects, queryTemporal);
+                    invalidObjects.addAll(currentInvalidObjects);
+                    final Set<STObjectWrapper> currentValidObjects = new HashSet<>(stObjects);
+                    currentValidObjects.removeAll(currentInvalidObjects);
+                    validObjects.addAll(currentValidObjects);
+
+                    final Set<STObjectWrapper> equivalence = getEquivalence(validObjects, invalidObjects, seenObjects, queryTemporal, temporalDirection.get(), tt);
+                    if (!equivalence.isEmpty()) {
+                        logger.debug("Found equivalence: {}", equivalence);
+                    }
+                    return Flowable.fromStream(equivalence.stream().map(STObjectWrapper::getIndividual));
+                })
+                .doOnComplete(() -> this.ontology.returnAndCommitTransaction(tt))
+                .doOnError(error -> this.ontology.returnAndAbortTransaction(tt));
+
+//
+//        try {
+////            TemporalDirection temporalDirection = null;
+//            Set<STObjectWrapper> stObjects = new HashSet<>(subjects.size());
+//            for (OWLNamedIndividual subject : subjects) {
+//                //        Get the existence temporals for the object
+//                final Set<OWLDataPropertyAssertionAxiom> individualExistenceProperties = this.ontology.getAllDataPropertiesForIndividual(subject).collect((Supplier<HashSet<OWLDataPropertyAssertionAxiom>>) HashSet::new, HashSet::add).blockingGet();
+//                final Optional<TemporalObject> temporals = TemporalObjectBuilder.buildTemporalFromProperties(individualExistenceProperties, temporalType, null, null);
+//                final STObjectWrapper stObject = new STObjectWrapper(subject, trestleObjectIRI, temporals.orElseThrow(() -> new IllegalStateException(TEMPORALS_ERROR)));
+//                stObjects.add(stObject);
+//            }
+//
+//            final Optional<TemporalDirection> temporalDirection = determineQueryDirection(stObjects, queryTemporal);
+//            if (!temporalDirection.isPresent()) {
+//                logger.debug("All objects are valid at {}, returning self-set", queryTemporal);
+//                return subjects;
+//            }
+//            logger.debug("Executing query in the {} direction", temporalDirection.get());
+//            if (temporalDirection.get() == TemporalDirection.FORWARD) {
+//                invalidObjects = new PriorityQueue<>(forwardComparator);
+//            } else {
+//                invalidObjects = new PriorityQueue<>(backwardComparator);
+//            }
+//            seenObjects.addAll(stObjects);
+//            final Set<STObjectWrapper> currentInvalidObjects = getInvalidObjects(stObjects, queryTemporal);
+//            invalidObjects.addAll(currentInvalidObjects);
+//            final Set<STObjectWrapper> currentValidObjects = new HashSet<>(stObjects);
+//            currentValidObjects.removeAll(currentInvalidObjects);
+//            validObjects.addAll(currentValidObjects);
+//
+//            final Set<STObjectWrapper> equivalence = getEquivalence(validObjects, invalidObjects, seenObjects, queryTemporal, temporalDirection.get());
+//            if (!equivalence.isEmpty()) {
+//                logger.debug("Found equivalence: {}", equivalence);
+//            }
+//            return equivalence.stream().map(STObjectWrapper::getIndividual).collect(Collectors.toList());
+//        } finally {
+//            this.ontology.returnAndCommitTransaction(trestleTransaction);
+//        }
     }
 
     /**
@@ -135,18 +187,19 @@ public class SpatialUnionTraverser {
      * @param seenObjects       - {@link Set} of {@link STObjectWrapper} of objects that have already been seen by the equivalence algorithm
      * @param queryTemporal     - {@link Temporal} query temporal
      * @param temporalDirection - {@link TemporalDirection} determining whether the algorithm is moving forwards or backwards in time
+     * @param transaction - {@link TrestleTransaction} transaction
      * @return - {@link Set} of {@link STObjectWrapper} that are equivalent to the first object in the {@link Queue} or represent all valid objects for the input set
      */
     @Timed(name = "equivalence-timer", absolute = true)
     @Metered(name = "equivalence-meter", absolute = true)
-    private Set<STObjectWrapper> getEquivalence(Set<STObjectWrapper> validObjects, Queue<STObjectWrapper> invalidObjects, Set<STObjectWrapper> seenObjects, Temporal queryTemporal, TemporalDirection temporalDirection) {
+    private Set<STObjectWrapper> getEquivalence(Set<STObjectWrapper> validObjects, Queue<STObjectWrapper> invalidObjects, Set<STObjectWrapper> seenObjects, Temporal queryTemporal, TemporalDirection temporalDirection, TrestleTransaction transaction) {
 //        This is a null safe way of checking that the queue is empty
         final STObjectWrapper object = invalidObjects.poll();
         if (object == null) {
             return validObjects;
         }
 
-        final Set<STObjectWrapper> eqObjects = executeEqualityQuery(object, temporalDirection, seenObjects);
+        final Set<STObjectWrapper> eqObjects = executeEqualityQuery(object, temporalDirection, seenObjects, transaction);
         if (eqObjects.isEmpty()) {
             return new HashSet<>();
         }
@@ -164,7 +217,7 @@ public class SpatialUnionTraverser {
             return validObjects;
         }
 
-        return getEquivalence(validObjects, invalidObjects, seenObjects, queryTemporal, temporalDirection);
+        return getEquivalence(validObjects, invalidObjects, seenObjects, queryTemporal, temporalDirection, transaction);
     }
 
     /**
@@ -173,15 +226,21 @@ public class SpatialUnionTraverser {
      * @param inputObject - {@link STObjectWrapper} to determine equality of
      * @param direction   - {@link TemporalDirection} whether the query is moving forwards or backwards in time
      * @param seenObjects - {@link Set} of {@link STObjectWrapper} of objects that have already been processed by the algorithm
+     * @param transaction - {@link TrestleTransaction} to continue with
      * @return - {@link Set} of {@link STObjectWrapper} objects that are equivalent to the given input object
      */
     @Timed(name = "equality-query-timer", absolute = true)
     @Metered(name = "equality-query-meter", absolute = true)
-    private Set<STObjectWrapper> executeEqualityQuery(STObjectWrapper inputObject, TemporalDirection direction, Set<STObjectWrapper> seenObjects) {
+    private Set<STObjectWrapper> executeEqualityQuery(STObjectWrapper inputObject, TemporalDirection direction, Set<STObjectWrapper> seenObjects, TrestleTransaction transaction) {
         logger.trace("Executing equality query for {}", inputObject.getIndividual());
         Set<STObjectWrapper> equivalentObjects = new HashSet<>();
         final String equivalenceQuery = this.qb.buildSTEquivalenceQuery(inputObject.getIndividual());
-        final List<TrestleResult> resultSet = this.ontology.executeSPARQLResults(equivalenceQuery).toList().blockingGet();
+
+        final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(transaction);
+        final List<TrestleResult> resultSet = this.ontology.executeSPARQLResults(equivalenceQuery).toList()
+                .doOnSuccess(success -> this.ontology.returnAndCommitTransaction(tt))
+                .doOnError(error -> this.ontology.returnAndAbortTransaction(tt))
+                .blockingGet();
         final Set<STObjectWrapper> queryObjects = resultSet
                 .stream()
 //                Build the STObjectWrapper
@@ -202,9 +261,9 @@ public class SpatialUnionTraverser {
 //            Unions first
             if (queryObject.getType().equals(spatialUnionIRI)) {
                 logger.trace("{} is a union", queryObject.getIndividual());
-                if (isCompleteUnion(queryObject, seenObjects)) {
+                if (isCompleteUnion(queryObject, seenObjects, tt)) {
                     logger.trace("{} is a complete union", queryObject.getIndividual());
-                    final Set<STObjectWrapper> unionEqualities = executeEqualityQuery(queryObject, direction, seenObjects);
+                    final Set<STObjectWrapper> unionEqualities = executeEqualityQuery(queryObject, direction, seenObjects, transaction);
                     if (unionEqualities.isEmpty()) {
                         return new HashSet<>();
                     }
@@ -227,19 +286,24 @@ public class SpatialUnionTraverser {
      * If so, it's not a complete union, and we can't do anything with it
      *
      * @param union        {@link STObjectWrapper} SpatialUnion object
-     * @param seenObjects- {@link Set} of {@link STObjectWrapper} of seen objects
+     * @param seenObjects - {@link Set} of {@link STObjectWrapper} of seen objects
+     * @param transaction - {@link TrestleTransaction} transaction to continue with
      * @return - {@code true} is complete union (we have everything), {@code false} is not a complete union, we need more info
      */
     @Timed
-    private boolean isCompleteUnion(STObjectWrapper union, Set<STObjectWrapper> seenObjects) {
+    private boolean isCompleteUnion(STObjectWrapper union, Set<STObjectWrapper> seenObjects, TrestleTransaction transaction) {
         final String unionQuery = this.qb.buildSTUnionComponentQuery(union.getIndividual());
-        final List<TrestleResult> resultSet = this.ontology.executeSPARQLResults(unionQuery).toList().blockingGet();
+        final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(transaction);
+        final List<TrestleResult> resultSet = this.ontology.executeSPARQLResults(unionQuery).toList()
+                .doOnSuccess(success -> this.ontology.returnAndCommitTransaction(tt))
+                .doOnError(error -> this.ontology.returnAndAbortTransaction(tt))
+                .blockingGet();
         final Optional<STObjectWrapper> hasUnseenObjects = resultSet
                 .stream()
                 .map(SpatialUnionTraverser::extractSTObjectWrapperFromResults)
                 .filter(object -> !seenObjects.contains(object))
                 .findAny();
-        return !hasUnseenObjects.isPresent();
+        return hasUnseenObjects.isEmpty();
     }
 
     /**
@@ -285,7 +349,7 @@ public class SpatialUnionTraverser {
         TemporalDirection direction = null;
         for (STObjectWrapper inputObject : inputObjects) {
             final int comparison = inputObject.getExistenceTemporal().compareTo(queryTemporal);
-            if ((direction != null && (direction == TemporalDirection.FORWARD && comparison == 1)) || (direction == TemporalDirection.BACKWARD && comparison == -1)) {
+            if (((direction == TemporalDirection.FORWARD && comparison == 1)) || (direction == TemporalDirection.BACKWARD && comparison == -1)) {
                 throw new IllegalStateException("Input objects have different temporal directions");
             } else if (direction == null && comparison == 1) {
                 direction = TemporalDirection.BACKWARD;

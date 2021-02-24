@@ -1,6 +1,6 @@
 package com.nickrobison.trestle.gaulintegrator;
 
-import com.nickrobison.trestle.common.exceptions.TrestleMissingIndividualException;
+import com.nickrobison.trestle.reasoner.exceptions.TrestleMissingIndividualException;
 import com.nickrobison.trestle.datasets.GAULObject;
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.TrestleBuilder;
@@ -27,7 +27,6 @@ import org.semanticweb.owlapi.model.IRI;
 import si.uom.SI;
 import tech.units.indriya.quantity.Quantities;
 
-import javax.measure.MetricPrefix;
 import javax.measure.Quantity;
 import javax.measure.Unit;
 import javax.measure.quantity.Area;
@@ -93,14 +92,14 @@ public class GAULAnalyzer {
     }
 
     private void evaluateSize() throws IOException, TrestleClassException, MissingOntologyEntity, ParseException {
-        final List<String> members = this.reasoner.getDatasetMembers(GAULObject.class);
+        final List<String> members = this.reasoner.getDatasetMembers(GAULObject.class).toList().blockingGet();
 
         Map<String, Double> sizeDistribution = new HashMap<>();
 
         try (ProgressBar pb = new ProgressBar("Calculating Size Distribution", members.size())) {
             for (final String member : members) {
-                final TrestleObjectHeader header = this.reasoner.readObjectHeader(GAULObject.class, member).orElseThrow(() -> new IllegalStateException("Cannot not have object"));
-                final GAULObject gaulObject = this.reasoner.readTrestleObject(GAULObject.class, member, header.getExistsFrom(), null);
+                final TrestleObjectHeader header = this.reasoner.readObjectHeader(GAULObject.class, member).blockingGet();
+                final GAULObject gaulObject = this.reasoner.readTrestleObject(GAULObject.class, member, header.getExistsFrom(), null).blockingGet();
     //            final double area = gaulObject.getShapePolygon().calculateArea2D();
                 final String wktValue = gaulObject.getPolygonAsWKT();
                 final Geometry read = new WKTReader().read(wktValue);
@@ -116,14 +115,14 @@ public class GAULAnalyzer {
     }
 
     private void objectLifetimes() throws IOException {
-        final List<String> members = this.reasoner.getDatasetMembers(GAULObject.class);
+        final List<String> members = this.reasoner.getDatasetMembers(GAULObject.class).toList().blockingGet();
 
         Map<String, Integer> lifetimes = new HashMap<>();
 
         try (ProgressBar pb = new ProgressBar("Calculating object lifetime length", members.size())) {
 
             for (String member : members) {
-                final TrestleObjectHeader header = this.reasoner.readObjectHeader(GAULObject.class, member).orElseThrow(() -> new IllegalStateException("Should have member header"));
+                final TrestleObjectHeader header = this.reasoner.readObjectHeader(GAULObject.class, member).blockingGet();
                 if (!header.continuing()) {
                     final Integer yearsBetween = GAULAnalyzer.adjustedYearsBetween(header.getExistsFrom(), header.getExistsTo());
                     lifetimes.put(member, yearsBetween);
@@ -185,7 +184,7 @@ public class GAULAnalyzer {
 
             for (GAULAnalyzer.AlgorithmResult result : results) {
                 try {
-                    final TrestleIndividual trestleIndividual = this.reasoner.getTrestleIndividual(result.getID());
+                    final TrestleIndividual trestleIndividual = this.reasoner.getTrestleIndividual(result.getID()).blockingGet();
                     final Optional<String> anyRelation = trestleIndividual.getRelations()
                             .stream()
                             .map(TrestleRelation::getType)

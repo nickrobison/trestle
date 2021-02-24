@@ -26,6 +26,9 @@ import com.nickrobison.trestle.reasoner.parser.TypeConstructor;
 import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.events.TrestleEvent;
 import com.nickrobison.trestle.types.events.TrestleEventType;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
@@ -138,9 +141,9 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      * @param queryString - Query String
      * @return - {@link TrestleResultSet}
      */
-    List<TrestleResult> executeSPARQLSelect(String queryString);
+    Flowable<TrestleResult> executeSPARQLSelect(String queryString);
 
-    Set<OWLNamedIndividual> getInstances(Class inputClass);
+    Flowable<OWLNamedIndividual> getInstances(Class inputClass);
 
     void writeOntology(URI filePath, boolean validate);
 
@@ -151,7 +154,7 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      * @param individual - {@link String} ID of the individual to gather events for
      * @return - {@link Optional} {@link Set} of {@link TrestleEvent} for the given individual
      */
-    Optional<Set<TrestleEvent>> getIndividualEvents(Class<?> clazz, String individual);
+    Flowable<TrestleEvent> getIndividualEvents(Class<?> clazz, String individual);
 
     /**
      * Get all {@link TrestleEvent} for the given individual
@@ -160,7 +163,7 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      * @param individual - {@link OWLNamedIndividual} to gather events for
      * @return - {@link Optional} {@link Set} of {@link TrestleEvent} for the given individual
      */
-    Optional<Set<TrestleEvent>> getIndividualEvents(Class<?> clazz, OWLNamedIndividual individual);
+    Flowable<TrestleEvent> getIndividualEvents(Class<?> clazz, OWLNamedIndividual individual);
 
     /**
      * Add {@link TrestleEvent} to individual
@@ -177,39 +180,39 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      * Add {@link TrestleEvent} to individual
      * This method cannot be used to add {@link TrestleEventType#MERGED} or {@link TrestleEventType#SPLIT} events because those require additional information.
      * Use the {@link TrestleReasoner#addTrestleObjectSplitMerge(TrestleEventType, Object, List, double)} for those event types
-     *
-     * @param type          - {@link TrestleEventType} to add to individual
+     *  @param type          - {@link TrestleEventType} to add to individual
      * @param individual    - {@link OWLNamedIndividual} individual to add event to
      * @param eventTemporal - {@link Temporal} temporal to use for event
+     * @return - {@link Completable} when finished
      */
-    void addTrestleObjectEvent(TrestleEventType type, OWLNamedIndividual individual, Temporal eventTemporal);
+    Completable addTrestleObjectEvent(TrestleEventType type, OWLNamedIndividual individual, Temporal eventTemporal);
 
     @Override
-    <T extends @NonNull Object> void addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects, double strength);
+    <T extends @NonNull Object> Completable addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects, double strength);
 
     /**
      * Get a {@link List} of objects that are equivalent to given individual at the given time point
      * If no objects satisfy the equality constraints and an empty {@link List} is returned
      *
+     * @param <T>           - Type parameter
      * @param clazz         - {@link Class} of input individuals
      * @param individual    - Individual {@link IRI}
      * @param queryTemporal - {@link Temporal} of query point
-     * @param <T>           - Type parameter
      * @return - {@link Optional} {@link List} of {@link T} objects
      */
-    <T extends @NonNull Object> Optional<List<T>> getEquivalentObjects(Class<T> clazz, IRI individual, Temporal queryTemporal);
+    <T extends @NonNull Object> Flowable<T> getEquivalentObjects(Class<T> clazz, IRI individual, Temporal queryTemporal);
 
     /**
      * Get a {@link List} of objects that are equivalent to given {@link List} of individuals at the given time point
      * If no objects satisfy the equality constraints and an empty {@link List} is returned
      *
+     * @param <T>           - Type parameter
      * @param clazz         - {@link Class} of input individuals
      * @param individuals   - {@link List} of individual {@link IRI}
      * @param queryTemporal - {@link Temporal} of query point
-     * @param <T>           - Type parameter
      * @return - {@link Optional} {@link List} of {@link T} objects
      */
-    <T extends @NonNull Object> Optional<List<T>> getEquivalentObjects(Class<T> clazz, List<IRI> individuals, Temporal queryTemporal);
+    <T extends @NonNull Object> Flowable<T> getEquivalentObjects(Class<T> clazz, List<IRI> individuals, Temporal queryTemporal);
 
     /**
      * Compute the spatial and temporal relationships between the given individual and any other individuals which intersect the individual.
@@ -221,23 +224,24 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      * @param validAt    - {@link Temporal} optional temporal to specify when to compute the spatial relationships
      * @throws MissingOntologyEntity - throws if the given individual isn't in the Database
      * @throws TrestleClassException - throws if the class isn't registered with the Reasoner
+     * @return - {@link Completable} when finished
      */
-    <T> void calculateSpatialAndTemporalRelationships(Class<T> clazz, String individual, @Nullable Temporal validAt) throws TrestleClassException, MissingOntologyEntity;
+    <T> Completable calculateSpatialAndTemporalRelationships(Class<T> clazz, String individual, @Nullable Temporal validAt) throws TrestleClassException, MissingOntologyEntity;
 
     /**
      * Build the spatial adjacency graph for a given class.
      *
+     * @param <T>         - {@link T} type parameter for object class
+     * @param <B>         - {@link B} type parameter for return type from {@link Computable} function
      * @param clazz       - Java {@link Class} of objects to retrieve
      * @param objectID    - {@link String} ID of object to begin graph computation with
      * @param edgeCompute - {@link Computable} function to use for computing edge weights
      * @param filter      - {@link Filterable} function to use for determining whether or not to compute the given node
      * @param validAt     - {@link Temporal} optional validAt restriction
      * @param dbAt        - {@link Temporal} optional dbAt restriction
-     * @param <T>         - {@link T} type parameter for object class
-     * @param <B>         - {@link B} type parameter for return type from {@link Computable} function
      * @return - {@link com.nickrobison.trestle.reasoner.engines.spatial.aggregation.AggregationEngine.AdjacencyGraph} spatial adjacency graph
      */
-    <T extends @NonNull Object, B extends Number> AggregationEngine.AdjacencyGraph<T, B> buildSpatialGraph(Class<T> clazz, String objectID, Computable<T, T, B> edgeCompute, Filterable<T> filter, @Nullable Temporal validAt, @Nullable Temporal dbAt);
+    <T extends @NonNull Object, B extends Number> Single<AggregationEngine.AdjacencyGraph<T, B>> buildSpatialGraph(Class<T> clazz, String objectID, Computable<T, T, B> edgeCompute, Filterable<T> filter, @Nullable Temporal validAt, @Nullable Temporal dbAt);
 
     /**
      * Search the ontology for individuals with IRIs that match the given search string
@@ -245,7 +249,7 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      * @param individualIRI - String to search for matching IRI
      * @return - List of Strings representing IRIs of matching individuals
      */
-    List<String> searchForIndividual(String individualIRI);
+    Flowable<String> searchForIndividual(String individualIRI);
 
     /**
      * Search the ontology for individuals with IRIs that match the given search string
@@ -255,7 +259,7 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      * @param limit         - Optional limit to returned results
      * @return - List of Strings representing IRIs of matching individuals
      */
-    List<String> searchForIndividual(String individualIRI, @Nullable String datasetClass, @Nullable Integer limit);
+    Flowable<String> searchForIndividual(String individualIRI, @Nullable String datasetClass, @Nullable Integer limit);
 
     /**
      * Return a {@link TrestleIndividual} with all the available facts and properties
@@ -264,7 +268,7 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      * @param individualIRI - String of individual IRI
      * @return - {@link TrestleIndividual}
      */
-    TrestleIndividual getTrestleIndividual(String individualIRI);
+    Single<TrestleIndividual> getTrestleIndividual(String individualIRI);
 
     /**
      * Register dataset class with Reasoner
@@ -288,7 +292,7 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      *
      * @return - Set of Strings representing the registered datasets
      */
-    Set<String> getAvailableDatasets();
+    Flowable<String> getAvailableDatasets();
 
     Class<?> getDatasetClass(String owlClassString) throws UnregisteredClassException;
 
@@ -308,5 +312,5 @@ public interface TrestleReasoner extends ITrestleObjectReader, ITrestleObjectWri
      * @param clazz - {@link Class} Java class to retrieve members of
      * @return - {@link List} of {@link String} IDs of dataset class memberss
      */
-    List<String> getDatasetMembers(Class<?> clazz);
+    Flowable<String> getDatasetMembers(Class<?> clazz);
 }

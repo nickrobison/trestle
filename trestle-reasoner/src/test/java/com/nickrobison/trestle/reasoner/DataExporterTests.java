@@ -84,14 +84,14 @@ public class DataExporterTests extends AbstractReasonerTest {
                 .parallelStream()
                 .forEach(object -> {
                     try {
-                        reasoner.writeTrestleObject(object);
+                        reasoner.writeTrestleObject(object).blockingAwait();
                     } catch (TrestleClassException | MissingOntologyEntity e) {
-                        e.printStackTrace();
+                        fail(e);
                     }
                 });
 
 //        Verify GeoJSON
-        final File file = reasoner.exportDataSetObjects(SimpleGAULObject.class, ids, LocalDate.of(1993, 1, 1), null, ITrestleExporter.DataType.GEOJSON);
+        final File file = reasoner.exportDataSetObjects(SimpleGAULObject.class, ids, LocalDate.of(1993, 1, 1), null, ITrestleExporter.DataType.GEOJSON).blockingGet();
         assertTrue(file.length() > 0, "Should have non-zero length");
 
 //        Verify that we actually have something approaching the correct number of values
@@ -106,7 +106,7 @@ public class DataExporterTests extends AbstractReasonerTest {
 
 
 //        Check for Shapefile
-        final File shapeZip = reasoner.exportDataSetObjects(SimpleGAULObject.class, ids, LocalDate.of(1993, 1, 1), null, ITrestleExporter.DataType.SHAPEFILE);
+        final File shapeZip = reasoner.exportDataSetObjects(SimpleGAULObject.class, ids, LocalDate.of(1993, 1, 1), null, ITrestleExporter.DataType.SHAPEFILE).blockingGet();
 
 //        We don't actually have to unzip anything, because the files still exist in the directory
 //        So that's nice.

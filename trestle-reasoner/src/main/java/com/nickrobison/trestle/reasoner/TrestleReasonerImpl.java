@@ -4,7 +4,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.nickrobison.metrician.Metrician;
-import com.nickrobison.trestle.common.TrestlePair;
 import com.nickrobison.trestle.exporter.ITrestleExporter;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
 import com.nickrobison.trestle.ontology.ReasonerPrefix;
@@ -21,6 +20,7 @@ import com.nickrobison.trestle.reasoner.engines.exporter.ITrestleDataExporter;
 import com.nickrobison.trestle.reasoner.engines.merge.TrestleMergeEngine;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectReader;
 import com.nickrobison.trestle.reasoner.engines.object.ITrestleObjectWriter;
+import com.nickrobison.trestle.reasoner.engines.relations.RelationCalculator;
 import com.nickrobison.trestle.reasoner.engines.relations.RelationTracker;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialComparisonReport;
 import com.nickrobison.trestle.reasoner.engines.spatial.SpatialEngine;
@@ -31,7 +31,6 @@ import com.nickrobison.trestle.reasoner.engines.spatial.containment.ContainmentE
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.EqualityEngine;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionContributionResult;
 import com.nickrobison.trestle.reasoner.engines.spatial.equality.union.UnionEqualityResult;
-import com.nickrobison.trestle.reasoner.engines.temporal.TemporalComparisonReport;
 import com.nickrobison.trestle.reasoner.engines.temporal.TemporalEngine;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.reasoner.exceptions.UnregisteredClassException;
@@ -48,8 +47,12 @@ import com.nickrobison.trestle.types.relations.CollectionRelationType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Supplier;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -66,14 +69,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.Temporal;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.nickrobison.trestle.common.IRIUtils.parseStringToIRI;
-import static com.nickrobison.trestle.common.LambdaUtils.sequenceCompletableFutures;
 import static com.nickrobison.trestle.common.StaticIRI.*;
 import static com.nickrobison.trestle.reasoner.utils.ConfigValidator.ValidateConfig;
 
@@ -285,17 +285,17 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public List<TrestleResult> executeSPARQLSelect(String queryString) {
+    public Flowable<TrestleResult> executeSPARQLSelect(String queryString) {
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-        final List<TrestleResult> resultSet = this.ontology.executeSPARQLResults(queryString).toList().blockingGet();
-        this.ontology.returnAndCommitTransaction(trestleTransaction);
-        return resultSet;
+        return this.ontology.executeSPARQLResults(queryString)
+                .doOnComplete(() -> this.ontology.returnAndCommitTransaction(trestleTransaction))
+                .doOnError(error -> this.ontology.returnAndAbortTransaction(trestleTransaction));
     }
 
     @Override
-    public Set<OWLNamedIndividual> getInstances(Class inputClass) {
+    public Flowable<OWLNamedIndividual> getInstances(Class inputClass) {
         final OWLClass owlClass = trestleParser.classParser.getObjectClass(inputClass);
-        return this.ontology.getInstances(owlClass, true).collect((Supplier<HashSet<OWLNamedIndividual>>) HashSet::new, HashSet::add).blockingGet();
+        return this.ontology.getInstances(owlClass, true);
     }
 
     @Override
@@ -317,23 +317,23 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
 
     @Override
-    public void writeTrestleObject(Object inputObject) throws TrestleClassException, MissingOntologyEntity {
-        this.objectWriter.writeTrestleObject(inputObject);
+    public Completable writeTrestleObject(Object inputObject) throws TrestleClassException, MissingOntologyEntity {
+        return this.objectWriter.writeTrestleObject(inputObject);
     }
 
     @Override
-    public void writeTrestleObject(Object inputObject, Temporal startTemporal, @Nullable Temporal endTemporal) throws MissingOntologyEntity, UnregisteredClassException {
-        this.objectWriter.writeTrestleObject(inputObject, startTemporal, endTemporal);
+    public Completable writeTrestleObject(Object inputObject, Temporal startTemporal, @Nullable Temporal endTemporal) throws MissingOntologyEntity, UnregisteredClassException {
+        return this.objectWriter.writeTrestleObject(inputObject, startTemporal, endTemporal);
     }
 
     @Override
-    public void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validAt, @Nullable Temporal databaseFrom) {
-        this.objectWriter.addFactToTrestleObject(clazz, individual, factName, value, validAt, databaseFrom);
+    public Completable addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validAt, @Nullable Temporal databaseFrom) {
+        return this.objectWriter.addFactToTrestleObject(clazz, individual, factName, value, validAt, databaseFrom);
     }
 
     @Override
-    public void addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validFrom, @Nullable Temporal validTo, @Nullable Temporal databaseFrom) {
-        this.objectWriter.addFactToTrestleObject(clazz, individual, factName, value, validFrom, validTo, databaseFrom);
+    public Completable addFactToTrestleObject(Class<?> clazz, String individual, String factName, Object value, Temporal validFrom, @Nullable Temporal validTo, @Nullable Temporal databaseFrom) {
+        return this.objectWriter.addFactToTrestleObject(clazz, individual, factName, value, validFrom, validTo, databaseFrom);
     }
 
 
@@ -346,28 +346,28 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //    ----------------------------
 
     @Override
-    public <T extends @NonNull Object> T readTrestleObject(String datasetClassID, String objectID) throws MissingOntologyEntity, TrestleClassException {
+    public <T extends @NonNull Object> Single<@NonNull Object> readTrestleObject(String datasetClassID, String objectID) throws MissingOntologyEntity, TrestleClassException {
         return this.objectReader.readTrestleObject(datasetClassID, objectID);
     }
 
     @Override
-    public <T extends @NonNull Object> T readTrestleObject(String datasetClassID, String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws MissingOntologyEntity, TrestleClassException {
+    public <T extends @NonNull Object> Single<T> readTrestleObject(String datasetClassID, String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws MissingOntologyEntity, TrestleClassException {
         return this.objectReader.readTrestleObject(datasetClassID, objectID, validTemporal, databaseTemporal);
     }
 
     @Override
-    public <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, String objectID) throws TrestleClassException, MissingOntologyEntity {
+    public <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, String objectID) throws TrestleClassException, MissingOntologyEntity {
         return this.objectReader.readTrestleObject(clazz, objectID);
     }
 
 
     @Override
-    public <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws TrestleClassException, MissingOntologyEntity {
+    public <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws TrestleClassException, MissingOntologyEntity {
         return this.objectReader.readTrestleObject(clazz, objectID, validTemporal, databaseTemporal);
     }
 
     @Override
-    public Optional<TrestleObjectHeader> readObjectHeader(Class<?> clazz, String individual) {
+    public @io.reactivex.rxjava3.annotations.NonNull Maybe<TrestleObjectHeader> readObjectHeader(Class<?> clazz, String individual) {
         return this.objectReader.readObjectHeader(clazz, individual);
     }
 
@@ -376,47 +376,47 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //    ----------------------------
 
     @Override
-    public <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache) {
-        return this.objectReader.readTrestleObject(clazz, individualIRI, bypassCache);
+    public <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable TrestleTransaction transaction) {
+        return this.objectReader.readTrestleObject(clazz, individualIRI, bypassCache, transaction);
     }
 
     @Override
-    public <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt) {
-        return this.objectReader.readTrestleObject(clazz, individualIRI, bypassCache, validAt, databaseAt);
+    public @io.reactivex.rxjava3.annotations.NonNull <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt, @Nullable TrestleTransaction transaction) {
+        return this.objectReader.readTrestleObject(clazz, individualIRI, bypassCache, validAt, databaseAt, null);
     }
 
     @Override
-    public List<Object> getFactValues(Class<?> clazz, String individual, String factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
+    public Flowable<Object> getFactValues(Class<?> clazz, String individual, String factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
         return this.objectReader.getFactValues(clazz, individual, factName, validStart, validEnd, databaseTemporal);
     }
 
     @Override
-    public List<Object> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
+    public @io.reactivex.rxjava3.annotations.NonNull Flowable<Object> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal) {
         return this.objectReader.getFactValues(clazz, individual, factName, validStart, validEnd, databaseTemporal);
     }
 
     @Override
-    public List<Object> sampleFactValues(Class<?> clazz, String factName, long sampleLimit) {
+    public Flowable<Object> sampleFactValues(Class<?> clazz, String factName, long sampleLimit) {
         return this.objectReader.sampleFactValues(clazz, factName, sampleLimit);
     }
 
     @Override
-    public List<Object> sampleFactValues(Class<?> clazz, OWLDataProperty factName, long sampleLimit) {
+    public @io.reactivex.rxjava3.annotations.NonNull Flowable<Object> sampleFactValues(Class<?> clazz, OWLDataProperty factName, long sampleLimit) {
         return this.objectReader.sampleFactValues(clazz, factName, sampleLimit);
     }
 
     @Override
-    public <T> List<T> getRelatedObjects(Class<T> clazz, String identifier, ObjectRelation relation, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
+    public <T> Flowable<T> getRelatedObjects(Class<T> clazz, String identifier, ObjectRelation relation, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
         return this.objectReader.getRelatedObjects(clazz, identifier, relation, validAt, dbAt);
     }
 
     @Override
-    public Optional<Set<TrestleEvent>> getIndividualEvents(Class<?> clazz, String individual) {
+    public Flowable<TrestleEvent> getIndividualEvents(Class<?> clazz, String individual) {
         return getIndividualEvents(clazz, df.getOWLNamedIndividual(parseStringToIRI(reasonerPrefix, individual)));
     }
 
     @Override
-    public Optional<Set<TrestleEvent>> getIndividualEvents(Class<?> clazz, OWLNamedIndividual individual) {
+    public Flowable<TrestleEvent> getIndividualEvents(Class<?> clazz, OWLNamedIndividual individual) {
         return this.individualEngine.getIndividualEvents(clazz, individual);
     }
 
@@ -426,16 +426,16 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public void addTrestleObjectEvent(TrestleEventType type, OWLNamedIndividual individual, Temporal eventTemporal) {
+    public Completable addTrestleObjectEvent(TrestleEventType type, OWLNamedIndividual individual, Temporal eventTemporal) {
         if (type == TrestleEventType.SPLIT || type == TrestleEventType.MERGED) {
-            throw new IllegalArgumentException("SPLIT and MERGED events cannot be added through this method");
+            return Completable.error(new IllegalArgumentException("SPLIT and MERGED events cannot be added through this method"));
         }
-        this.eventEngine.addEvent(type, individual, eventTemporal);
+        return this.eventEngine.addEvent(type, individual, eventTemporal);
     }
 
     @Override
-    public <T extends @NonNull Object> void addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects, double strength) {
-        this.objectWriter.addTrestleObjectSplitMerge(type, subject, objects, strength);
+    public <T extends @NonNull Object> Completable addTrestleObjectSplitMerge(TrestleEventType type, T subject, List<T> objects, double strength) {
+        return this.objectWriter.addTrestleObjectSplitMerge(type, subject, objects, strength);
     }
 
 //    ----------------------------
@@ -443,43 +443,42 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 //    ----------------------------
 
     @Override
-    public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer) {
+    public <T extends @NonNull Object> Flowable<T> spatialIntersectObject(T inputObject, double buffer) {
         return this.spatialEngine.spatialIntersectObject(inputObject, buffer);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, @Nullable Temporal temporalAt, Temporal dbAt) {
-        return this.spatialEngine.spatialIntersectObject(inputObject, buffer, temporalAt, null);
+    public <T extends @NonNull Object> Flowable<T> spatialIntersectObject(T inputObject, double buffer, @Nullable Temporal temporalAt, Temporal dbAt, @Nullable TrestleTransaction transaction) {
+        return this.spatialEngine.spatialIntersectObject(inputObject, buffer, temporalAt, null, transaction);
     }
 
     @Override
-    public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit) {
+    public <T extends @NonNull Object> Flowable<T> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit) {
         return this.spatialEngine.spatialIntersectObject(inputObject, buffer, bufferUnit);
     }
 
     @Override
-    public <T extends @NonNull Object> Optional<List<T>> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit, Temporal temporalAt, Temporal dbAt) {
-        return this.spatialEngine.spatialIntersectObject(inputObject, buffer, bufferUnit, temporalAt, null);
+    public <T extends @NonNull Object> Flowable<T> spatialIntersectObject(T inputObject, double buffer, Unit<Length> bufferUnit, Temporal temporalAt, Temporal dbAt, @Nullable TrestleTransaction transaction) {
+        return this.spatialEngine.spatialIntersectObject(inputObject, buffer, bufferUnit, temporalAt, null, transaction);
     }
 
     @Override
-    public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer) {
+    public <T extends @NonNull Object> Flowable<T> spatialIntersect(Class<T> clazz, String wkt, double buffer) {
         return this.spatialEngine.spatialIntersect(clazz, wkt, buffer);
     }
 
     @Override
-    public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, Unit<Length> bufferUnit) {
+    public <T extends @NonNull Object> Flowable<T> spatialIntersect(Class<T> clazz, String wkt, double buffer, Unit<Length> bufferUnit) {
         return this.spatialEngine.spatialIntersect(clazz, wkt, buffer, bufferUnit);
     }
 
     @Override
-    public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, Unit<Length> bufferUnit, Temporal validAt, Temporal dbAt) {
-        return this.spatialEngine.spatialIntersect(clazz, wkt, buffer, bufferUnit, validAt, null);
+    public <T extends @NonNull Object> Flowable<T> spatialIntersect(Class<T> clazz, String wkt, double buffer, Unit<Length> bufferUnit, Temporal validAt, Temporal dbAt, @Nullable TrestleTransaction transaction) {
+        return this.spatialEngine.spatialIntersect(clazz, wkt, buffer, bufferUnit, validAt, null, transaction);
     }
 
     @Override
-    public <T extends @NonNull Object> Optional<List<T>> spatialIntersect(Class<T> clazz, String wkt, double buffer, @Nullable Temporal validAt, Temporal dbAt) {
+    public <T extends @NonNull Object> Flowable<T> spatialIntersect(Class<T> clazz, String wkt, double buffer, @Nullable Temporal validAt, Temporal dbAt) {
         return this.spatialEngine.spatialIntersect(clazz, wkt, buffer, validAt, null);
     }
 
@@ -514,63 +513,63 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
 
     @Override
-    public List<String> getCollections() {
+    public Flowable<String> getCollections() {
         return this.collectionEngine.getCollections();
     }
 
     @Override
-    public Optional<Map<String, List<String>>> getRelatedCollections(String individual, @Nullable String collectionID, double relationStrength) {
+    public Single<Map<String, List<String>>> getRelatedCollections(String individual, @Nullable String collectionID, double relationStrength) {
         return this.collectionEngine.getRelatedCollections(individual, collectionID, relationStrength);
     }
 
     @Override
-    public Optional<Set<String>> STIntersectCollection(String wkt, double buffer, double strength, Temporal validAt, @Nullable Temporal dbAt) {
+    public Flowable<String> STIntersectCollection(String wkt, double buffer, double strength, Temporal validAt, @Nullable Temporal dbAt) {
         return this.collectionEngine.STIntersectCollection(wkt, buffer, strength, validAt, dbAt);
     }
 
     @Override
-    public Optional<Set<String>> STIntersectCollection(String wkt, double buffer, Unit<Length> bufferUnit, double strength, Temporal validAt, @Nullable Temporal dbAt) {
+    public Flowable<String> STIntersectCollection(String wkt, double buffer, Unit<Length> bufferUnit, double strength, Temporal validAt, @Nullable Temporal dbAt) {
         return this.collectionEngine.STIntersectCollection(wkt, buffer, bufferUnit, strength, validAt, dbAt);
     }
 
     @Override
-    public <T> Optional<List<T>> getCollectionMembers(Class<T> clazz, String collectionID, double strength, @Nullable String spatialIntersection, @Nullable Temporal temporalIntersection) {
+    public @NonNull <T> Flowable<T> getCollectionMembers(Class<T> clazz, String collectionID, double strength, @Nullable String spatialIntersection, @Nullable Temporal temporalIntersection) {
         return this.collectionEngine.getCollectionMembers(clazz, collectionID, strength, spatialIntersection, temporalIntersection);
     }
 
     @Override
-    public void addObjectToCollection(String collectionIRI, Object inputObject, CollectionRelationType relationType, double strength) {
-        this.collectionEngine.addObjectToCollection(collectionIRI, inputObject, relationType, strength);
+    public Completable addObjectToCollection(String collectionIRI, Object inputObject, CollectionRelationType relationType, double strength) {
+        return this.collectionEngine.addObjectToCollection(collectionIRI, inputObject, relationType, strength);
     }
 
     @Override
-    public void removeObjectFromCollection(String collectionIRI, Object inputObject, boolean removeEmptyCollection) {
-        this.collectionEngine.removeObjectFromCollection(collectionIRI, inputObject, removeEmptyCollection);
+    public Completable removeObjectFromCollection(String collectionIRI, Object inputObject, boolean removeEmptyCollection) {
+        return this.collectionEngine.removeObjectFromCollection(collectionIRI, inputObject, removeEmptyCollection);
     }
 
     @Override
-    public void removeCollection(String collectionIRI) {
-        this.collectionEngine.removeCollection(collectionIRI);
+    public Completable removeCollection(String collectionIRI) {
+        return this.collectionEngine.removeCollection(collectionIRI);
     }
 
     @Override
-    public boolean collectionsAreAdjacent(String subjectCollectionID, String objectCollectionID, double strength) {
+    public Single<Boolean> collectionsAreAdjacent(String subjectCollectionID, String objectCollectionID, double strength) {
         return this.collectionEngine.collectionsAreAdjacent(subjectCollectionID, objectCollectionID, strength);
     }
 
     @Override
-    public void writeObjectRelationship(Object subject, Object object, ObjectRelation relation) {
-        this.objectWriter.writeObjectRelationship(subject, object, relation);
+    public Completable writeObjectRelationship(Object subject, Object object, ObjectRelation relation, @Nullable TrestleTransaction transaction) {
+        return this.objectWriter.writeObjectRelationship(subject, object, relation, transaction);
     }
 
     @Override
-    public void writeSpatialOverlap(Object subject, Object object, String wkt) {
-        this.objectWriter.writeSpatialOverlap(subject, object, wkt);
+    public Completable writeSpatialOverlap(Object subject, Object object, String wkt) {
+        return this.objectWriter.writeSpatialOverlap(subject, object, wkt);
     }
 
     @Override
-    public void writeTemporalOverlap(Object subject, Object object, String temporalOverlap) {
-        this.objectWriter.writeTemporalOverlap(subject, object, temporalOverlap);
+    public Completable writeTemporalOverlap(Object subject, Object object, String temporalOverlap) {
+        return this.objectWriter.writeTemporalOverlap(subject, object, temporalOverlap);
     }
 
     /**
@@ -578,78 +577,80 @@ public class TrestleReasonerImpl implements TrestleReasoner {
      *
      * @param inputObject - Individual to remove
      * @param <T>         - Type of individual to remove
+     * @return {@link Completable} when finished
      */
     @SafeVarargs
-    public final <T extends @NonNull Object> void removeIndividual(T... inputObject) {
-        // TODO(nickrobison): TRESTLE-733: Make better with RxJava
-        final List<CompletableFuture<Void>> completableFutures = Arrays.stream(inputObject)
-                .map(object -> CompletableFuture.supplyAsync(() -> trestleParser.classParser.getIndividual(object), trestleThreadPool))
-                .map(idFuture -> idFuture.thenApply(individual -> this.ontology.getAllObjectPropertiesForIndividual(individual).collect((Supplier<HashSet<OWLObjectPropertyAssertionAxiom>>) HashSet::new, HashSet::add).blockingGet()))
-                .map(propertyFutures -> propertyFutures.thenCompose(this::removeRelatedObjects))
-                .map(removedFuture -> removedFuture.thenAccept(individual -> this.ontology.removeIndividual(individual).blockingAwait()))
-                .collect(Collectors.toList());
-        final CompletableFuture<List<Void>> listCompletableFuture = sequenceCompletableFutures(completableFutures);
-        try {
-            listCompletableFuture.get();
-        } catch (InterruptedException e) {
-            logger.error("Delete interrupted", e.getCause());
-            Thread.currentThread().interrupt();
-        } catch (ExecutionException e) {
-            logger.error("Execution error", e.getCause());
-        }
+    public final <T extends @NonNull Object> Completable removeIndividuals(T... inputObject) {
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
+
+        return Observable.fromArray(inputObject)
+                .flatMapCompletable(object -> {
+                    final OWLNamedIndividual individual = trestleParser.classParser.getIndividual(object);
+                    final TrestleTransaction transaction = this.ontology.createandOpenNewTransaction(trestleTransaction);
+                    return this.ontology.getAllObjectPropertiesForIndividual(individual)
+                            .toList()
+                            .flatMapCompletable(properties -> this.removeRelatedObjects(properties, trestleTransaction))
+                            .andThen(Completable.defer(() -> {
+                                final TrestleTransaction tt = this.ontology.createandOpenNewTransaction(trestleTransaction);
+                                return this.ontology.removeIndividual(individual)
+                                        .doOnComplete(() -> this.ontology.returnAndCommitTransaction(tt))
+                                        .doOnError(error -> this.ontology.returnAndAbortTransaction(tt));
+                            }))
+                            .andThen(Completable.defer(() -> {
+                                this.trestleCache.deleteTrestleIndividual(individual);
+                                return Completable.complete();
+                            }))
+                            .doOnComplete(() -> this.ontology.returnAndCommitTransaction(transaction))
+                            .doOnError(error -> this.ontology.returnAndAbortTransaction(transaction));
+                })
+                .doOnComplete(() -> this.ontology.returnAndCommitTransaction(trestleTransaction))
+                .doOnError(error -> this.ontology.returnAndAbortTransaction(trestleTransaction));
     }
 
     /**
-     * Given a set of OWL Objects, remove them and return the subject as an OWLNamedIndividual
+     * Given a set of OWL Objects, remove them
      *
-     * @param objectProperties - Set of OWLObjectPropertyAssertionAxioms to remove the object assertions from the ontology
-     * @return - OWLNamedIndividual representing the subject of the object assertions
+     * @param objectProperties - {@link Collection} of {@link OWLObjectPropertyAssertionAxiom} to remove the object assertions from the ontology
+     * @param transaction      - Optional {@link TrestleTransaction} to continue with
+     * @return - {@link Completable} when finished
      */
-    private CompletableFuture<OWLNamedIndividual> removeRelatedObjects(Set<OWLObjectPropertyAssertionAxiom> objectProperties) {
-        // TODO(nickrobison): TRESTLE-733: Make better with rxJava
-        return CompletableFuture.supplyAsync(() -> {
+    private Completable removeRelatedObjects(Collection<OWLObjectPropertyAssertionAxiom> objectProperties, @Nullable TrestleTransaction transaction) {
+        final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(transaction, true);
 
-//            Remove the facts
-            final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
-            objectProperties
-                    .stream()
-                    .filter(property -> property.getProperty().getNamedProperty().getIRI().equals(hasFactIRI))
-                    .forEach(object -> ontology.removeIndividual(object.getObject().asOWLNamedIndividual()));
+        final Flowable<OWLObjectPropertyAssertionAxiom> propertiesFlowable = Flowable.fromIterable(objectProperties).publish().autoConnect(3);
+        final Completable factsCompletable = propertiesFlowable
+                .filter(property -> property.getProperty().getNamedProperty().getIRI().equals(hasFactIRI))
+                .flatMapCompletable(propery -> this.ontology.removeIndividual(propery.getObject().asOWLNamedIndividual()));
 
-//            And the temporals, but make sure the temporal doesn't have any other dependencies
-            objectProperties
-                    .stream()
-                    .filter(property -> property.getProperty().getNamedProperty().getIRI().equals(hasTemporalIRI))
-                    .map(object -> Optional.of(ontology.getIndividualObjectProperty(object.getObject().asOWLNamedIndividual(), temporalOfIRI).toList().blockingGet()))
-                    .filter(properties -> properties.orElseThrow(RuntimeException::new).size() <= 1)
-                    .map(properties -> properties.orElseThrow(RuntimeException::new).stream().findAny())
-                    .filter(Optional::isPresent)
-                    .forEach(property -> ontology.removeIndividual(property.orElseThrow(RuntimeException::new).getObject().asOWLNamedIndividual()));
+        final Completable temporalCompletable = propertiesFlowable
+                .filter(property -> property.getProperty().getNamedProperty().getIRI().equals(hasTemporalIRI))
+                .flatMapSingle(object -> ontology.getIndividualObjectProperty(object.getObject().asOWLNamedIndividual(), temporalOfIRI).toList())
+                .filter(properties -> properties.size() <= 1)
+                .map(properties -> properties.stream().findAny())
+                .filter(Optional::isPresent)
+                .flatMapCompletable(property -> ontology.removeIndividual(property.orElseThrow(RuntimeException::new).getObject().asOWLNamedIndividual()));
 
-//            And the database time object
-            objectProperties
-                    .stream()
-                    .filter(property -> property.getProperty().getNamedProperty().getIRI().equals(databaseTimeIRI))
-                    .map(object -> Optional.of(ontology.getIndividualObjectProperty(object.getObject().asOWLNamedIndividual(), databaseTimeOfIRI).toList().blockingGet()))
-                    .filter(properties -> properties.orElseThrow(RuntimeException::new).size() <= 1)
-                    .map(properties -> properties.orElseThrow(RuntimeException::new).stream().findAny())
-                    .filter(Optional::isPresent)
-                    .forEach(property -> ontology.removeIndividual(property.orElseThrow(RuntimeException::new).getObject().asOWLNamedIndividual()));
+        final Completable dbTimeCompletable = propertiesFlowable
+                .filter(property -> property.getProperty().getNamedProperty().getIRI().equals(databaseTimeIRI))
+                .flatMapSingle(object -> ontology.getIndividualObjectProperty(object.getObject().asOWLNamedIndividual(), databaseTimeOfIRI).toList())
+                .filter(properties -> properties.size() <= 1)
+                .map(properties -> properties.stream().findAny())
+                .filter(Optional::isPresent)
+                .flatMapCompletable(property -> ontology.removeIndividual(property.orElseThrow(RuntimeException::new).getObject().asOWLNamedIndividual()));
 
-            this.ontology.returnAndCommitTransaction(trestleTransaction);
-            return objectProperties.stream().findAny().orElseThrow(RuntimeException::new).getSubject().asOWLNamedIndividual();
-        }, trestleThreadPool);
-
+        return Completable.mergeArray(factsCompletable, temporalCompletable, dbTimeCompletable)
+                .doOnComplete(() -> this.ontology.returnAndCommitTransaction(trestleTransaction))
+                .doOnError(error -> this.ontology.returnAndAbortTransaction(trestleTransaction));
     }
 
 
     @Override
-    public Optional<UnionContributionResult> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSRID, double matchThreshold) {
+    public Maybe<UnionContributionResult> calculateSpatialUnionWithContribution(String datasetClassID, List<String> individualIRIs, int inputSRID, double matchThreshold) {
         return this.spatialEngine.calculateSpatialUnionWithContribution(datasetClassID, individualIRIs, inputSRID, matchThreshold);
     }
 
     @Override
-    public Optional<List<SpatialComparisonReport>> compareTrestleObjects(String datasetID, String objectAID, List<String> comparisonObjectIDs, int inputSR, double matchThreshold) {
+    public Flowable<SpatialComparisonReport> compareTrestleObjects(String datasetID, String objectAID, List<String> comparisonObjectIDs, int inputSR, double matchThreshold) {
         return this.spatialEngine.compareTrestleObjects(datasetID, objectAID, comparisonObjectIDs, inputSR, matchThreshold);
     }
 
@@ -659,137 +660,51 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public <T> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, OWLNamedIndividual individual, Temporal queryTemporal) {
+    public <T> Flowable<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, OWLNamedIndividual individual, Temporal queryTemporal) {
         return this.spatialEngine.getEquivalentIndividuals(clazz, individual, queryTemporal);
     }
 
     @Override
-    public <T> List<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, List<OWLNamedIndividual> individual, Temporal queryTemporal) {
-        return this.spatialEngine.getEquivalentIndividuals(clazz, individual, queryTemporal);
+    public <T> Flowable<OWLNamedIndividual> getEquivalentIndividuals(Class<T> clazz, List<OWLNamedIndividual> individual, Temporal queryTemporal, @Nullable TrestleTransaction transaction) {
+        return this.spatialEngine.getEquivalentIndividuals(clazz, individual, queryTemporal, transaction);
     }
 
     @Override
-    public <T extends @NonNull Object> Optional<List<T>> getEquivalentObjects(Class<T> clazz, IRI individual, Temporal queryTemporal) {
+    public <T extends @NonNull Object> Flowable<T> getEquivalentObjects(Class<T> clazz, IRI individual, Temporal queryTemporal) {
         return getEquivalentObjects(clazz, Collections.singletonList(individual), queryTemporal);
     }
 
     @Override
-    public <T extends @NonNull Object> Optional<List<T>> getEquivalentObjects(Class<T> clazz, List<IRI> individuals, Temporal queryTemporal) {
+    public <T extends @NonNull Object> Flowable<T> getEquivalentObjects(Class<T> clazz, List<IRI> individuals, Temporal queryTemporal) {
         final List<OWLNamedIndividual> individualSubjects = individuals
                 .stream()
                 .map(df::getOWLNamedIndividual)
                 .collect(Collectors.toList());
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-        try {
-            final List<OWLNamedIndividual> equivalentIndividuals = this.spatialEngine.getEquivalentIndividuals(clazz, individualSubjects, queryTemporal);
-            final List<T> individualList = equivalentIndividuals
-                    .stream()
-                    .map(individual -> {
-                        return this.objectReader.readTrestleObject(clazz, individual.getIRI(), false, queryTemporal, null);
-                    })
-                    .collect(Collectors.toList());
-            this.ontology.returnAndCommitTransaction(trestleTransaction);
-            return Optional.of(individualList);
-        } catch (Exception e) {
-            this.ontology.returnAndAbortTransaction(trestleTransaction);
-            logger.error("Unable to get equivalent objects for {} at {}", individuals, queryTemporal, e);
-            return Optional.empty();
-        }
+        return this.spatialEngine.getEquivalentIndividuals(clazz, individualSubjects, queryTemporal, trestleTransaction)
+                .flatMapSingle(individual -> this.objectReader.readTrestleObject(clazz, individual.getIRI(), false, queryTemporal, null, trestleTransaction))
+                .doOnComplete(() -> this.ontology.returnAndCommitTransaction(trestleTransaction))
+                .doOnError(error -> this.ontology.returnAndAbortTransaction(trestleTransaction));
     }
 
     @Override
-    public <T> void calculateSpatialAndTemporalRelationships(Class<T> clazz, String individual, @Nullable Temporal validAt) throws TrestleClassException, MissingOntologyEntity {
-        final IRI individualIRI = parseStringToIRI(this.reasonerPrefix, individual);
-
-//        Read the object first
-        final T trestleObject = this.objectReader.readTrestleObject(clazz, individual, validAt, null);
-//        Intersect it
-        final Optional<List<T>> intersectedObjects = this.spatialEngine.spatialIntersectObject(trestleObject, 1, validAt, null);
-//        Now, compute the relationships (I'm fine doing this on an alternate thread, but it should return a completable future, rather than blocking the thread
-        // TODO(nickrobison): TRESTLE-733 - Make this better with RxJava
-        if (intersectedObjects.isPresent()) {
-            final List<CompletableFuture<@Nullable TrestlePair<T, TrestlePair<SpatialComparisonReport, TemporalComparisonReport>>>> comparisonFutures = intersectedObjects.get()
-                    .stream()
-                    .map(intersectedObject -> CompletableFuture.supplyAsync(() -> {
-                        final IRI intersectedIRI = this.trestleParser.classParser.getIndividual(intersectedObject).getIRI();
-//                        If we've already computed these two, don't do them again.
-//                        Or, if the objects are the same, skip them
-                        if (this.relationTracker.hasRelation(individualIRI, intersectedIRI) || intersectedIRI.equals(individualIRI)) {
-                            logger.debug("Already computed relationships between {} and {}", individualIRI, intersectedIRI);
-                            return null;
-                        }
-                        logger.debug("Writing relationships between {} and {}", individualIRI, this.trestleParser.classParser.getIndividual(intersectedObject));
-                        final SpatialComparisonReport spatialComparisonReport = this.compareTrestleObjects(trestleObject, intersectedObject, 0.9);
-                        final TemporalComparisonReport temporalComparisonReport = this.temporalEngine.compareObjects(trestleObject, intersectedObject);
-                        return new TrestlePair<>(intersectedObject, new TrestlePair<>(spatialComparisonReport, temporalComparisonReport));
-                    }, this.comparisonThreadPool))
-                    .collect(Collectors.toList());
-
-            final CompletableFuture<List<@Nullable TrestlePair<T, TrestlePair<SpatialComparisonReport, TemporalComparisonReport>>>> comparisonFuture = sequenceCompletableFutures(comparisonFutures);
-
-
-//            Write all the relationships in a single transaction
-//            TODO(nickrobison): This should not be on the main thread.
-            final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(true);
-            try {
-//                Filter out null objects and those that have no spatial interactions
-                final List<@Nullable TrestlePair<T, TrestlePair<SpatialComparisonReport, TemporalComparisonReport>>> comparisons = comparisonFuture
-                        .get()
-                        .stream()
-                        .filter(Objects::nonNull)
-                        .filter(pair -> !pair.getRight().getLeft().getRelations().isEmpty())
-                        .collect(Collectors.toList());
-
-                comparisons.forEach(cPair -> {
-                    final T intersectedObject = cPair.getLeft();
-                    final SpatialComparisonReport spatialComparisonReport = cPair.getRight().getLeft();
-                    final TemporalComparisonReport temporalComparisonReport = cPair.getRight().getRight();
-                    final IRI intersectedObjectID = parseStringToIRI(this.reasonerPrefix, spatialComparisonReport.getObjectBID());
-
-                    //                Write the relationships
-                    spatialComparisonReport.getRelations().forEach(relation -> {
-                        logger.trace("Writing spatial relationship {}", relation);
-                        this.writeObjectRelationship(trestleObject, intersectedObject, relation);
-                    });
-
-//                Write overlaps
-                    spatialComparisonReport.getSpatialOverlap().ifPresent(overlap -> {
-                        logger.debug("Writing spatial overlap");
-                        this.writeSpatialOverlap(trestleObject, intersectedObject, overlap);
-                    });
-
-                    //            Temporal relations
-                    temporalComparisonReport.getRelations().forEach(tRelation -> {
-                        logger.debug("Writing temporal relationship {}", tRelation);
-                        this.writeObjectRelationship(trestleObject, intersectedObject, tRelation);
-                    });
-                    this.relationTracker.addRelation(individualIRI, intersectedObjectID);
-
-                });
-                this.ontology.returnAndCommitTransaction(trestleTransaction);
-            } catch (InterruptedException e) {
-                logger.error("Interrupted while computing relationships for {}", individualIRI, e);
-                Thread.currentThread().interrupt();
-                this.ontology.returnAndAbortTransaction(trestleTransaction);
-            } catch (ExecutionException e) {
-                logger.error("Cannot compute relationships for {}", individualIRI, ExceptionUtils.getRootCause(e));
-                this.ontology.returnAndAbortTransaction(trestleTransaction);
-            }
-        }
+    public <T> Completable calculateSpatialAndTemporalRelationships(Class<T> clazz, String individual, @Nullable Temporal validAt) throws TrestleClassException, MissingOntologyEntity {
+        final RelationCalculator<T> calculator = new RelationCalculator<T>(ontology, this.reasonerPrefix, this.objectReader, this.objectWriter, this.spatialEngine, this.relationTracker, this.temporalEngine, this.trestleParser, clazz, individual, validAt);
+        return calculator.calculate();
     }
 
     @Override
-    public <T extends @NonNull Object, B extends Number> AggregationEngine.AdjacencyGraph<T, B> buildSpatialGraph(Class<T> clazz, String objectID, Computable<T, T, B> edgeCompute, Filterable<T> filter, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
+    public <T extends @NonNull Object, B extends Number> Single<AggregationEngine.AdjacencyGraph<T, B>> buildSpatialGraph(Class<T> clazz, String objectID, Computable<T, T, B> edgeCompute, Filterable<T> filter, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
         return this.aggregationEngine.buildSpatialGraph(clazz, objectID, edgeCompute, filter, validAt, dbAt);
     }
 
     @Override
-    public List<String> searchForIndividual(String individualIRI) {
+    public Flowable<String> searchForIndividual(String individualIRI) {
         return searchForIndividual(individualIRI, null, null);
     }
 
     @Override
-    public List<String> searchForIndividual(String individualIRI, @Nullable String datasetClass, @Nullable Integer limit) {
+    public Flowable<String> searchForIndividual(String individualIRI, @Nullable String datasetClass, @Nullable Integer limit) {
         final OWLClass owlClass;
         if (datasetClass != null) {
             owlClass = df.getOWLClass(parseStringToIRI(reasonerPrefix, datasetClass));
@@ -799,58 +714,63 @@ public class TrestleReasonerImpl implements TrestleReasoner {
 
         final String query = qb.buildIndividualSearchQuery(individualIRI, owlClass, limit);
         final TrestleTransaction trestleTransaction = this.ontology.createandOpenNewTransaction(false);
-
-        try {
-            final List<String> results = ontology.executeSPARQLResults(query).toList().blockingGet()
-                    .stream()
-                    .map(result -> result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID())
-                    .collect(Collectors.toList());
-            this.ontology.returnAndCommitTransaction(trestleTransaction);
-            return results;
-        } catch (Exception e) {
-            logger.error("Problem searching for {}", individualIRI, e);
-            this.ontology.returnAndAbortTransaction(trestleTransaction);
-            return ExceptionUtils.rethrow(e);
-        }
+        return this.ontology.executeSPARQLResults(query)
+                .map(result -> result.unwrapIndividual("m"))
+                .map(OWLIndividual::toStringID)
+                .doOnComplete(() -> this.ontology.returnAndCommitTransaction(trestleTransaction))
+                .doOnError(error -> this.ontology.returnAndAbortTransaction(trestleTransaction));
+//
+//        try {
+//            final List<String> results = ontology.executeSPARQLResults(query).toList().blockingGet()
+//                    .stream()
+//                    .map(result -> result.getIndividual("m").orElseThrow(() -> new RuntimeException("individual is null")).toStringID())
+//                    .collect(Collectors.toList());
+//            this.ontology.returnAndCommitTransaction(trestleTransaction);
+//            return results;
+//        } catch (Exception e) {
+//            logger.error("Problem searching for {}", individualIRI, e);
+//            this.ontology.returnAndAbortTransaction(trestleTransaction);
+//            return ExceptionUtils.rethrow(e);
+//        }
     }
 
     @Override
-    public Optional<List<TrestleIndividual>> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer) {
+    public Flowable<TrestleIndividual> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer) {
         return this.spatialEngine.spatialIntersectIndividuals(datasetClassID, wkt, buffer);
     }
 
 
     @Override
-    public Optional<List<TrestleIndividual>> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer, @Nullable Temporal atTemporal, @Nullable Temporal dbTemporal) {
+    public Flowable<TrestleIndividual> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer, @Nullable Temporal atTemporal, @Nullable Temporal dbTemporal) {
         return this.spatialEngine.spatialIntersectIndividuals(datasetClassID, wkt, buffer, atTemporal, dbTemporal);
     }
 
     @Override
-    public Optional<List<TrestleIndividual>> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer, Unit<Length> bufferUnit) {
+    public Flowable<TrestleIndividual> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer, Unit<Length> bufferUnit) {
         return this.spatialEngine.spatialIntersectIndividuals(datasetClassID, wkt, buffer, bufferUnit);
     }
 
     @Override
-    public Optional<List<TrestleIndividual>> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer, Unit<Length> bufferUnit, @Nullable Temporal atTemporal, @Nullable Temporal dbTemporal) {
+    public Flowable<TrestleIndividual> spatialIntersectIndividuals(String datasetClassID, String wkt, double buffer, Unit<Length> bufferUnit, @Nullable Temporal atTemporal, @Nullable Temporal dbTemporal) {
         return this.spatialEngine.spatialIntersectIndividuals(datasetClassID, wkt, buffer, bufferUnit, atTemporal, dbTemporal);
     }
 
     @Override
-    public Optional<List<TrestleIndividual>> spatialIntersectIndividuals(Class<?> clazz, String wkt, double buffer, @Nullable Temporal atTemporal, @Nullable Temporal dbTemporal) {
+    public Flowable<TrestleIndividual> spatialIntersectIndividuals(Class<?> clazz, String wkt, double buffer, @Nullable Temporal atTemporal, @Nullable Temporal dbTemporal) {
         return this.spatialEngine.spatialIntersectIndividuals(clazz, wkt, buffer, atTemporal, dbTemporal);
     }
 
     @Override
-    public Optional<List<TrestleIndividual>> spatialIntersectIndividuals(Class<@NonNull ?> clazz, String wkt, double buffer, Unit<Length> bufferUnit, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
+    public Flowable<TrestleIndividual> spatialIntersectIndividuals(Class<@NonNull ?> clazz, String wkt, double buffer, Unit<Length> bufferUnit, @Nullable Temporal validAt, @Nullable Temporal dbAt) {
         return this.spatialEngine.spatialIntersectIndividuals(clazz, wkt, buffer, bufferUnit, validAt, dbAt);
     }
 
     @Override
-    public TrestleIndividual getTrestleIndividual(String individualIRI) {
+    public Single<TrestleIndividual> getTrestleIndividual(String individualIRI) {
         return getTrestleIndividual(df.getOWLNamedIndividual(parseStringToIRI(reasonerPrefix, individualIRI)));
     }
 
-    private TrestleIndividual getTrestleIndividual(OWLNamedIndividual individual) {
+    private Single<TrestleIndividual> getTrestleIndividual(OWLNamedIndividual individual) {
         return this.individualEngine.getTrestleIndividual(individual);
     }
 
@@ -866,21 +786,17 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public Set<String> getAvailableDatasets() {
+    public Flowable<String> getAvailableDatasets() {
 
         final String datasetQuery = qb.buildDatasetQuery();
-        final List<TrestleResult> resultSet = ontology.executeSPARQLResults(datasetQuery).toList().blockingGet();
-        Set<OWLClass> datasetsInOntology = resultSet
-                .stream()
-                .map(result -> df.getOWLClass(result.getIndividual("dataset").orElseThrow(() -> new RuntimeException("dataset is null")).toStringID()))
-                .collect(Collectors.toSet());
-
-        return this.trestleParser.classRegistry
-                .getRegisteredOWLClasses()
-                .stream()
-                .filter(datasetsInOntology::contains)
-                .map(individual -> individual.getIRI().getShortForm())
-                .collect(Collectors.toSet());
+        return ontology.executeSPARQLResults(datasetQuery)
+                .map(result -> df.getOWLClass(result.unwrapIndividual("dataset").toStringID()))
+                .collect((Supplier<HashSet<OWLClass>>) HashSet::new, HashSet::add)
+                .flattenStreamAsFlowable(datasetsInOntology -> trestleParser.classRegistry
+                        .getRegisteredOWLClasses()
+                        .stream()
+                        .filter(datasetsInOntology::contains)
+                        .map(individual -> individual.getIRI().getShortForm()));
     }
 
     @Override
@@ -901,21 +817,19 @@ public class TrestleReasonerImpl implements TrestleReasoner {
     }
 
     @Override
-    public List<String> getDatasetMembers(Class<?> clazz) {
+    public Flowable<String> getDatasetMembers(Class<?> clazz) {
         final OWLClass objectClass = this.trestleParser.classParser.getObjectClass(clazz);
-        return this.ontology.getInstances(objectClass, true).toList().blockingGet()
-                .stream()
-                .map(OWLIndividual::toStringID)
-                .collect(Collectors.toList());
+        return this.ontology.getInstances(objectClass, true)
+                .map(OWLIndividual::toStringID);
     }
 
     @Override
-    public <T> File exportDataSetObjects(Class<T> inputClass, List<String> objectID, ITrestleExporter.DataType exportType) throws IOException {
+    public <T> Single<File> exportDataSetObjects(Class<T> inputClass, List<String> objectID, ITrestleExporter.DataType exportType) throws IOException {
         return this.dataExporter.exportDataSetObjects(inputClass, objectID, exportType);
     }
 
     @Override
-    public <T> File exportDataSetObjects(Class<T> inputClass, List<String> objectID, @Nullable Temporal validAt, @Nullable Temporal databaseAt, ITrestleExporter.DataType exportType) throws IOException {
+    public <T> Single<File> exportDataSetObjects(Class<T> inputClass, List<String> objectID, @Nullable Temporal validAt, @Nullable Temporal databaseAt, ITrestleExporter.DataType exportType) throws IOException {
         return this.dataExporter.exportDataSetObjects(inputClass, objectID, validAt, databaseAt, exportType);
     }
 }

@@ -6,20 +6,17 @@ import com.nickrobison.trestle.reasoner.AbstractReasonerTest;
 import com.nickrobison.trestle.reasoner.TestClasses;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
 import com.nickrobison.trestle.types.TrestleIndividual;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 import static com.nickrobison.trestle.SharedTestUtils.readGAULObjects;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Tag("integration")
-@Disabled
 public class SpatialIntersectionTest extends AbstractReasonerTest {
 
 
@@ -28,7 +25,7 @@ public class SpatialIntersectionTest extends AbstractReasonerTest {
         final List<TestClasses.GAULTestClass> gaulObjects = readGAULObjects();
         gaulObjects.parallelStream().forEach(gaul -> {
             try {
-                reasoner.writeTrestleObject(gaul);
+                reasoner.writeTrestleObject(gaul).blockingAwait();
             } catch (TrestleClassException e) {
                 throw new RuntimeException(String.format("Problem writing object %s", gaul.adm0_name), e);
             } catch (MissingOntologyEntity missingOntologyEntity) {
@@ -42,19 +39,15 @@ public class SpatialIntersectionTest extends AbstractReasonerTest {
                 .findAny().orElseThrow(RuntimeException::new);
 
 //        Do a standard spatial intersection with it
-
-        final Optional<List<TrestleIndividual>> trestleIndividuals = this.reasoner.spatialIntersectIndividuals(TestClasses.GAULTestClass.class,
-                maputo.wkt, 0.0, null, null);
-        assertAll(() -> assertTrue(trestleIndividuals.isPresent(), "Should have individuals"),
-                () -> assertEquals(10, trestleIndividuals.get().size(), "Should have all Distrito and Aeropuerto individuals"));
+        final List<TrestleIndividual> trestleIndividuals = this.reasoner.spatialIntersectIndividuals(TestClasses.GAULTestClass.class,
+                maputo.wkt, 0.0, null, null).toList().blockingGet();
+        assertEquals(10, trestleIndividuals.size(), "Should have all Distrito and Aeropuerto individuals");
 
         //        Do a TS intersection with it
 
-        final Optional<List<TrestleIndividual>> individuals2015 = this.reasoner.spatialIntersectIndividuals(TestClasses.GAULTestClass.class,
-                maputo.wkt, 0.0, LocalDate.of(2015, 1, 1), null);
-
-        assertAll(() -> assertTrue(individuals2015.isPresent(), "Should have an optional"),
-                () -> assertEquals(1, individuals2015.get().size(), "Should only have itself"));
+        final List<TrestleIndividual> individuals2015 = this.reasoner.spatialIntersectIndividuals(TestClasses.GAULTestClass.class,
+                maputo.wkt, 0.0, LocalDate.of(2015, 1, 1), null).toList().blockingGet();
+        assertEquals(1, individuals2015.size(), "Should only have itself");
 
 
 //        Find Manhica 2
@@ -64,19 +57,15 @@ public class SpatialIntersectionTest extends AbstractReasonerTest {
                 .findFirst().orElseThrow(RuntimeException::new);
 
 //        Add a buffer and try a spatial intersection
-        final Optional<List<TrestleIndividual>> manhicaSpatial = this.reasoner.spatialIntersectIndividuals(TestClasses.GAULTestClass.class
-                , manhica.wkt, 0.1, null, null);
-
-        assertAll(() -> assertTrue(manhicaSpatial.isPresent(), "Should have optional"),
-                () -> assertEquals(6, manhicaSpatial.get().size(), "Should have multiple objects"));
+        final List<TrestleIndividual> manhicaSpatial = this.reasoner.spatialIntersectIndividuals(TestClasses.GAULTestClass.class
+                , manhica.wkt, 0.1, null, null).toList().blockingGet();
+        assertEquals(6, manhicaSpatial.size(), "Should have multiple objects");
 
 
 //        Now with the buffer, do a TS Intersection
-        final Optional<List<TrestleIndividual>> manhica2015 = this.reasoner.spatialIntersectIndividuals(TestClasses.GAULTestClass.class,
-                manhica.wkt, 0.1, LocalDate.of(2015, 1, 1), null);
-        assertAll(() -> assertTrue(manhica2015.isPresent(), "Should have optional"),
-                () -> assertEquals(2, manhica2015.get().size(), "Should not have old Manhica"));
-
+        final List<TrestleIndividual> manhica2015 = this.reasoner.spatialIntersectIndividuals(TestClasses.GAULTestClass.class,
+                manhica.wkt, 0.1, LocalDate.of(2015, 1, 1), null).toList().blockingGet();
+        assertEquals(2, manhica2015.size(), "Should not have old Manhica");
     }
 
 

@@ -234,7 +234,7 @@ public class GraphDBOntology extends RDF4JOntology {
 
     @Override
     public void openDatasetTransaction(boolean write) {
-        if (this.tc.get() == null) {
+        if (this.getThreadTransactionObject() == null && this.tc.get() == null) {
             logger.debug("Thread has no open connection, creating a new one");
             this.setOntologyConnection();
         }

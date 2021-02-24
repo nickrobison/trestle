@@ -13,6 +13,8 @@ public class TrestleTransaction {
     private final @Nullable Long transactionID;
     private final Boolean writeTransaction;
     private volatile @Nullable RepositoryConnection connection;
+    private final @Nullable TrestleTransaction parent;
+    private final String openedThread;
 
     /**
      * Create a new TrestleTransaction with the current timestamp, indicating the tread owns the current transaction
@@ -23,16 +25,24 @@ public class TrestleTransaction {
     public TrestleTransaction(Long id, boolean write) {
         this.transactionID = id;
         this.writeTransaction = write;
+        this.openedThread = Thread.currentThread().getName();
+        this.parent = null;
     }
 
     /**
      * Create TrestleTransaction object that does not own the current transaction
      *
+     * @param parent - {@link TrestleTransaction} which this transaction is a child of
      * @param write - Is this a write transaction?
      */
-    public TrestleTransaction(boolean write) {
+    public TrestleTransaction(@Nullable TrestleTransaction parent, boolean write) {
         this.transactionID = null;
         this.writeTransaction = write;
+        this.parent = parent;
+        this.openedThread = Thread.currentThread().getName();
+        if (parent != null) {
+            this.connection = parent.getConnection();
+        }
     }
 
     /**
@@ -75,6 +85,18 @@ public class TrestleTransaction {
 
     public void setConnection(@Nullable RepositoryConnection connection) {
         this.connection = connection;
+    }
+
+    public TrestleTransaction getParent() {
+        return parent;
+    }
+
+    public String getOpenedThread() {
+        return openedThread;
+    }
+
+    public boolean isRoot() {
+        return this.parent == null;
     }
 
     @Override

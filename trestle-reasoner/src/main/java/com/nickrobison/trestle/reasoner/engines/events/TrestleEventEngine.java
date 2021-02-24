@@ -2,6 +2,7 @@ package com.nickrobison.trestle.reasoner.engines.events;
 
 import com.nickrobison.trestle.common.IRIUtils;
 import com.nickrobison.trestle.types.events.TrestleEventType;
+import io.reactivex.rxjava3.core.Completable;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
@@ -27,27 +28,33 @@ public interface TrestleEventEngine {
 
     /**
      * Added a Trestle_Event to the given individual
-     * @param event - {@link TrestleEventType} to add
-     * @param individual - {@link OWLNamedIndividual} to add event to
+     *
+     * @param event         - {@link TrestleEventType} to add
+     * @param individual    - {@link OWLNamedIndividual} to add event to
      * @param eventTemporal - {@link Temporal} of when event occurred
+     * @return - {@link Completable} when finished
      */
-    void addEvent(TrestleEventType event, OWLNamedIndividual individual, Temporal eventTemporal);
+    Completable addEvent(TrestleEventType event, OWLNamedIndividual individual, Temporal eventTemporal);
 
     /**
      * Adjusts an object's events based on modified temporals
+     *
      * @param objectExistenceAxioms - {@link List} of {@link OWLDataPropertyAssertionAxiom} representing the new existence temporals to write
+     * @return - {@link Completable} when finished
      */
-    void adjustObjectEvents(List<OWLDataPropertyAssertionAxiom> objectExistenceAxioms);
+    Completable adjustObjectEvents(List<OWLDataPropertyAssertionAxiom> objectExistenceAxioms);
 
     /**
      * Add a SPLIT or MERGE {@link TrestleEventType} to a given {@link OWLNamedIndividual}
      * Events are oriented subject to object, so A splits_into [B,C,D] and H merged_from [E,F,G]
      * Individuals are not created if they don't already exist
      * throws {@link IllegalArgumentException} if something other than {@link TrestleEventType#MERGED} or {@link TrestleEventType#SPLIT} is passed
-     *  @param type    {@link TrestleEventType} to add
-     * @param subject - {@link OWLNamedIndividual} subject of Event
-     * @param objects - {@link Set} of {@link OWLNamedIndividual} that are the objects of the event
+     *
+     * @param type          {@link TrestleEventType} to add
+     * @param subject       - {@link OWLNamedIndividual} subject of Event
+     * @param objects       - {@link Set} of {@link OWLNamedIndividual} that are the objects of the event
      * @param eventTemporal - {@link Temporal} of when event occurred
+     * @return - {@link Completable} when finished
      */
-    void addSplitMergeEvent(TrestleEventType type, OWLNamedIndividual subject, Set<OWLNamedIndividual> objects, Temporal eventTemporal);
+    Completable addSplitMergeEvent(TrestleEventType type, OWLNamedIndividual subject, Set<OWLNamedIndividual> objects, Temporal eventTemporal);
 }

@@ -64,7 +64,7 @@ public class QueryResource {
     public Response executeQuery(@NotEmpty String queryString) {
         logger.debug("Executing query {}", queryString);
         try {
-            final List<TrestleResult> results = this.reasoner.executeSPARQLSelect(queryString);
+            final List<TrestleResult> results = this.reasoner.executeSPARQLSelect(queryString).toList().blockingGet();
 
             return ok(new TrestleResultSet(results.size(), Collections.emptyList(), results)).build();
         } catch (Exception e) {

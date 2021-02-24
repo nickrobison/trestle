@@ -234,7 +234,7 @@ public class TigerLoader {
             TigerCountyObject tigerObj = tigerObjs.get(count);
             String id = tigerObj.getGeoid();
             LocalDate startDate = tigerObj.getRecord_start_date().plusMonths(1);
-            TigerCountyObject outObj = reasoner.readTrestleObject(TigerCountyObject.class, id, startDate, null);
+            TigerCountyObject outObj = reasoner.readTrestleObject(TigerCountyObject.class, id, startDate, null).blockingGet();
 
             if(!tigerObj.equals(outObj))
             {

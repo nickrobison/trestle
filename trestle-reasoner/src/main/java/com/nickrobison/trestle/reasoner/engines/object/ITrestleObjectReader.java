@@ -2,8 +2,12 @@ package com.nickrobison.trestle.reasoner.engines.object;
 
 import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
+import com.nickrobison.trestle.transactions.TrestleTransaction;
 import com.nickrobison.trestle.types.TrestleObjectHeader;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.IRI;
@@ -11,8 +15,6 @@ import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import java.time.temporal.Temporal;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * Created by nickrobison on 2/13/18.
@@ -28,14 +30,14 @@ public interface ITrestleObjectReader {
      * Returns an object from the database, looking up the class definition from the registry
      * Returns the currently valid facts, at the current database time
      *
+     * @param <T>            - Java class to return
      * @param datasetClassID - {@link String} name of Java class to retrieve from the class registry
      * @param objectID       - {@link String} string ID of individual
-     * @param <T>            - Java class to return
-     * @return - Java object of type {@link T}
+     * @return - {@link Single} Java object of type {@link T}
      * @throws MissingOntologyEntity - throws if the given individual isn't in the Database
      * @throws TrestleClassException - throws if the class isn't registered with the Reasoner
      */
-    <T extends @NonNull Object> T readTrestleObject(String datasetClassID, String objectID) throws MissingOntologyEntity, TrestleClassException;
+    <T extends @NonNull Object> Single<@NonNull Object> readTrestleObject(String datasetClassID, String objectID) throws MissingOntologyEntity, TrestleClassException;
 
     /**
      * Returns an object from the database, looking up the class definition from the registry
@@ -46,51 +48,52 @@ public interface ITrestleObjectReader {
      * @param objectID         - {@link String} string ID of individual
      * @param validTemporal    - {@link Temporal} to denote the ValidAt time
      * @param databaseTemporal - Optional {@link Temporal} to denote the DatabaseAt time
-     * @return - Java object of type {@link T}
+     * @return - {@link Single} Java object of type {@link T}
      * @throws MissingOntologyEntity - throws if the given individual isn't in the Database
      * @throws TrestleClassException - throws if the class isn't registered with the Reasoner
      */
-    <T extends @NonNull Object> T readTrestleObject(String datasetClassID, String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws MissingOntologyEntity, TrestleClassException;
+    <T extends @NonNull Object> Single<T> readTrestleObject(String datasetClassID, String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws MissingOntologyEntity, TrestleClassException;
 
     /**
      * Returns an object from the database, using the provided class definition.
      * Returns the currently valid facts, at the current database time
      *
+     * @param <T>      - Java class to return
      * @param clazz    - Java {@link Class} of type {@link T} to return
      * @param objectID - {@link String} ID of individual
-     * @param <T>      - Java class to return
-     * @return - Java object of type {@link T}
+     * @return - {@link Single} Java object of type {@link T}
      * @throws MissingOntologyEntity - throws if the given individual isn't in the Database
      * @throws TrestleClassException - throws if the class isn't registered with the Reasoner
      */
-    <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, String objectID) throws TrestleClassException, MissingOntologyEntity;
+    <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, String objectID) throws TrestleClassException, MissingOntologyEntity;
 
     /**
      * Returns an object, from the database, using the provided class definition.
      * Allows the user to specify a valid/database pair for the desired object state
      *
+     * @param <T>              - Java class to return
      * @param clazz            - Java {@link Class} of type {@link T} to return
      * @param objectID         - {@link String} ID  of individual
      * @param validTemporal    - {@link Temporal} to denote the ValidAt time
      * @param databaseTemporal - Optional {@link Temporal} to denote the DatabaseAt time
-     * @param <T>              - Java class to return
-     * @return - Java object of type {@link T}
+     * @return - {@link Single} Java object of type {@link T}
      * @throws MissingOntologyEntity - throws if the given individual isn't in the Database
      * @throws TrestleClassException - throws if the class isn't registered with the Reasoner
      */
-    <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws TrestleClassException, MissingOntologyEntity;
+    <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, String objectID, @Nullable Temporal validTemporal, @Nullable Temporal databaseTemporal) throws TrestleClassException, MissingOntologyEntity;
 
     /**
      * ReadAsObject interface, builds the default database temporal, optionally returns the object from the cache
      * Returns the currently valid facts, at the current database time
      *
+     * @param <T>           - Java {@link Class} to return
      * @param clazz         - Java {@link Class} of type {@link T} to return
      * @param individualIRI - {@link IRI} ID of individual
      * @param bypassCache   - {@code true} bypass object cache. {@code false} use cache if possible
-     * @param <T>           - Java {@link Class} to return
-     * @return - Java object of type {@link T}
+     * @param transaction   - {@link TrestleTransaction} to continue with
+     * @return - {@link Single} Java object of type {@link T}
      */
-    <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache);
+    <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable TrestleTransaction transaction);
 
     /**
      * /**
@@ -98,24 +101,26 @@ public interface ITrestleObjectReader {
      * Returns the state of the object at the specified valid/database point
      * If no valid or database times are specified, returns the currently valid facts at the current database time
      *
+     * @param <T>           - Java {@link Class} to return
      * @param clazz         - Java {@link Class} of type {@link T} to return
      * @param individualIRI - {@link IRI} ID of individual
      * @param bypassCache   - {@code true} bypass object cache. {@code false} use cache if possible
      * @param validAt       - Optional {@link Temporal} to specify a validAt time
      * @param databaseAt    - Optional {@link Temporal} to specify databaseAt time
-     * @param <T>           - Java {@link Class} to return
-     * @return - Java object of type {@link T}
+     * @param transaction   - {@link TrestleTransaction} to continue with
+     * @return - {@link Single} Java object of type {@link T}
+     * @throws com.nickrobison.trestle.reasoner.exceptions.NoValidStateException - If unable to find all properties at the given time point
      */
-    <T extends @NonNull Object> T readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt);
+    <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt, @Nullable TrestleTransaction transaction);
 
     /**
      * Retrieve {@link TrestleObjectHeader} for the given Individual
      *
      * @param clazz      - {@link Class} Java class to retrieve
      * @param individual - {@link String} individual to retrieve header for
-     * @return - {@link Optional} {@link TrestleObjectHeader}
+     * @return - {@link Maybe} {@link TrestleObjectHeader}
      */
-    Optional<TrestleObjectHeader> readObjectHeader(Class<?> clazz, String individual);
+    Maybe<TrestleObjectHeader> readObjectHeader(Class<?> clazz, String individual);
 
     /**
      * Retrieve historical states of a given Fact
@@ -128,10 +133,10 @@ public interface ITrestleObjectReader {
      * @param validStart       - Optional {@link Temporal} setting the start of the temporal filter
      * @param validEnd         - Optional {@link Temporal} setting the end of the temporal filter
      * @param databaseTemporal - Optional {@link Temporal} filtering results to only certain fact versions
-     * @return - {@link Optional} {@link List} of Java {@link Object}
+     * @return - {@link Flowable} of Java {@link Object}
      * @throws IllegalArgumentException - Throws if the given Fact name does not exist on the dataset
      */
-    List<Object> getFactValues(Class<?> clazz, String individual, String factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal);
+    Flowable<Object> getFactValues(Class<?> clazz, String individual, String factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal);
 
     /**
      * Retrieve historical states of a given Fact
@@ -144,10 +149,10 @@ public interface ITrestleObjectReader {
      * @param validStart       - Optional {@link Temporal} setting the start of the temporal filter
      * @param validEnd         - Optional {@link Temporal} setting the end of the temporal filter
      * @param databaseTemporal - Optional {@link Temporal} filtering results to only certain fact versions
-     * @return - {@link Optional} {@link List} of Java {@link Object}
+     * @return - {@link Flowable} of Java {@link Object}
      * @throws IllegalArgumentException - Throws if the given Fact name does not exist on the dataset
      */
-    List<Object> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal);
+    Flowable<Object> getFactValues(Class<?> clazz, OWLNamedIndividual individual, OWLDataProperty factName, @Nullable Temporal validStart, @Nullable Temporal validEnd, @Nullable Temporal databaseTemporal);
 
 
     /**
@@ -156,25 +161,25 @@ public interface ITrestleObjectReader {
      * @param clazz       - Java {@link Class} to retrieve from the class registry
      * @param factName    - {@link String} name of the Fact
      * @param sampleLimit - {@link Long} maximum number of unique values to return
-     * @return - {@link Optional} {@link List} of Java {@link Object}
+     * @return - {@link Flowable} of Java {@link Object}
      */
-    List<Object> sampleFactValues(Class<?> clazz, String factName, long sampleLimit);
+    Flowable<Object> sampleFactValues(Class<?> clazz, String factName, long sampleLimit);
 
-    List<Object> sampleFactValues(Class<?> clazz, OWLDataProperty factName, long sampleLimit);
+    Flowable<Object> sampleFactValues(Class<?> clazz, OWLDataProperty factName, long sampleLimit);
 
     /**
      * Get Objects which satistify the given {@link ObjectRelation} for the specified individual
      * Note: This currently only works for objects of the same class
      * If either of the temporal values are missing, the current time is used.
      *
+     * @param <T>        - {@link T} generic type parameter
      * @param clazz      - Java {@link Class} of the specified objects
      * @param identifier - {@link String} object Identifier
      * @param relation   - {@link ObjectRelation} to use for retrieving objects
      * @param validAt    - {@link Temporal} optional temporal to specify valid at intersection
      * @param dbAt       - {@link Temporal} optional temporal to specificy database at intersection
-     * @param <T>        - {@link T} generic type parameter
-     * @return - {@link List} of {@link T} objects which satisfy the given object relationship
+     * @return - {@link Flowable} of {@link T} objects which satisfy the given object relationship
      * @since 0.9
      */
-    <T> List<T> getRelatedObjects(Class<T> clazz, String identifier, ObjectRelation relation, @Nullable Temporal validAt, @Nullable Temporal dbAt);
+    <T> Flowable<T> getRelatedObjects(Class<T> clazz, String identifier, ObjectRelation relation, @Nullable Temporal validAt, @Nullable Temporal dbAt);
 }

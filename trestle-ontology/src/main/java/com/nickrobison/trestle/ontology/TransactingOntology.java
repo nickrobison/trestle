@@ -71,7 +71,7 @@ abstract class TransactingOntology implements ITrestleOntology {
             threadTransactionObject.set(transactionObject);
             threadTransactionInherited.set(Boolean.TRUE);
             this.setOntologyConnection();
-            return transactionObject;
+            return new TrestleTransaction(transactionObject, transactionObject.isWriteTransaction());
         }
     }
 
@@ -115,7 +115,7 @@ abstract class TransactingOntology implements ITrestleOntology {
             return trestleTransaction;
         } else {
             logger.trace("Thread transaction owned by {}, returning empty object", threadTransaction.getTransactionID());
-            final TrestleTransaction trestleTransaction = new TrestleTransaction(write);
+            final TrestleTransaction trestleTransaction = new TrestleTransaction((TrestleTransaction) null, write);
             trestleTransaction.setConnection(this.getOntologyConnection());
             return trestleTransaction;
         }
@@ -130,21 +130,12 @@ abstract class TransactingOntology implements ITrestleOntology {
     @Override
     public void returnAndCommitTransaction(TrestleTransaction transaction) {
 //        If the transaction state is inherited, don't commit
-        if (!threadTransactionInherited.get()) {
-            final TrestleTransaction trestleTransaction = threadTransactionObject.get();
-            if (trestleTransaction != null) {
-                if (trestleTransaction.equals(transaction)) {
-                    logger.trace("Owns transaction, committing transaction {}", transaction.getTransactionID());
-                    this.unlockAndCommit(transaction.isWriteTransaction(), Boolean.TRUE);
-                    threadTransactionObject.set(null);
+        if (transaction.isRoot()) {
+            logger.trace("Owns transaction, committing transaction {}", transaction.getTransactionID());
+            this.unlockAndCommit(transaction.isWriteTransaction(), Boolean.TRUE);
+            threadTransactionObject.set(null);
 //                    Clear the logging context
-                    MDC.remove(TRANSACTION);
-                } else {
-                    logger.trace("Transaction {} doesn't own transaction, continuing", transaction.getTransactionID());
-                }
-            } else {
-                logger.warn("Null thread transaction object, transaction {} continuing", transaction.getTransactionID());
-            }
+            MDC.remove(TRANSACTION);
         } else {
             logger.trace("Transaction {} inherited state, continuing", transaction.getTransactionID());
         }
@@ -152,20 +143,12 @@ abstract class TransactingOntology implements ITrestleOntology {
 
     @Override
     public void returnAndAbortTransaction(TrestleTransaction transaction) {
-        //        If the transaction state is inherited, don't rollback
-        if (!threadTransactionInherited.get()) {
-            final TrestleTransaction trestleTransaction = threadTransactionObject.get();
-            if (trestleTransaction != null) {
-                if (trestleTransaction.equals(transaction)) {
-                    logger.trace("Transaction object {} owns transaction, aborting", transaction.getTransactionID());
-                    this.unlockAndAbort(transaction.isWriteTransaction(), Boolean.TRUE);
-                    threadTransactionObject.set(null);
-                } else {
-                    logger.trace("Transaction {} doesn't own transaction, not aborting", transaction.getTransactionID());
-                }
-            } else {
-                logger.warn("Null transaction object, transaction {} not aborting", transaction.getTransactionID());
-            }
+        if (transaction.isRoot()) {
+            logger.trace("Transaction object {} owns transaction, aborting", transaction.getTransactionID());
+            this.unlockAndAbort(transaction.isWriteTransaction(), Boolean.TRUE);
+            threadTransactionObject.set(null);
+            //                    Clear the logging context
+            MDC.remove(TRANSACTION);
         } else {
             logger.trace("Transaction {} inherited state, not aborting", transaction.getTransactionID());
         }

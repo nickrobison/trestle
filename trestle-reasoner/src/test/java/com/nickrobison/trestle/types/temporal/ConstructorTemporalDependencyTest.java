@@ -42,15 +42,11 @@ public class ConstructorTemporalDependencyTest extends AbstractReasonerTest {
         TestObject inObj = new TestObject(startDate, id);
 
         try {
-            reasoner.writeTrestleObject(inObj);
-            TestObject outObject = reasoner.readTrestleObject(TestObject.class, id, startDate, null);
+            reasoner.writeTrestleObject(inObj).blockingAwait();
+            TestObject outObject = reasoner.readTrestleObject(TestObject.class, id, startDate, null).blockingGet();
             if (!outObject.equals(inObj))
                 fail("Input and output objects are not equivalent");
-        } catch (TrestleClassException e) {
-            e.printStackTrace();
-            fail(e.getMessage());
-        } catch (MissingOntologyEntity e) {
-            e.printStackTrace();
+        } catch (TrestleClassException | MissingOntologyEntity e) {
             fail(e.getMessage());
         }
     }
