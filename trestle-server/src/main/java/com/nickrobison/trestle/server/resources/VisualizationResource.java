@@ -131,7 +131,7 @@ public class VisualizationResource {
                 request.getBuffer(),
                 request.getValidAt(), null).toList().blockingGet();
 
-        return Response.ok(intersectedObjects).build();
+        return ok(intersectedObjects).build();
     }
 
     @POST
@@ -171,7 +171,7 @@ public class VisualizationResource {
             objectUnionEqualityResult.ifPresent(comparisonReport::setUnion);
 
 
-            return Response.ok(comparisonReport).build();
+            return ok(comparisonReport).build();
 
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e).build();

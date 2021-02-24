@@ -42,7 +42,7 @@ public class RelationCalculator<T> {
     private final TemporalEngine temporalEngine;
     private final Class<T> clazz;
     private final String individual;
-    @Nullable Temporal validAt;
+    private final @Nullable Temporal validAt;
 
     public RelationCalculator(ITrestleOntology ontology, String reasonerPrefix, ITrestleObjectReader objectReader, ITrestleObjectWriter objectWriter, SpatialEngine spatialEngine, RelationTracker tracker, TemporalEngine temporalEngine, TrestleParser parser, Class<T> clazz, String individual, @Nullable Temporal validAt) {
         this.ontology = ontology;

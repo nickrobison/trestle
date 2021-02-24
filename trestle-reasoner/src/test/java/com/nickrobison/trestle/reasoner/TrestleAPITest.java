@@ -100,7 +100,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
 //        De register the class
         this.reasoner.deregisterClass(TestClasses.GAULComplexClassTest.class);
 //        Try to write the indvidual
-        final RuntimeException exn = assertThrows(RuntimeException.class, () -> this.reasoner.writeTrestleObject(gaulComplexClassTest).blockingAwait());
+        assertThrows(RuntimeException.class, () -> this.reasoner.writeTrestleObject(gaulComplexClassTest).blockingAwait());
 //        Register the class again
         this.reasoner.registerClass(TestClasses.GAULComplexClassTest.class);
 //        Try again

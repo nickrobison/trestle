@@ -29,8 +29,10 @@ import com.nickrobison.trestle.types.events.TrestleEventType;
 import com.nickrobison.trestle.types.relations.ObjectRelation;
 import com.nickrobison.trestle.types.temporal.TemporalObject;
 import com.nickrobison.trestle.types.temporal.TemporalObjectBuilder;
-import io.reactivex.rxjava3.core.*;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Supplier;
 import org.apache.commons.lang3.ClassUtils;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -268,7 +270,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
      */
     @Timed
     @Metered(name = "trestle-object-write", absolute = true)
-    Completable writeTrestleObjectImpl(Object inputObject, @Nullable TemporalObject databaseTemporal) {
+    private Completable writeTrestleObjectImpl(Object inputObject, @Nullable TemporalObject databaseTemporal) {
         final Class<?> aClass = inputObject.getClass();
         if (!this.engineUtils.checkRegisteredClass(aClass)) {
             return Completable.error(new UnregisteredClassException(aClass));
@@ -499,37 +501,41 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
 
 //        Find existing facts
         try {
-            final String validFactQuery = this.qb.buildObjectFactRetrievalQuery(parseTemporalToOntologyDateTime(validTemporal.getIdTemporal(), ZoneOffset.UTC), parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC), true, Collections.singletonList(owlDataProperty), owlNamedIndividual);
-            final Single<List<TrestleResult>> trestleResultFlowable = this.ontology.executeSPARQLResults(validFactQuery).toList();
-
-//                    Get object existence information
-            Single<Optional<TemporalObject>> existsFlowable = readObjectExistence(owlNamedIndividual,
-                    !this.mergeEngine.existenceEnabled());
-
-            return Single.zip(trestleResultFlowable, existsFlowable, (validFactResultSet, existsTemporal) -> {
-                final MergeScript newFactMergeScript = this.mergeEngine.mergeFacts(owlNamedIndividual, validTemporal, Collections.singletonList(newFactAxiom), validFactResultSet, validTemporal.getIdTemporal(), databaseTemporal.getIdTemporal(), existsTemporal);
-
-                final String update = this.qb.buildUpdateUnboundedTemporal(parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC), newFactMergeScript.getFactsToVersionAsArray());
-                final Completable dbUpdateCompletable = this.ontology.executeUpdateSPARQL(update);
-
-                //        Write the new versions
-                final Completable newFactVerionCompletable = Flowable.fromIterable(newFactMergeScript.getNewFactVersions())
-                        .flatMapCompletable(fact -> writeObjectFacts(clazz, owlNamedIndividual, Collections.singletonList(fact.getAxiom()), fact.getValidTemporal(), fact.getDbTemporal()));
-
-                // Write new facts
-                final Completable newFactsCompletable = writeObjectFacts(clazz, owlNamedIndividual, newFactMergeScript.getNewFacts(), validTemporal, databaseTemporal);
-
-                final List<OWLDataPropertyAssertionAxiom> individualExistenceAxioms = newFactMergeScript.getIndividualExistenceAxioms();
-                final String updateExistenceQuery = this.qb.updateObjectProperties(individualExistenceAxioms, trestleObjectIRI);
-                final Completable existenceCompletable = this.ontology.executeUpdateSPARQL(updateExistenceQuery)
-                        .andThen(Completable.defer(() -> this.eventEngine.adjustObjectEvents(individualExistenceAxioms)));
-
-                return Completable.mergeArray(dbUpdateCompletable, newFactsCompletable, newFactVerionCompletable, existenceCompletable);
-            }).flatMapCompletable(val -> val);
+            return findAndAddExistingFacts(clazz, owlNamedIndividual, owlDataProperty, validTemporal, databaseTemporal, newFactAxiom);
         } catch (RuntimeException e) {
             logger.error("Unable to add fact {} to object {}", factName, owlNamedIndividual, e);
             return Completable.error(e);
         }
+    }
+
+    private Completable findAndAddExistingFacts(Class<?> clazz, OWLNamedIndividual owlNamedIndividual, OWLDataProperty owlDataProperty, TemporalObject validTemporal, TemporalObject databaseTemporal, OWLDataPropertyAssertionAxiom newFactAxiom) {
+        final String validFactQuery = this.qb.buildObjectFactRetrievalQuery(parseTemporalToOntologyDateTime(validTemporal.getIdTemporal(), ZoneOffset.UTC), parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC), true, Collections.singletonList(owlDataProperty), owlNamedIndividual);
+        final Single<List<TrestleResult>> trestleResultFlowable = this.ontology.executeSPARQLResults(validFactQuery).toList();
+
+//                    Get object existence information
+        Single<Optional<TemporalObject>> existsFlowable = readObjectExistence(owlNamedIndividual,
+                !this.mergeEngine.existenceEnabled());
+
+        return Single.zip(trestleResultFlowable, existsFlowable, (validFactResultSet, existsTemporal) -> {
+            final MergeScript newFactMergeScript = this.mergeEngine.mergeFacts(owlNamedIndividual, validTemporal, Collections.singletonList(newFactAxiom), validFactResultSet, validTemporal.getIdTemporal(), databaseTemporal.getIdTemporal(), existsTemporal);
+
+            final String update = this.qb.buildUpdateUnboundedTemporal(parseTemporalToOntologyDateTime(databaseTemporal.getIdTemporal(), ZoneOffset.UTC), newFactMergeScript.getFactsToVersionAsArray());
+            final Completable dbUpdateCompletable = this.ontology.executeUpdateSPARQL(update);
+
+            //        Write the new versions
+            final Completable newFactVerionCompletable = Flowable.fromIterable(newFactMergeScript.getNewFactVersions())
+                    .flatMapCompletable(fact -> writeObjectFacts(clazz, owlNamedIndividual, Collections.singletonList(fact.getAxiom()), fact.getValidTemporal(), fact.getDbTemporal()));
+
+            // Write new facts
+            final Completable newFactsCompletable = writeObjectFacts(clazz, owlNamedIndividual, newFactMergeScript.getNewFacts(), validTemporal, databaseTemporal);
+
+            final List<OWLDataPropertyAssertionAxiom> individualExistenceAxioms = newFactMergeScript.getIndividualExistenceAxioms();
+            final String updateExistenceQuery = this.qb.updateObjectProperties(individualExistenceAxioms, trestleObjectIRI);
+            final Completable existenceCompletable = this.ontology.executeUpdateSPARQL(updateExistenceQuery)
+                    .andThen(Completable.defer(() -> this.eventEngine.adjustObjectEvents(individualExistenceAxioms)));
+
+            return Completable.mergeArray(dbUpdateCompletable, newFactsCompletable, newFactVerionCompletable, existenceCompletable);
+        }).flatMapCompletable(val -> val);
     }
 
     /**

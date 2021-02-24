@@ -6,7 +6,6 @@ import com.nickrobison.trestle.ontology.exceptions.MissingOntologyEntity;
 import com.nickrobison.trestle.reasoner.AbstractReasonerTest;
 import com.nickrobison.trestle.reasoner.TestClasses;
 import com.nickrobison.trestle.reasoner.exceptions.TrestleClassException;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Geometry;
@@ -15,17 +14,15 @@ import org.opengis.feature.simple.SimpleFeature;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static com.nickrobison.trestle.SharedTestUtils.readFromShapeFiles;
-import static java.util.stream.Collectors.groupingBy;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Created by nickrobison on 6/25/18.
  */
 @Tag("integration")
-//@Disabled
 public class SpatialProjectionTest extends AbstractReasonerTest {
 
     @Test
