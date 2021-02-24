@@ -45,7 +45,7 @@ public interface ITrestleObjectWriter {
      * @param startTemporal - Start {@link Temporal} of database time interval
      * @param endTemporal   - Nullable {@link Temporal} of ending interval time
      * @return - {@link Completable} when finished
-     * @throws TrestleClassException - if the class isn't registered
+     * @throws UnregisteredClassException - if the class isn't registered
      * @throws MissingOntologyEntity - Should never throw this
      */
     Completable writeTrestleObject(Object inputObject, Temporal startTemporal, @Nullable Temporal endTemporal) throws MissingOntologyEntity, UnregisteredClassException;
