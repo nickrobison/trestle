@@ -82,7 +82,7 @@ public class DatasetResource {
 
         try {
             final Class<?> datasetClass = this.reasoner.getDatasetClass(dataset);
-            final List<Object> factValues = this.reasoner.sampleFactValues(datasetClass, property, limit);
+            final List<Object> factValues = this.reasoner.sampleFactValues(datasetClass, property, limit).toList().blockingGet();
             return ok(factValues).build();
         } catch (UnregisteredClassException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity("Class does not exist").build();

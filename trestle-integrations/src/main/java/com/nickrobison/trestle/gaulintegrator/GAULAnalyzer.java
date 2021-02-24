@@ -99,8 +99,8 @@ public class GAULAnalyzer {
 
         try (ProgressBar pb = new ProgressBar("Calculating Size Distribution", members.size())) {
             for (final String member : members) {
-                final TrestleObjectHeader header = this.reasoner.readObjectHeader(GAULObject.class, member).orElseThrow(() -> new IllegalStateException("Cannot not have object"));
-                final GAULObject gaulObject = this.reasoner.readTrestleObject(GAULObject.class, member, header.getExistsFrom(), null);
+                final TrestleObjectHeader header = this.reasoner.readObjectHeader(GAULObject.class, member).blockingGet();
+                final GAULObject gaulObject = this.reasoner.readTrestleObject(GAULObject.class, member, header.getExistsFrom(), null).blockingGet();
     //            final double area = gaulObject.getShapePolygon().calculateArea2D();
                 final String wktValue = gaulObject.getPolygonAsWKT();
                 final Geometry read = new WKTReader().read(wktValue);
@@ -123,7 +123,7 @@ public class GAULAnalyzer {
         try (ProgressBar pb = new ProgressBar("Calculating object lifetime length", members.size())) {
 
             for (String member : members) {
-                final TrestleObjectHeader header = this.reasoner.readObjectHeader(GAULObject.class, member).orElseThrow(() -> new IllegalStateException("Should have member header"));
+                final TrestleObjectHeader header = this.reasoner.readObjectHeader(GAULObject.class, member).blockingGet();
                 if (!header.continuing()) {
                     final Integer yearsBetween = GAULAnalyzer.adjustedYearsBetween(header.getExistsFrom(), header.getExistsTo());
                     lifetimes.put(member, yearsBetween);

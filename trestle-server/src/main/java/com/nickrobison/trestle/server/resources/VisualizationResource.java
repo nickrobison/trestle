@@ -87,7 +87,7 @@ public class VisualizationResource {
         final Class<?> datasetClass;
         try {
             datasetClass = this.reasoner.getDatasetClass(request.getDataset());
-            final List<Object> factValues = this.reasoner.sampleFactValues(datasetClass, request.getFact(), request.getLimit());
+            final List<Object> factValues = this.reasoner.sampleFactValues(datasetClass, request.getFact(), request.getLimit()).toList().blockingGet();
             return ok(factValues).build();
         } catch (UnregisteredClassException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity("Class does not exist").build();
