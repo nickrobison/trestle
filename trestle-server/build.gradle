@@ -51,7 +51,7 @@ dependencies {
   }
 
   implementation platform(group: "ru.vyarus.guicey", name: "guicey-bom", version: "5.2.0-1")
-  implementation platform(group: "io.dropwizard", name: "dropwizard-bom", version: "2.0.19")
+  implementation platform(group: "io.dropwizard", name: "dropwizard-bom", version: "2.0.20")
 
 
   implementation group: 'ch.qos.logback', name: 'logback-core', version: logbackVersion
