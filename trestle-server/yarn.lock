@@ -10912,10 +10912,10 @@ protocol-buffers-schema@^3.3.1:
   resolved "https://registry.yarnpkg.com/protocol-buffers-schema/-/protocol-buffers-schema-3.4.0.tgz#2f0ea31ca96627d680bf2fefae7ebfa2b6453eae"
   integrity sha512-G/2kcamPF2S49W5yaMGdIpkG6+5wZF0fzBteLKgEHjbNzqjZQ85aAs1iJGto31EJaSTkNvHs5IXuHSaTLWBAiA==
 
-protractor-cucumber-framework@^6.2.1:
-  version "6.2.1"
-  resolved "https://registry.yarnpkg.com/protractor-cucumber-framework/-/protractor-cucumber-framework-6.2.1.tgz#4cacd11bcad1c42afd1ad894720c4c660bebc021"
-  integrity sha512-ZKOvX0Yoq2aL1nrlX5RzeHB9jtWGGiuaqqTPUvPXpyAFbrs3wfDAmMwrdWjg8m62wEhamZMVQIYqSPMPd9obMw==
+protractor-cucumber-framework@^7.0.0:
+  version "7.0.0"
+  resolved "https://registry.yarnpkg.com/protractor-cucumber-framework/-/protractor-cucumber-framework-7.0.0.tgz#caefd5f3422996bb5905b4a43c457194480175e7"
+  integrity sha512-aCOFcjUiaL/Ok/fECORAhk2a6ECq1rx2JEAUzCKBp19VXwGkIfd2E/jOYRpMG7C6F4cw367hcUadBIkmy+z5tw==
   dependencies:
     debug "^3.1.0"
     glob "^7.1.2"
