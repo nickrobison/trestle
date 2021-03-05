@@ -24,7 +24,7 @@ dependencies {
     implementation group: 'javax.cache', name: 'cache-api', version: '1.1.1'
     implementation group: 'org.apache.commons', name: 'commons-math3', version: '3.6.1'
     implementation group: 'it.unimi.dsi', name: 'fastutil', version: '8.5.2'
-    implementation group: 'org.clojure', name: 'clojure', version: '1.10.2'
+    implementation group: 'org.clojure', name: 'clojure', version: '1.10.3'
     implementation group: 'org.clojure', name: 'core.match', version: '1.0.0'
     implementation group: 'org.clojure', name: 'tools.logging', version: '1.1.0'
     implementation group: "clj-fuzzy", name: "clj-fuzzy", version: "0.4.1"
