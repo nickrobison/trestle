@@ -31,6 +31,11 @@ ext {
     postgresVersion = '42.2.14'
     guiceVersion = "4.2.3"
     mockitoVersion = '3.3.3'
+
+    // We only want to publish libraries, not applications or tools
+    publicLibraries = subprojects.findAll {
+        it.name != 'trestle-server' && it.name != 'trestle-integrations' && it.name != 'trestle-tools'
+    }
 }
 
 allprojects {
@@ -45,8 +50,8 @@ allprojects {
 }
 
 subprojects {
-    apply plugin: 'java-library'
-    apply plugin: 'jacoco'
+    apply plugin: "java-library"
+    apply plugin: "jacoco"
     apply plugin: "io.spring.dependency-management"
 
     dependencyManagement {
@@ -102,22 +107,53 @@ subprojects {
     }
 }
 
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
+configure(publicLibraries) {
+    apply plugin: "maven-publish"
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                pom {
+                    name = project.name
+                    description = project.description
+                    url = "https://github.com/nickrobison/trestle"
 
-        }
-    }
-    repositories {
-        maven {
-            def stagingUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
-            def snapshotUrl = "https://oss.sonatype.org/content/repositories/snapshots"
-            url version.endsWith("SNAPSHOT") ? snapshotUrl : stagingUrl
-            credentials {
-                username project.hasProperty("sonatypeUsername") ? project.property("sonatypeUsername") : System.getenv("SONATYPE_USERNAME")
-                password project.hasProperty("sonatypePassword") ? project.property("sonatypePassword") : System.getenv("SONATYPE_PASSWORD")
+                    licenses {
+                        license {
+                            name = "The Apache License, Version 2.0"
+                            url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                        }
+                    }
+
+                    scm {
+                        scm {
+                            connection = "git@github.com:nickrobison/trestle.git"
+                            developerConnection = "git@github.com:nickrobison/trestle.git"
+                            url = "https://github.com:nickrobison/trestle"
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id = "nick"
+                            name = "Nick Robison"
+                            email = "nick@nickrobison.com"
+                        }
+                    }
+                }
+                from components.java
             }
-            name "oss-sonatype"
+        }
+        repositories {
+            maven {
+                def stagingUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+                def snapshotUrl = "https://oss.sonatype.org/content/repositories/snapshots"
+                url version.endsWith("SNAPSHOT") ? snapshotUrl : stagingUrl
+                credentials {
+                    username project.hasProperty("sonatypeUsername") ? project.property("sonatypeUsername") : System.getenv("SONATYPE_USERNAME")
+                    password project.hasProperty("sonatypePassword") ? project.property("sonatypePassword") : System.getenv("SONATYPE_PASSWORD")
+                }
+                name "oss-sonatype"
+            }
         }
     }
 }
