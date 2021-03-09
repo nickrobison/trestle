@@ -44,6 +44,7 @@ dependencies {
     implementation(project(":trestle-datasets"))
     compileOnly group: 'javax.servlet', name: 'javax.servlet-api', version: '4.0.1'
     implementation group: 'commons-io', name: 'commons-io'
+    implementation group: 'me.tongfei', name: 'progressbar', version: progressBarVersion
     implementation group: 'com.google.inject.extensions', name: 'guice-multibindings', version: guiceVersion
     implementation group: 'com.google.inject.extensions', name: 'guice-assistedinject', version: guiceVersion
     implementation(group: 'com.github.nickrobison', name: 'Shapefile', version: "cabbd18957") {
@@ -60,5 +61,4 @@ dependencies {
 
     implementation group: "org.geotools", name: "gt-shapefile", version: geotoolsVersion
     implementation group: "org.geotools", name: "gt-cql", version: geotoolsVersion
-    implementation group: 'me.tongfei', name: 'progressbar'
 }

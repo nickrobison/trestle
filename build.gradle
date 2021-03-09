@@ -31,6 +31,7 @@ ext {
     postgresVersion = '42.2.14'
     guiceVersion = "4.2.3"
     mockitoVersion = '3.3.3'
+    progressBarVersion = "0.9.0"
 
     // We only want to publish libraries, not applications or tools
     publicLibraries = subprojects.findAll {
@@ -61,7 +62,6 @@ subprojects {
         }
         dependencies {
             dependency group: 'commons-io', name: 'commons-io', version: '2.8.0'
-            dependency group: 'me.tongfei', name: 'progressbar', version: '0.9.0'
             dependency group: 'org.locationtech.jts', name: 'jts-core', version: "1.18.1"
             dependency group: 'com.esri.geometry', name: 'esri-geometry-api', version: '2.2.4'
             dependency group: 'com.google.guava', name: 'guava', version: "30.1-jre"
