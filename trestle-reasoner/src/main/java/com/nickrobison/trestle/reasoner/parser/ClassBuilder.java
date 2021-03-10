@@ -46,6 +46,11 @@ public class ClassBuilder implements IClassBuilder {
         return getPropertyMembers(clazz, filterSpatial, TRESTLE_PREFIX);
     }
 
+    @Override
+    public List<OWLObjectProperty> getObjectPropertyMembers(Class<?> clazz) {
+        throw new UnsupportedOperationException("Cannot get object properties in legacy parser");
+    }
+
     /**
      * Parses out the data properties fof a given input class
      * Only returns the property axioms, not the values themselves

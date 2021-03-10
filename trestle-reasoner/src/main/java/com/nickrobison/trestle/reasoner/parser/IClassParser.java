@@ -52,7 +52,7 @@ public interface IClassParser {
     OWLNamedIndividual getIndividual(Object inputObject);
 
     /**
-     * Extract the {@link OWLDataPropertyAssertionAxiom} from a given object
+     * Extract the {@link List} of {@link OWLDataPropertyAssertionAxiom} from a given object
      * Return {@link Optional#empty()} if the input object cannot be parsed
      *
      * @param inputObject - {@link Object} to parse
@@ -61,7 +61,7 @@ public interface IClassParser {
     Optional<List<OWLDataPropertyAssertionAxiom>> getFacts(Object inputObject);
 
     /**
-     * Extract the {@link OWLDataPropertyAssertionAxiom} from a given object
+     * Extract the {@link List} of {@link OWLDataPropertyAssertionAxiom} from a given object
      * Return {@link Optional#empty()} if the input object cannot be parsed
      *
      * @param inputObject   - {@link Object} to parse
@@ -69,6 +69,22 @@ public interface IClassParser {
      * @return - {@link Optional} {@link List} of {@link OWLDataPropertyAssertionAxiom}s
      */
     Optional<List<OWLDataPropertyAssertionAxiom>> getFacts(Object inputObject, boolean filterSpatial);
+
+    /**
+     * Extract the {@link List} of {@link OWLObjectPropertyAssertionAxiom} from a given object
+     *
+     * @param inputObject - {@link Object} to parse
+     * @return - {@link List} of {@link OWLObjectPropertyAssertionAxiom}
+     */
+    List<OWLObjectPropertyAssertionAxiom> getObjectProperties(Object inputObject);
+
+    /**
+     * Get the objects related to this object via an {@link OWLObjectProperty}
+     *
+     * @param inputObject - {@link Object} to parse
+     * @return - {@link List} of associated {@link Object} to process
+     */
+    List<Object> getAssociatedObjects(Object inputObject);
 
     /**
      * Extract the spatial property a given object

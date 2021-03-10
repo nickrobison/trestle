@@ -6,6 +6,7 @@ import com.nickrobison.trestle.reasoner.annotations.*;
 import com.nickrobison.trestle.reasoner.annotations.temporal.DefaultTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
+import com.nickrobison.trestle.types.ObjectRestriction;
 import com.nickrobison.trestle.types.TemporalType;
 import org.locationtech.jts.geom.Geometry;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -704,6 +705,41 @@ public class TestClasses {
 
         public int getPopulation() {
             return population;
+        }
+    }
+
+    @DatasetClass(name = "State_Parent")
+    public static class StateParent implements Serializable {
+        private static final long serialVersionUID = 42L;
+        private final Integer code;
+        private final String name;
+        private final LocalDate date;
+        private final CountyRelated county;
+
+        public StateParent(Integer code, String name, LocalDate date, CountyRelated county) {
+            this.code = code;
+            this.name = name;
+            this.date = date;
+            this.county = county;
+        }
+
+        @IndividualIdentifier
+        public Integer getCode() {
+            return code;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        @StartTemporal
+        public LocalDate getDate() {
+            return date;
+        }
+
+        @ObjectProperty(propertyIRI = "contains", restriction = ObjectRestriction.ONLY)
+        public CountyRelated getCounty() {
+            return county;
         }
     }
 

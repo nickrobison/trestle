@@ -2,9 +2,6 @@ package com.nickrobison.trestle.reasoner.parser;
 
 import com.nickrobison.trestle.common.IRIUtils;
 import com.nickrobison.trestle.reasoner.annotations.*;
-import com.nickrobison.trestle.reasoner.annotations.temporal.DefaultTemporal;
-import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
-import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.reasoner.exceptions.MissingConstructorException;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -331,6 +328,16 @@ public class ClassParser implements IClassParser {
         }
 
         return Optional.of(axioms);
+    }
+
+    @Override
+    public List<OWLObjectPropertyAssertionAxiom> getObjectProperties(Object inputObject) {
+        throw new UnsupportedOperationException("We don't support Object properties in the classic parser");
+    }
+
+    @Override
+    public List<Object> getAssociatedObjects(Object inputObject) {
+        throw new UnsupportedOperationException("We don't support Object properties in the classic parser");
     }
 
     @Override
