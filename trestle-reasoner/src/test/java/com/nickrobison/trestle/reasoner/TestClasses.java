@@ -8,8 +8,8 @@ import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.types.ObjectRestriction;
 import com.nickrobison.trestle.types.TemporalType;
-import org.locationtech.jts.geom.Geometry;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.locationtech.jts.geom.Geometry;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
 import java.io.Serializable;
@@ -705,6 +705,19 @@ public class TestClasses {
 
         public int getPopulation() {
             return population;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            CountyRelated that = (CountyRelated) o;
+            return code == that.code && population == that.population && id.equals(that.id) && startTemporal.equals(that.startTemporal) && name.equals(that.name);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(id, startTemporal, code, name, population);
         }
     }
 

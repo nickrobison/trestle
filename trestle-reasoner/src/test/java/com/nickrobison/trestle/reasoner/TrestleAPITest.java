@@ -52,6 +52,8 @@ public class TrestleAPITest extends AbstractReasonerTest {
         final TestClasses.ESRIPolygonTest esriPolygonTest = new TestClasses.ESRIPolygonTest(4792, geometry, LocalDate.now());
         final TestClasses.OffsetDateTimeTest offsetDateTimeTest = new TestClasses.OffsetDateTimeTest(5515, OffsetDateTime.now(), OffsetDateTime.now().plusYears(5));
         final TestClasses.MultiLangTest multiLangTest = new TestClasses.MultiLangTest();
+        final TestClasses.CountyRelated county = new TestClasses.CountyRelated("Allen", LocalDate.of(2018, 3, 11), 1234, "Allen County", 100);
+        final TestClasses.StateParent state = new TestClasses.StateParent(12, "Indiana", LocalDate.of(2020, 1, 1), county);
 
         List<Object> classObjects = new ArrayList<>();
         classObjects.add(gaulComplexClassTest);
@@ -70,6 +72,11 @@ public class TrestleAPITest extends AbstractReasonerTest {
 //        Try to write some relations between two objects
         reasoner.writeObjectRelationship(classObjects.get(1), classObjects.get(0), ObjectRelation.SPATIAL_MEETS, null).blockingAwait();
         reasoner.writeObjectRelationship(classObjects.get(1), classObjects.get(3), ObjectRelation.DURING, null).blockingAwait();
+        try {
+            reasoner.writeTrestleObject(state).blockingAwait();
+        } catch (TrestleClassException | MissingOntologyEntity e) {
+            fail(e);
+        }
 
         classObjects.parallelStream().forEach(object -> {
             final OWLNamedIndividual owlNamedIndividual = tp.classParser.getIndividual(object);
@@ -86,6 +93,11 @@ public class TrestleAPITest extends AbstractReasonerTest {
                 assertEquals(esriPolygonTest, returnedObject, "Should be equal");
             }
         });
+
+        // Verify the related object is writen as well
+        final OWLNamedIndividual relatedIndividual = tp.classParser.getIndividual(county);
+        final TestClasses.CountyRelated c2 = reasoner.readTrestleObject(TestClasses.CountyRelated.class, relatedIndividual.getIRI(), false, null).blockingGet();
+        assertEquals(county, c2, "Should have written county object");
 
 //        Search for some matching individuals
         final IRI gaul_jts_test = IRI.create(OVERRIDE_PREFIX, "GAUL_JTS_Test");
@@ -269,6 +281,8 @@ public class TrestleAPITest extends AbstractReasonerTest {
                 TestClasses.MultiLangTest.class,
                 TestClasses.FactVersionTest.class,
                 TestClasses.CountyRelated.class,
-                TestClasses.JTSExtended.class);
+                TestClasses.JTSExtended.class,
+                TestClasses.CountyRelated.class,
+                TestClasses.StateParent.class);
     }
 }
