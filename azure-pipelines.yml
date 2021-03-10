@@ -207,7 +207,7 @@ stages:
     dependsOn: Test
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/feature/TRESTLE-767-maven-central'))
     variables:
-      - group: DEPLOY
+      - group: Deploy
     jobs:
       - job: Deploy
         displayName: Deploy Artifacts
@@ -232,5 +232,5 @@ stages:
               gradleOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER) -DsonatypeUsername=$(SONATYPE_USERNAME) -DsonatypePassword=$(SONATYPE_PASSWORD)'
               javaHomeOption: 'JDKVersion'
               jdkVersionOption: '1.11'
-              tasks: 'publish'
+              tasks: 'assemble publish'
               jdkArchitectureOption: 'x64'

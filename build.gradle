@@ -79,7 +79,7 @@ subprojects {
         compileOnly group: 'org.checkerframework', name: 'checker', version: checkerVersion
         implementation group: 'net.sourceforge.owlapi', name: 'owlapi-api', version: owlVersion
         implementation group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
-        implementation group: "com.typesafe", name: "config", version: "1.4.1"
+        implementation group: 'com.typesafe', name: 'config', version: "1.4.1"
         testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: junitJupiterVersion
         testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-params', version: junitJupiterVersion
         testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: junitJupiterVersion
@@ -107,35 +107,35 @@ subprojects {
 }
 
 configure(publicLibraries) {
-    apply plugin: "maven-publish"
+    apply plugin: 'maven-publish'
     publishing {
         publications {
             mavenJava(MavenPublication) {
                 pom {
                     name = project.name
                     description = project.description
-                    url = "https://github.com/nickrobison/trestle"
+                    url = 'https://github.com/nickrobison/trestle'
 
                     licenses {
                         license {
-                            name = "The Apache License, Version 2.0"
-                            url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                            name = 'The Apache License, Version 2.0'
+                            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
                         }
                     }
 
                     scm {
                         scm {
-                            connection = "git@github.com:nickrobison/trestle.git"
-                            developerConnection = "git@github.com:nickrobison/trestle.git"
-                            url = "https://github.com:nickrobison/trestle"
+                            connection = 'git@github.com:nickrobison/trestle.git'
+                            developerConnection = 'git@github.com:nickrobison/trestle.git'
+                            url = 'https://github.com:nickrobison/trestle'
                         }
                     }
 
                     developers {
                         developer {
-                            id = "nick"
-                            name = "Nick Robison"
-                            email = "nick@nickrobison.com"
+                            id = 'nick'
+                            name = 'Nick Robison'
+                            email = 'nick@nickrobison.com'
                         }
                     }
                 }
@@ -144,14 +144,14 @@ configure(publicLibraries) {
         }
         repositories {
             maven {
-                def stagingUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
-                def snapshotUrl = "https://oss.sonatype.org/content/repositories/snapshots"
-                url version.endsWith("SNAPSHOT") ? snapshotUrl : stagingUrl
+                def stagingUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2'
+                def snapshotUrl = 'https://oss.sonatype.org/content/repositories/snapshots'
+                url version.endsWith('SNAPSHOT') ? snapshotUrl : stagingUrl
                 credentials {
-                    username project.hasProperty("sonatypeUsername") ? project.property("sonatypeUsername") : System.getenv("SONATYPE_USERNAME")
-                    password project.hasProperty("sonatypePassword") ? project.property("sonatypePassword") : System.getenv("SONATYPE_PASSWORD")
+                    username project.hasProperty('sonatypeUsername') ? project.property('sonatypeUsername') : System.getenv('SONATYPE_USERNAME')
+                    password project.hasProperty('sonatypePassword') ? project.property('sonatypePassword') : System.getenv('SONATYPE_PASSWORD')
                 }
-                name "oss-sonatype"
+                name 'oss-sonatype'
             }
         }
     }
