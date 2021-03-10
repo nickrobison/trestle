@@ -569,7 +569,7 @@ public class TrestleObjectWriter implements ITrestleObjectWriter {
                                             //                Write the valid validTemporal
                                             return writeTemporal(validTemporal, propertyIndividual)
                                                     //                Write the relation back to the root individual
-                                                    .andThen(Completable.defer(() -> ontology.writeIndividualObjectProperty(propertyIndividual, factOfIRI, rootIndividual)));
+                                                    .andThen(Completable.defer(() -> ontology.writeIndividualObjectProperty(rootIndividual, hasFactIRI, propertyIndividual)));
                                         }))
                                         .andThen(Completable.defer(() -> {
                                             //                Write the database time
