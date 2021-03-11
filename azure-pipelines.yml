@@ -234,3 +234,6 @@ stages:
               jdkVersionOption: '1.11'
               tasks: 'assemble publish'
               jdkArchitectureOption: 'x64'
+            env:
+              SONATYPE_USERNAME: $(SONATYPE_USERNAME)
+              SONATYPE_PASSWORD: $(SONATYPE_PASSWORD)
