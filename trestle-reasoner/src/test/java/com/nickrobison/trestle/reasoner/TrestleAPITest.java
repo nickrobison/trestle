@@ -95,9 +95,9 @@ public class TrestleAPITest extends AbstractReasonerTest {
         });
 
         // Verify the related object is writen as well
-        final OWLNamedIndividual relatedIndividual = tp.classParser.getIndividual(county);
-        final TestClasses.CountyRelated c2 = reasoner.readTrestleObject(TestClasses.CountyRelated.class, relatedIndividual.getIRI(), false, null).blockingGet();
-        assertEquals(county, c2, "Should have written county object");
+        final OWLNamedIndividual relatedIndividual = tp.classParser.getIndividual(state);
+        final TestClasses.StateParent c2 = reasoner.readTrestleObject(TestClasses.StateParent.class, relatedIndividual.getIRI(), false, null).blockingGet();
+        assertEquals(state, c2, "Should have written county object");
 
 //        Search for some matching individuals
         final IRI gaul_jts_test = IRI.create(OVERRIDE_PREFIX, "GAUL_JTS_Test");

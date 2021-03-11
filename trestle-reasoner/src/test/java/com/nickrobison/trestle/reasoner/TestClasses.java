@@ -754,6 +754,19 @@ public class TestClasses {
         public CountyRelated getCounty() {
             return county;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            StateParent that = (StateParent) o;
+            return code.equals(that.code) && name.equals(that.name) && date.equals(that.date) && county.equals(that.county);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(code, name, date, county);
+        }
     }
 
     @DatasetClass(name = "GAUL_JTS_Test")

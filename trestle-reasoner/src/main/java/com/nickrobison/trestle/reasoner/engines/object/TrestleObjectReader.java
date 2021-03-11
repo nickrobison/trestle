@@ -3,7 +3,6 @@ package com.nickrobison.trestle.reasoner.engines.object;
 import com.codahale.metrics.annotation.Metered;
 import com.codahale.metrics.annotation.Timed;
 import com.nickrobison.trestle.common.TemporalUtils;
-import com.nickrobison.trestle.reasoner.exceptions.TrestleMissingIndividualException;
 import com.nickrobison.trestle.iri.IRIBuilder;
 import com.nickrobison.trestle.iri.TrestleIRI;
 import com.nickrobison.trestle.ontology.ITrestleOntology;
@@ -12,6 +11,7 @@ import com.nickrobison.trestle.querybuilder.QueryBuilder;
 import com.nickrobison.trestle.reasoner.caching.TrestleCache;
 import com.nickrobison.trestle.reasoner.exceptions.MissingConstructorException;
 import com.nickrobison.trestle.reasoner.exceptions.NoValidStateException;
+import com.nickrobison.trestle.reasoner.exceptions.TrestleMissingIndividualException;
 import com.nickrobison.trestle.reasoner.parser.*;
 import com.nickrobison.trestle.reasoner.threading.TrestleExecutorFactory;
 import com.nickrobison.trestle.transactions.TrestleTransaction;
@@ -35,9 +35,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import java.time.*;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import static com.nickrobison.trestle.common.IRIUtils.parseStringToIRI;
 import static com.nickrobison.trestle.iri.IRIVersion.V1;
@@ -47,7 +52,6 @@ import static com.nickrobison.trestle.reasoner.parser.TemporalParser.parseToTemp
 /**
  * Created by nickrobison on 2/13/18.
  */
-@SuppressWarnings("TypeParameterExplicitlyExtendsObject")
 public class TrestleObjectReader implements ITrestleObjectReader {
 
     private static final Logger logger = LoggerFactory.getLogger(TrestleObjectReader.class);
@@ -214,13 +218,27 @@ public class TrestleObjectReader implements ITrestleObjectReader {
                 })
                 .toList();
 
+//         Fetch related objects
+        final Single<List<TrestleAssociatedObject<Object>>> associatedObjectsFlowable = Flowable.fromIterable(this.classBuilder.getObjectPropertyMembers(clazz))
+                .flatMapSingle(property -> {
+                    // We can't handle multiple objects yet, so we can only have a 1-1 mapping.
+                    return this.ontology.getIndividualObjectProperty(individual, property).firstOrError()
+                            .flatMap(assertion -> {
+                                final Class<@NonNull ?> dType = this.classParser.getPropertyDatatype(clazz, property.getIRI().getIRIString());
+                                return this.readTrestleObjectImpl(dType, assertion.getObject().asOWLNamedIndividual().getIRI(), validTemporal, databaseTemporal, transaction)
+                                        .map(result -> new TrestleAssociatedObject<Object>(assertion.getProperty().getNamedProperty(), result.getObject()));
+                            });
+                })
+                .toList();
+
+
         final Single<TemporalObject> temporalFlowable = this.ontology.getTemporalsForIndividual(individual)
                 .collect((Supplier<HashSet<OWLDataPropertyAssertionAxiom>>) HashSet::new, HashSet::add)
                 .map(properties -> TemporalObjectBuilder.buildTemporalFromProperties(properties, baseTemporalType, clazz))
                 .map(temporal -> temporal.orElseThrow(() -> new IllegalStateException(String.format("Cannot restore temporal from ontology for %s", individualIRI))));
 
-        final Single<TrestleObjectResult<T>> mergedFlow = Single.zip(factsFlowable, temporalFlowable,
-                (facts, temporal) -> this.buildTrestleObjectResult(individualIRI, clazz, facts, temporal, validTemporal, databaseTemporal));
+        final Single<TrestleObjectResult<T>> mergedFlow = Single.zip(factsFlowable, temporalFlowable, associatedObjectsFlowable,
+                (facts, temporal, associatedObjects) -> this.buildTrestleObjectResult(clazz, individualIRI, facts, associatedObjects, temporal, validTemporal, databaseTemporal));
 
         return this.engineUtils.checkExists(individualIRI)
                 .flatMap(exists -> {
@@ -360,13 +378,23 @@ public class TrestleObjectReader implements ITrestleObjectReader {
                 this.classParser.getClassProjection(datasetClass));
     }
 
-    private <T> TrestleObjectResult<T> buildTrestleObjectResult(IRI individualIRI, Class<T> clazz, List<TrestleFact<@NonNull Object>> facts, TemporalObject temporal, PointTemporal<?> validTemporal, PointTemporal<?> databaseTemporal) {
+    @SuppressWarnings("unchecked")
+    private <T> TrestleObjectResult<T> buildTrestleObjectResult(Class<T> clazz, IRI individualIRI, List<TrestleFact<@NonNull Object>> facts, List<TrestleAssociatedObject<Object>> associatedObjects, TemporalObject temporal, PointTemporal<?> validTemporal, PointTemporal<?> databaseTemporal) {
 
         final ConstructorArguments constructorArguments = new ConstructorArguments();
         facts.forEach(fact -> constructorArguments.addArgument(
                 this.classParser.matchWithClassMember(clazz, fact.getName(), fact.getLanguage()),
                 fact.getJavaClass(),
                 fact.getValue()));
+
+        associatedObjects.forEach(object -> {
+            final String propertyName = object.getProperty().getIRI().getRemainder().orElse("");
+            final String member = this.classParser.matchWithClassMember(clazz, propertyName);
+            constructorArguments.addArgument(
+                    member,
+                    object.getObject().getClass(),
+                    object.getObject());
+        });
 
 //            Add the temporal to the constructor args
         if (temporal.isInterval()) {

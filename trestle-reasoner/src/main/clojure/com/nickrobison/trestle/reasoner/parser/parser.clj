@@ -376,7 +376,7 @@
 
 
 (defn match-class-member
-  "Iterates through the provided member list (which can be members or temporals).
+  "Iterates through the provided member list (which can be members, properties or temporals).
   Try to match the string IRI name with a member in the given set"
   [members languageCode classMember]
   (->> members
@@ -496,13 +496,25 @@
         (and (nil? languageCode) (ClassBuilder/isConstructorArgument clazz classMember nil))
         classMember
         (if-let
-          ; Try to match against the members lists first, if it doesn't match, go for temporals
+          ; Try to match against the members lists first, if it doesn't match, go for temporals and then properties
           [classMember (match-class-member (get parsedClass :members)
                                            languageCode classMember)]
           classMember
           ; Lookup temporals
-          (match-class-member (get parsedClass :temporals)
-                              languageCode classMember)))))
+          (if-let
+            [classMember (match-class-member (get parsedClass :temporals)
+                                             languageCode classMember)]
+            classMember
+            (match-class-member (get parsedClass :properties)
+                                languageCode classMember))
+          ))))
+
+  (getPropertyDatatype [this clazz propertyName]
+    (let [parsedClass (.getRegisteredClass this clazz)]
+      (m/filter-and-get (:properties parsedClass)
+                        (fn [member]
+                          (m/filter-member-name-iri propertyName member))
+                        :return-type)))
 
   (getFactDatatype ^Optional [this clazz factName]
     (let [parsedClass (.getRegisteredClass this clazz)]

@@ -115,6 +115,15 @@ public interface IClassParser {
     String matchWithClassMember(Class<?> clazz, String classMember);
 
     /**
+     * Get the datatype of the property represented in the given string as an Java {@link Class}
+     *
+     * @param clazz        - {@link Class} to parse
+     * @param propertyName - {@link String} name of property
+     * @return - {@link Class} of return datatype
+     */
+    Class<@NonNull ?> getPropertyDatatype(Class<?> clazz, String propertyName);
+
+    /**
      * Get the datatype of the fact represented in the given string as an Java {@link Class}
      *
      * @param clazz    - {@link Class} to parse
