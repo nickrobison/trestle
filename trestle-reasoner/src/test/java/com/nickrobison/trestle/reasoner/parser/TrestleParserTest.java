@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Created by nrobison on 6/28/16.
  */
-@SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization", "unchecked", "WeakerAccess"})
+@SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization", "unchecked", "WeakerAccess", "rawtypes"})
 public class TrestleParserTest {
 
     public TrestleParserTest() {
@@ -381,7 +381,7 @@ public class TrestleParserTest {
         final OWLObjectProperty owlObjectProperty = df.getOWLObjectProperty("http://nickrobison.com/dissertation/trestle.owl#contains");
 
         final Optional<List<OWLDataProperty>> dataProperties = cb.getPropertyMembers(TestClasses.StateParent.class);
-        final List<OWLObjectProperty> objectProperties = cb.getObjectPropertyMembers(TestClasses.StateParent.class);
+        final List<OWLObjectProperty> objectProperties = new ArrayList<>(cb.getObjectPropertyMembers(TestClasses.StateParent.class));
         assertAll(() -> assertEquals(2, dataProperties.get().size(), "Should not have any object properties"),
                 () -> assertEquals(1, objectProperties.size(), "Should have a single object property"),
                 () -> assertEquals(owlObjectProperty, objectProperties.get(0), "Should have correct object property"));

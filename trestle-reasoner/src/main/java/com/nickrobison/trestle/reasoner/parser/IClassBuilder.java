@@ -8,6 +8,7 @@ import org.semanticweb.owlapi.model.OWLObjectProperty;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface IClassBuilder {
 
@@ -35,9 +36,9 @@ public interface IClassBuilder {
      * Parses out the object properties for a given input class
      *
      * @param clazz - {@link Class to parse}
-     * @return - {@link List} of {@link OWLObjectProperty} for given class
+     * @return - {@link Set} of {@link OWLObjectProperty} for given class
      */
-    List<OWLObjectProperty> getObjectPropertyMembers(Class<?> clazz);
+    Set<OWLObjectProperty> getObjectPropertyMembers(Class<?> clazz);
 
     /**
      * /**

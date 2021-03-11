@@ -6,11 +6,15 @@ import com.nickrobison.trestle.reasoner.exceptions.MissingConstructorException;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLDataProperty;
+import org.semanticweb.owlapi.model.OWLLiteral;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Parameter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -47,7 +51,7 @@ public class ClassBuilder implements IClassBuilder {
     }
 
     @Override
-    public List<OWLObjectProperty> getObjectPropertyMembers(Class<?> clazz) {
+    public Set<OWLObjectProperty> getObjectPropertyMembers(Class<?> clazz) {
         throw new UnsupportedOperationException("Cannot get object properties in legacy parser");
     }
 

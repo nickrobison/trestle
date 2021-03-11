@@ -563,8 +563,9 @@
     (.getPropertyMembers this clazz false))
   (getObjectPropertyMembers [this clazz]
     (let [parsedClass (.getRegisteredClass this clazz)]
-      (->> (:properties  parsedClass)
-           (map #(.getOWLObjectProperty df ^IRI (:iri %))))))
+      (->> (:properties parsedClass)
+           (map #(.getOWLObjectProperty df ^IRI (:iri %)))
+           (into #{}))))
   (constructObject ^Object [this clazz arguments]
     (let [parsedClass (.getRegisteredClass this clazz)
           constructor (:constructor parsedClass)

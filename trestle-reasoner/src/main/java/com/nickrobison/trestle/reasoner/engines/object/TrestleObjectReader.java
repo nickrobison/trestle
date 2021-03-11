@@ -39,10 +39,7 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 import static com.nickrobison.trestle.common.IRIUtils.parseStringToIRI;
 import static com.nickrobison.trestle.iri.IRIVersion.V1;
@@ -123,6 +120,7 @@ public class TrestleObjectReader implements ITrestleObjectReader {
         return readTrestleObject(clazz, individualIRI, bypassCache, null, null, transaction);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <T extends @NonNull Object> Single<T> readTrestleObject(Class<T> clazz, IRI individualIRI, boolean bypassCache, @Nullable Temporal validAt, @Nullable Temporal databaseAt, @Nullable TrestleTransaction transaction) {
         logger.debug("Reading {}", individualIRI);
@@ -219,18 +217,22 @@ public class TrestleObjectReader implements ITrestleObjectReader {
                 .toList();
 
 //         Fetch related objects
-        final Single<List<TrestleAssociatedObject<Object>>> associatedObjectsFlowable = Flowable.fromIterable(this.classBuilder.getObjectPropertyMembers(clazz))
-                .flatMapSingle(property -> {
-                    // We can't handle multiple objects yet, so we can only have a 1-1 mapping.
-                    return this.ontology.getIndividualObjectProperty(individual, property).firstOrError()
-                            .flatMap(assertion -> {
-                                final Class<@NonNull ?> dType = this.classParser.getPropertyDatatype(clazz, property.getIRI().getIRIString());
-                                return this.readTrestleObjectImpl(dType, assertion.getObject().asOWLNamedIndividual().getIRI(), validTemporal, databaseTemporal, transaction)
-                                        .map(result -> new TrestleAssociatedObject<Object>(assertion.getProperty().getNamedProperty(), result.getObject()));
-                            });
-                })
-                .toList();
-
+        final Set<OWLObjectProperty> objectProperties = this.classBuilder.getObjectPropertyMembers(clazz);
+        final Single<List<TrestleAssociatedObject<Object>>> associatedObjectsFlowable;
+        // If we actually have object properties, then fetch everything in a single go and filter out what we don't need
+        if (objectProperties.isEmpty()) {
+            associatedObjectsFlowable = Single.just(Collections.emptyList());
+        } else {
+            associatedObjectsFlowable = this.ontology.getAllObjectPropertiesForIndividual(individual)
+                    .filter(property -> objectProperties.contains(property.getProperty().asOWLObjectProperty()))
+                    .flatMapSingle(assertion -> {
+                        // We can't handle multiple objects yet, so we can only have a 1-1 mapping.
+                        final Class<@NonNull ?> dType = this.classParser.getPropertyDatatype(clazz, assertion.getProperty().getNamedProperty().getIRI().getIRIString());
+                        return this.readTrestleObjectImpl(dType, assertion.getObject().asOWLNamedIndividual().getIRI(), validTemporal, databaseTemporal, transaction)
+                                .map(result -> new TrestleAssociatedObject<Object>(assertion.getProperty().getNamedProperty(), result.getObject()));
+                    })
+                    .toList();
+        }
 
         final Single<TemporalObject> temporalFlowable = this.ontology.getTemporalsForIndividual(individual)
                 .collect((Supplier<HashSet<OWLDataPropertyAssertionAxiom>>) HashSet::new, HashSet::add)
