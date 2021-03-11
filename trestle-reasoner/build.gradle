@@ -6,11 +6,13 @@ dependencies {
     api project(":trestle-exporter")
     api project(":trestle-iri")
     api project(":trestle-metrics")
+    api project(":trestle-ontology")
     api group: "org.geotools", name: "gt-main", version: geotoolsVersion
-    api group: 'com.esri.geometry', name: 'esri-geometry-api'
+    api group: 'com.esri.geometry', name: 'esri-geometry-api', version: esriVersion
     api group: 'org.locationtech.jts', name: 'jts-core'
-    implementation project(":trestle-graphdb")
     implementation project(":trestle-querybuilder")
+    // This should only be used for testing
+    implementation project(":trestle-graphdb")
     implementation group: 'net.sourceforge.owlapi', name: 'owlapi-parsers', version: owlVersion
     implementation group: 'org.apache.commons', name: 'commons-lang3', version: commonsLangVersion
     implementation group: 'commons-io', name: 'commons-io'

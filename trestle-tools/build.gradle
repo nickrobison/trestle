@@ -15,8 +15,8 @@ task runSubsetter(type: JavaExec) {
 }
 
 dependencies {
+    implementation group: 'me.tongfei', name: 'progressbar', version: progressBarVersion
     implementation group: 'commons-io', name: 'commons-io'
     implementation group: "org.geotools", name: "gt-shapefile", version: geotoolsVersion
     implementation group: "org.geotools", name: "gt-cql", version: geotoolsVersion
-    implementation group: 'me.tongfei', name: 'progressbar'
 }

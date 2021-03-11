@@ -1,3 +1,5 @@
+def managedVersions = dependencyManagement.implementation.managedVersions
+
 dependencies {
     implementation project(":trestle-querybuilder")
     implementation project(":trestle-common")
@@ -8,7 +10,7 @@ dependencies {
     api group: 'net.sourceforge.owlapi', name: 'owlapi-apibinding', version: owlVersion
     api group: 'com.google.guava', name: 'guava'
     api group: 'io.reactivex.rxjava3', name: 'rxjava', version: '3.0.11'
-    implementation group: 'org.eclipse.rdf4j', name: 'rdf4j-runtime'
+    implementation group: 'org.eclipse.rdf4j', name: 'rdf4j-runtime', version: managedVersions['org.eclipse.rdf4j:rdf4j-runtime']
     compileOnly group: 'io.dropwizard.metrics', name: 'metrics-annotation', version: metricsVersion
     testImplementation group: 'org.mockito', name: 'mockito-core', version: mockitoVersion
 }
