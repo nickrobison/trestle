@@ -1,7 +1,7 @@
 (ns com.nickrobison.trestle.reasoner.parser.parser
   (:import
     (com.nickrobison.trestle.reasoner.parser IClassParser IClassBuilder IClassRegister ClassBuilder ITypeConverter)
-    (org.semanticweb.owlapi.model IRI OWLClass OWLDataFactory OWLNamedIndividual OWLDataPropertyAssertionAxiom OWLDataProperty OWLLiteral OWLDatatype)
+    (org.semanticweb.owlapi.model IRI OWLClass OWLDataFactory OWLNamedIndividual OWLDataPropertyAssertionAxiom OWLDataProperty OWLLiteral OWLDatatype OWLObjectPropertyAssertionAxiom)
     (java.lang.reflect Constructor Parameter)
     (com.nickrobison.trestle.reasoner.annotations DatasetClass Fact Language)
     (java.util Optional List)
@@ -276,9 +276,10 @@
   "Build the Class Member Map"
   [acc member]
   ; Validate member
-  (log/debug "validating")
+  (log/debugf "validating %s" member)
   (let [members (get acc :members)
         temporals (get acc :temporals [])
+        properties (get acc :properties [])
         type (get member :type)
         ignore (get member :ignore false)]
     (match [type ignore]
@@ -296,12 +297,21 @@
                                          "TestClass" InvalidClassException$State/EXCESS "Spatial"))
                                 (merge acc {:members (conj members member) :spatial member}))
            [::pred/temporal _] (merge acc {:temporals (conj temporals (validate-temporal member temporals (:java-class acc)))})
+           [::pred/property _] (merge acc {:properties (conj properties member)})
            :else (assoc acc :members (conj members member)))))
 
-(defmulti build-assertion-axiom
+(defn build-object-assertion-axiom
+  "Build OWLObjectPropertyAssertionAxiom from member"
+  [parser df member individual inputObject]
+  (let [relatedObject (m/invoker (get member :handle) inputObject)
+        related (.getIndividual parser relatedObject)
+        axiom (.getOWLObjectProperty df ^IRI (:iri member))]
+    (.getOWLObjectPropertyAssertionAxiom df axiom individual related)))
+
+(defmulti build-data-assertion-axiom
           "Build OWLDataPropertyAssertionAxiom from member"
           (fn [^OWLDataFactory _df _individual member _inputObject] (:type member)))
-(defmethod build-assertion-axiom ::pred/spatial
+(defmethod build-data-assertion-axiom ::pred/spatial
   [^OWLDataFactory df ^OWLNamedIndividual individual member inputObject]
   (if-let [literal (.getOWLLiteral df (spatial/build-projected-wkt
                                         "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
@@ -315,7 +325,7 @@
                                        individual
                                        literal)
     nil))
-(defmethod build-assertion-axiom ::pred/language
+(defmethod build-data-assertion-axiom ::pred/language
   [^OWLDataFactory df ^OWLNamedIndividual individual member inputObject]
   (.getOWLDataPropertyAssertionAxiom df
                                      ^OWLDataProperty (get member :data-property)
@@ -324,7 +334,7 @@
                                                     (m/invoker (get member :handle) inputObject)
                                                     (get member :owl-datatype)
                                                     (get member :language))))
-(defmethod build-assertion-axiom :default
+(defmethod build-data-assertion-axiom :default
   [^OWLDataFactory df ^OWLNamedIndividual individual member inputObject]
   (.getOWLDataPropertyAssertionAxiom df
                                      ^OWLDataProperty (get member :data-property)
@@ -366,7 +376,7 @@
 
 
 (defn match-class-member
-  "Iterates through the provided member list (which can be members or temporals).
+  "Iterates through the provided member list (which can be members, properties or temporals).
   Try to match the string IRI name with a member in the given set"
   [members languageCode classMember]
   (->> members
@@ -448,7 +458,7 @@
                            true)))
              ; Build the assertion axiom
              (r/map (fn [member]
-                      (build-assertion-axiom df individual member inputObject)))
+                      (build-data-assertion-axiom df individual member inputObject)))
              (into ())))))
   (getFacts ^Optional ^List ^OWLDataPropertyAssertionAxiom [this inputObject]
     (.getFacts this inputObject false))
@@ -457,8 +467,23 @@
     (let [parsedClass (.getRegisteredClass this (.getClass inputObject))
           individual (.getIndividual this inputObject)]
       (if-let [spatial (get parsedClass :spatial)]
-        (Optional/of (build-assertion-axiom df individual spatial inputObject))
+        (Optional/of (build-data-assertion-axiom df individual spatial inputObject))
         (Optional/empty))))
+
+  (getObjectProperties ^List ^OWLObjectPropertyAssertionAxiom [this inputObject]
+    (let [parsedClass (.getRegisteredClass this (.getClass inputObject))
+          individual (.getIndividual this inputObject)]
+      (->> (get parsedClass :properties)
+           (r/map (fn [member]
+                    (build-object-assertion-axiom this df member individual inputObject)))
+           (into ()))))
+
+  (getAssociatedObjects ^List ^Object [this inputObject]
+    (let [parsedClass (.getRegisteredClass this (.getClass inputObject))]
+      (->> (:properties parsedClass)
+           (r/map (fn [member]
+                    (m/invoker (:handle member) inputObject)))
+           (into ()))))
 
   (matchWithClassMember ^String [this clazz classMember]
     (.matchWithClassMember this clazz classMember defaultLanguageCode))
@@ -471,13 +496,25 @@
         (and (nil? languageCode) (ClassBuilder/isConstructorArgument clazz classMember nil))
         classMember
         (if-let
-          ; Try to match against the members lists first, if it doesn't match, go for temporals
+          ; Try to match against the members lists first, if it doesn't match, go for temporals and then properties
           [classMember (match-class-member (get parsedClass :members)
                                            languageCode classMember)]
           classMember
           ; Lookup temporals
-          (match-class-member (get parsedClass :temporals)
-                              languageCode classMember)))))
+          (if-let
+            [classMember (match-class-member (get parsedClass :temporals)
+                                             languageCode classMember)]
+            classMember
+            (match-class-member (get parsedClass :properties)
+                                languageCode classMember))
+          ))))
+
+  (getPropertyDatatype [this clazz propertyName]
+    (let [parsedClass (.getRegisteredClass this clazz)]
+      (m/filter-and-get (:properties parsedClass)
+                        (fn [member]
+                          (m/filter-member-name-iri propertyName member))
+                        :return-type)))
 
   (getFactDatatype ^Optional [this clazz factName]
     (let [parsedClass (.getRegisteredClass this clazz)]
@@ -524,6 +561,11 @@
                                 (map #(.getOWLDataProperty df ^IRI (:iri %)))))))
   (getPropertyMembers ^Optional [this clazz]
     (.getPropertyMembers this clazz false))
+  (getObjectPropertyMembers [this clazz]
+    (let [parsedClass (.getRegisteredClass this clazz)]
+      (->> (:properties parsedClass)
+           (map #(.getOWLObjectProperty df ^IRI (:iri %)))
+           (into #{}))))
   (constructObject ^Object [this clazz arguments]
     (let [parsedClass (.getRegisteredClass this clazz)
           constructor (:constructor parsedClass)

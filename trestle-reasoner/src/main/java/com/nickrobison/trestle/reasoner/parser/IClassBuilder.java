@@ -4,9 +4,11 @@ import com.nickrobison.trestle.reasoner.exceptions.MissingConstructorException;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLLiteral;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface IClassBuilder {
 
@@ -29,6 +31,14 @@ public interface IClassBuilder {
      * @return - {@link Optional} {@link List} of {@link OWLDataProperty} for given class
      */
     Optional<List<OWLDataProperty>> getPropertyMembers(Class<?> clazz, boolean filterSpatial);
+
+    /**
+     * Parses out the object properties for a given input class
+     *
+     * @param clazz - {@link Class to parse}
+     * @return - {@link Set} of {@link OWLObjectProperty} for given class
+     */
+    Set<OWLObjectProperty> getObjectPropertyMembers(Class<?> clazz);
 
     /**
      * /**

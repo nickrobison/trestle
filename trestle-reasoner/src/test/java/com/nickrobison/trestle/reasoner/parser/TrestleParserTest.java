@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Created by nrobison on 6/28/16.
  */
-@SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization", "unchecked", "WeakerAccess"})
+@SuppressWarnings({"OptionalGetWithoutIsPresent", "initialization", "unchecked", "WeakerAccess", "rawtypes"})
 public class TrestleParserTest {
 
     public TrestleParserTest() {
@@ -39,7 +39,6 @@ public class TrestleParserTest {
     private ExpandedGAULTests expandedGAULClass;
     private OWLDataFactory df;
     private TemporalObject temporal;
-    private TemporalObject temporalPoint;
     private TestClasses.GAULMethodTest testMethod;
     private TestClasses.GAULComplexClassTest complexObjectClass;
     private TestClasses.MultiLangTest multiLangTest;
@@ -60,7 +59,7 @@ public class TrestleParserTest {
         LocalDateTime dt = LocalDateTime.of(1989, 3, 26, 0, 0);
         LocalDate ld = LocalDate.of(1989, 3, 26);
         temporal = TemporalObjectBuilder.exists().from(dt).to(dt.plusYears(1)).build(); //.withRelations();
-        temporalPoint = TemporalObjectBuilder.exists().at(ld).build(); // .withRelations();
+        TemporalObject temporalPoint = TemporalObjectBuilder.exists().at(ld).build(); // .withRelations();
         this.typeConverter = ClojureTypeConverterProvider.buildClojureTypeConverter(df);
         final Object clojureParser = ClojureProvider.buildClojureParser(TRESTLE_PREFIX, true, "", 4326, typeConverter);
         cb = (IClassBuilder) clojureParser;
@@ -373,6 +372,35 @@ public class TrestleParserTest {
         extraArgs.addArgument("nope_integer", Integer.class, 1);
         final ExpandedGAULTests constructedObject = cb.constructObject(ExpandedGAULTests.class, extraArgs);
         assertEquals(new ExpandedGAULTests(42), constructedObject, "Extra arguments objects should match");
+    }
+
+    @Test
+    void testObjectRelationships() throws TrestleClassException {
+        cr.registerClass(cp.getObjectClass(TestClasses.CountyRelated.class), TestClasses.CountyRelated.class);
+        cr.registerClass(cp.getObjectClass(TestClasses.StateParent.class), TestClasses.StateParent.class);
+        final OWLObjectProperty owlObjectProperty = df.getOWLObjectProperty("http://nickrobison.com/dissertation/trestle.owl#contains");
+
+        final Optional<List<OWLDataProperty>> dataProperties = cb.getPropertyMembers(TestClasses.StateParent.class);
+        final List<OWLObjectProperty> objectProperties = new ArrayList<>(cb.getObjectPropertyMembers(TestClasses.StateParent.class));
+        assertAll(() -> assertEquals(2, dataProperties.get().size(), "Should not have any object properties"),
+                () -> assertEquals(1, objectProperties.size(), "Should have a single object property"),
+                () -> assertEquals(owlObjectProperty, objectProperties.get(0), "Should have correct object property"));
+
+
+        final TestClasses.CountyRelated county = new TestClasses.CountyRelated("Allen", LocalDate.of(2018, 3, 11), 1234, "Allen County", 100);
+        final TestClasses.StateParent state = new TestClasses.StateParent(12, "Indiana", LocalDate.of(2020, 1, 1), county);
+
+
+        final List<OWLObjectPropertyAssertionAxiom> opAxioms = cp.getObjectProperties(state);
+        assertAll(() -> assertEquals(1, opAxioms.size(), "Should have a property axiom"),
+                () -> assertEquals(owlObjectProperty, opAxioms.get(0).getProperty().asOWLObjectProperty(), "Should have correct object property"),
+                () -> assertEquals(cp.getIndividual(state), opAxioms.get(0).getSubject(), "Should have correct subject"),
+                () -> assertEquals(cp.getIndividual(county), opAxioms.get(0).getObject(), "Should have correct object"));
+
+        // Verify we can invoke the associated object correctly
+        final List<Object> associatedObjects = cp.getAssociatedObjects(state);
+        assertAll(() -> assertEquals(1, associatedObjects.size(), "Should only have a single associated object"),
+                () -> assertEquals(county, associatedObjects.get(0), "Should have a county object"));
     }
 
     @DatasetClass(name = "GAUL_Test")

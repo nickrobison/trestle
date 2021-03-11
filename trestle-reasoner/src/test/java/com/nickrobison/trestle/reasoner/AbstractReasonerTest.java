@@ -10,7 +10,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.slf4j.MDC;
 
 @SuppressWarnings({"initialization.fields.uninitialized"})
@@ -31,7 +30,7 @@ public abstract class AbstractReasonerTest {
                 .withName(getTestName())
                 .withOntology(IRI.create(config.getString("trestle.ontology.location")))
                 .withPrefix(AbstractReasonerTest.OVERRIDE_PREFIX)
-                .withInputClasses(registerClasses().toArray(new Class<?>[registerClasses().size()]))
+                .withInputClasses(registerClasses().toArray(new Class<?>[0]))
                 .trackObjectRelations()
                 .withoutMetrics()
                 .initialize()
@@ -46,7 +45,7 @@ public abstract class AbstractReasonerTest {
     }
 
     @AfterEach
-    public void close() throws OWLOntologyStorageException {
+    public void close() {
         Assertions.assertEquals(reasoner.getUnderlyingOntology().getOpenedTransactionCount(), reasoner.getUnderlyingOntology().getCommittedTransactionCount() + reasoner.getUnderlyingOntology().getAbortedTransactionCount(), "Should have symmetric opened/aborted+committed transactions");
         reasoner.shutdown(true);
         MDC.remove(LOGGING_CONTEXT);

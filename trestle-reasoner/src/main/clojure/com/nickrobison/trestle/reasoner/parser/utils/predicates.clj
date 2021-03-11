@@ -1,6 +1,6 @@
 (ns com.nickrobison.trestle.reasoner.parser.utils.predicates
   (:import (java.lang.reflect Modifier Method Field Constructor)
-           (com.nickrobison.trestle.reasoner.annotations Ignore Fact Spatial Language NoMultiLanguage IndividualIdentifier TrestleCreator Related)
+           (com.nickrobison.trestle.reasoner.annotations Ignore Fact Spatial Language NoMultiLanguage IndividualIdentifier TrestleCreator Related ObjectProperty)
            (com.nickrobison.trestle.reasoner.annotations.temporal DefaultTemporal StartTemporal EndTemporal)
            (com.nickrobison.trestle.types TemporalType))
   (:require [clojure.string :as string]
@@ -62,6 +62,7 @@
 (defn fact? [entity] (hasAnnotation? entity Fact))
 (defn spatial? [entity] (hasAnnotation? entity Spatial))
 (defn language? [entity] (hasAnnotation? entity Language))
+(defn property? [entity] (hasAnnotation? entity ObjectProperty))
 (defn noMultiLanguage? [entity] (hasAnnotation? entity NoMultiLanguage))
 (defn identifier? [entity] (hasAnnotation? entity IndividualIdentifier))
 (defn temporal? [entity] (or
@@ -91,6 +92,7 @@
                                   language?
                                   temporal?
                                   related?
+                                  property?
                                   noMultiLanguage?
                                   noAnnotations?) entity))
 
@@ -109,12 +111,14 @@
         l (and (string-return? member)
                (language? member))
         i (identifier? member)
-        t (temporal? member)]
-    (match [s t i l]
-           [true _ _ _] ::spatial
-           [_ true _ _] ::temporal
-           [_ _ true _] ::identifier
-           [_ _ _ true] ::language
+        t (temporal? member)
+        p (property? member)]
+    (match [s t i l p]
+           [true _ _ _ _] ::spatial
+           [_ true _ _ _] ::temporal
+           [_ _ true _ _] ::identifier
+           [_ _ _ true _] ::language
+           [_ _ _ _ true] ::property
            :else ::fact)))
 
 

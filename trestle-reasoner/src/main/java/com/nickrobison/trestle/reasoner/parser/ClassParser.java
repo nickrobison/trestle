@@ -2,9 +2,6 @@ package com.nickrobison.trestle.reasoner.parser;
 
 import com.nickrobison.trestle.common.IRIUtils;
 import com.nickrobison.trestle.reasoner.annotations.*;
-import com.nickrobison.trestle.reasoner.annotations.temporal.DefaultTemporal;
-import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
-import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
 import com.nickrobison.trestle.reasoner.exceptions.MissingConstructorException;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -219,7 +216,7 @@ public class ClassParser implements IClassParser {
                     final Fact annotation = classField.getAnnotation(Fact.class);
                     final IRI iri = IRI.create(ReasonerPrefix, annotation.name());
                     final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
-                    Object fieldValue = null;
+                    Object fieldValue;
 
                     try {
                         fieldValue = classField.get(inputObject);
@@ -240,7 +237,7 @@ public class ClassParser implements IClassParser {
                 } else if (classField.isAnnotationPresent(Spatial.class) && !filterSpatial) {
                     final IRI iri = IRI.create(GEOSPARQLPREFIX, "asWKT");
                     final OWLDataProperty spatialDataProperty = df.getOWLDataProperty(iri);
-                    Object fieldValue = null;
+                    Object fieldValue;
                     try {
                         fieldValue = classField.get(inputObject);
                     } catch (IllegalAccessException e) {
@@ -252,7 +249,7 @@ public class ClassParser implements IClassParser {
                 } else {
                     final IRI iri = IRI.create(ReasonerPrefix, classField.getName());
                     final OWLDataProperty owlDataProperty = df.getOWLDataProperty(iri);
-                    Object fieldValue = null;
+                    Object fieldValue;
                     try {
                         fieldValue = classField.get(inputObject);
                     } catch (IllegalAccessException e) {
@@ -334,6 +331,16 @@ public class ClassParser implements IClassParser {
     }
 
     @Override
+    public List<OWLObjectPropertyAssertionAxiom> getObjectProperties(Object inputObject) {
+        throw new UnsupportedOperationException("We don't support Object properties in the classic parser");
+    }
+
+    @Override
+    public List<Object> getAssociatedObjects(Object inputObject) {
+        throw new UnsupportedOperationException("We don't support Object properties in the classic parser");
+    }
+
+    @Override
     public Optional<OWLDataPropertyAssertionAxiom> getSpatialFact(Object inputObject) {
         final OWLNamedIndividual owlNamedIndividual = getIndividual(inputObject);
         final IRI iri = IRI.create(GEOSPARQLPREFIX, "asWKT");
@@ -363,7 +370,7 @@ public class ClassParser implements IClassParser {
 
         if (field.isPresent()) {
 
-            Object fieldValue = null;
+            Object fieldValue;
             try {
                 fieldValue = field.get().get(inputObject);
             } catch (IllegalAccessException e) {
@@ -520,6 +527,11 @@ public class ClassParser implements IClassParser {
         return classField.getName();
 
 //        Check for a matching method
+    }
+
+    @Override
+    public Class<@NonNull ?> getPropertyDatatype(Class<?> clazz, String propertyName) {
+        throw new UnsupportedOperationException("Cannot handle object properties in classic parser");
     }
 
     @Override

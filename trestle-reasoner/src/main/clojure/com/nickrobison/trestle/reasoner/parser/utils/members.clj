@@ -1,7 +1,7 @@
 (ns com.nickrobison.trestle.reasoner.parser.utils.members
   (:import (org.semanticweb.owlapi.model IRI OWLDataFactory)
            (com.nickrobison.trestle.common StaticIRI)
-           (com.nickrobison.trestle.reasoner.annotations Spatial Fact)
+           (com.nickrobison.trestle.reasoner.annotations Spatial Fact ObjectProperty)
            (java.lang.invoke MethodHandles MethodHandle)
            (java.lang.reflect Constructor Method Field)
            (com.nickrobison.trestle.reasoner.exceptions InvalidClassException InvalidClassException$State))
@@ -41,11 +41,14 @@
   (if (pred/hasAnnotation? member Fact)
     ; Reflection is ok here, we're trying to paper over Field/Method differences
     (IRI/create prefix (.name ^Fact (.getAnnotation member Fact)))
-     (if (pred/hasAnnotation? member Spatial)
-      ; If spatial, use the GEOSPARQL prefix
-      (IRI/create StaticIRI/GEOSPARQLPREFIX "asWKT")
-      ; Otherwise, use the member-name
-      (IRI/create prefix (filter-java-member-name member)))))
+    ; If we're an object property, then we have to get the IRI from the annotation
+    (if (pred/property? member)
+      (IRI/create prefix (.propertyIRI ^ObjectProperty (.getAnnotation member ObjectProperty)))
+      (if (pred/hasAnnotation? member Spatial)
+        ; If spatial, use the GEOSPARQL prefix
+        (IRI/create StaticIRI/GEOSPARQLPREFIX "asWKT")
+        ; Otherwise, use the member-name
+        (IRI/create prefix (filter-java-member-name member))))))
 
 ; Reflection helpers
 

@@ -6,9 +6,10 @@ import com.nickrobison.trestle.reasoner.annotations.*;
 import com.nickrobison.trestle.reasoner.annotations.temporal.DefaultTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.EndTemporal;
 import com.nickrobison.trestle.reasoner.annotations.temporal.StartTemporal;
+import com.nickrobison.trestle.types.ObjectRestriction;
 import com.nickrobison.trestle.types.TemporalType;
-import org.locationtech.jts.geom.Geometry;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.locationtech.jts.geom.Geometry;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
 import java.io.Serializable;
@@ -704,6 +705,67 @@ public class TestClasses {
 
         public int getPopulation() {
             return population;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            CountyRelated that = (CountyRelated) o;
+            return code == that.code && population == that.population && id.equals(that.id) && startTemporal.equals(that.startTemporal) && name.equals(that.name);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(id, startTemporal, code, name, population);
+        }
+    }
+
+    @DatasetClass(name = "State_Parent")
+    public static class StateParent implements Serializable {
+        private static final long serialVersionUID = 42L;
+        private final Integer code;
+        private final String name;
+        private final LocalDate date;
+        private final CountyRelated county;
+
+        public StateParent(Integer code, String name, LocalDate date, CountyRelated county) {
+            this.code = code;
+            this.name = name;
+            this.date = date;
+            this.county = county;
+        }
+
+        @IndividualIdentifier
+        public Integer getCode() {
+            return code;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        @StartTemporal
+        public LocalDate getDate() {
+            return date;
+        }
+
+        @ObjectProperty(propertyIRI = "contains", restriction = ObjectRestriction.ONLY)
+        public CountyRelated getCounty() {
+            return county;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            StateParent that = (StateParent) o;
+            return code.equals(that.code) && name.equals(that.name) && date.equals(that.date) && county.equals(that.county);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(code, name, date, county);
         }
     }
 

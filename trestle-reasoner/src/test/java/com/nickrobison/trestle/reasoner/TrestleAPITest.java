@@ -12,7 +12,7 @@ import com.nickrobison.trestle.types.TrestleIndividual;
 import com.nickrobison.trestle.types.TrestleRelation;
 import com.nickrobison.trestle.types.events.TrestleEvent;
 import com.nickrobison.trestle.types.events.TrestleEventType;
-import com.nickrobison.trestle.types.relations.ObjectRelation;
+import io.reactivex.rxjava3.core.Completable;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -52,6 +52,8 @@ public class TrestleAPITest extends AbstractReasonerTest {
         final TestClasses.ESRIPolygonTest esriPolygonTest = new TestClasses.ESRIPolygonTest(4792, geometry, LocalDate.now());
         final TestClasses.OffsetDateTimeTest offsetDateTimeTest = new TestClasses.OffsetDateTimeTest(5515, OffsetDateTime.now(), OffsetDateTime.now().plusYears(5));
         final TestClasses.MultiLangTest multiLangTest = new TestClasses.MultiLangTest();
+        final TestClasses.CountyRelated county = new TestClasses.CountyRelated("Allen", LocalDate.of(2018, 3, 11), 1234, "Allen County", 100);
+        final TestClasses.StateParent state = new TestClasses.StateParent(12, "Indiana", LocalDate.of(2020, 1, 1), county);
 
         List<Object> classObjects = new ArrayList<>();
         classObjects.add(gaulComplexClassTest);
@@ -59,33 +61,29 @@ public class TrestleAPITest extends AbstractReasonerTest {
         classObjects.add(esriPolygonTest);
         classObjects.add(offsetDateTimeTest);
         classObjects.add(multiLangTest);
+        classObjects.add(state);
 
-        classObjects.parallelStream().forEach(object -> {
-            try {
-                reasoner.writeTrestleObject(object).blockingAwait();
-            } catch (TrestleClassException | MissingOntologyEntity e) {
-                fail(e);
-            }
-        });
-//        Try to write some relations between two objects
-        reasoner.writeObjectRelationship(classObjects.get(1), classObjects.get(0), ObjectRelation.SPATIAL_MEETS, null).blockingAwait();
-        reasoner.writeObjectRelationship(classObjects.get(1), classObjects.get(3), ObjectRelation.DURING, null).blockingAwait();
+        classObjects.parallelStream()
+                .forEach(object -> {
+                    try {
+                        reasoner.writeTrestleObject(object)
+                                .andThen(Completable.defer(() -> {
+                                    final OWLNamedIndividual owlNamedIndividual = tp.classParser.getIndividual(object);
+                                    return reasoner.readTrestleObject(object.getClass(), owlNamedIndividual.getIRI(), false, null)
+                                            .flatMapCompletable(o2 -> {
+                                                assertEquals(object, o2, String.format("Expected class: %s to round-trip correctly", object.getClass().getSimpleName()));
+                                                return Completable.complete();
+                                            });
+                                })).blockingAwait();
+                    } catch (TrestleClassException | MissingOntologyEntity e) {
+                        fail(e);
+                    }
+                });
 
-        classObjects.parallelStream().forEach(object -> {
-            final OWLNamedIndividual owlNamedIndividual = tp.classParser.getIndividual(object);
-            final Object returnedObject = reasoner.readTrestleObject(object.getClass(), owlNamedIndividual.getIRI(), false, null).blockingGet();
-            if (returnedObject instanceof TestClasses.GAULComplexClassTest) {
-                assertEquals(gaulComplexClassTest, returnedObject, "Should have the same object");
-            } else if (returnedObject instanceof TestClasses.JTSGeometryTest) {
-                assertEquals(jtsGeometryTest, returnedObject, "Should have the same object");
-            } else if (returnedObject instanceof TestClasses.OffsetDateTimeTest) {
-                assertEquals(offsetDateTimeTest, returnedObject, "Should have the same object");
-            } else if (returnedObject instanceof TestClasses.MultiLangTest) {
-                assertEquals(multiLangTest, returnedObject, "Should have the same object");
-            } else {
-                assertEquals(esriPolygonTest, returnedObject, "Should be equal");
-            }
-        });
+        // Verify the related object is writen as well
+        final OWLNamedIndividual relatedIndividual = tp.classParser.getIndividual(state);
+        final TestClasses.StateParent c2 = reasoner.readTrestleObject(TestClasses.StateParent.class, relatedIndividual.getIRI(), false, null).blockingGet();
+        assertEquals(state, c2, "Should have written county object");
 
 //        Search for some matching individuals
         final IRI gaul_jts_test = IRI.create(OVERRIDE_PREFIX, "GAUL_JTS_Test");
@@ -103,9 +101,12 @@ public class TrestleAPITest extends AbstractReasonerTest {
                     final OWLNamedIndividual owlNamedIndividual = tp.classParser.getIndividual(object);
                     assertThrows(TrestleMissingIndividualException.class, () -> reasoner.readTrestleObject(object.getClass(), owlNamedIndividual.getIRI(), true, null).blockingGet());
                 });
+        // Uncomment if you want to pull out some metrics
+//        reasoner.getMetricsEngine().exportData(new File("./target/api-test-metrics.csv"));
 
-
-        reasoner.getMetricsEngine().exportData(new File("./target/api-test-metrics.csv"));
+        // We verify that we only opened/committed the expected number of transactions, this will need to be reset occasionally as the application changes
+        // But should help ensure we don't suddenly start leaking operations outside their parents
+        assertEquals(25, reasoner.getUnderlyingOntology().getCommittedTransactionCount(), "Should have the correct number of committed transactions");
     }
 
     @Test
@@ -113,7 +114,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
         final TestClasses.GAULComplexClassTest gaulComplexClassTest = new TestClasses.GAULComplexClassTest();
 //        De register the class
         this.reasoner.deregisterClass(TestClasses.GAULComplexClassTest.class);
-//        Try to write the indvidual
+//        Try to write the individual
         assertThrows(RuntimeException.class, () -> this.reasoner.writeTrestleObject(gaulComplexClassTest).blockingAwait());
 //        Register the class again
         this.reasoner.registerClass(TestClasses.GAULComplexClassTest.class);
@@ -269,6 +270,8 @@ public class TrestleAPITest extends AbstractReasonerTest {
                 TestClasses.MultiLangTest.class,
                 TestClasses.FactVersionTest.class,
                 TestClasses.CountyRelated.class,
-                TestClasses.JTSExtended.class);
+                TestClasses.JTSExtended.class,
+                TestClasses.CountyRelated.class,
+                TestClasses.StateParent.class);
     }
 }
