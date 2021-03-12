@@ -1,12 +1,13 @@
 /**
  * Created by nrobison on 5/31/17.
  */
-import {Given, When, Then} from "cucumber";
+import {Given, Then, When} from '@cucumber/cucumber';
 import {DashboardPageObject} from '../page_objects/main.page';
 import {LoginPageObject} from '../page_objects/login.page';
 import * as chaiAsPromised from 'chai-as-promised';
 import {by} from 'protractor';
 import * as chai from 'chai';
+
 const expect = chai.expect;
 
 chai.use(chaiAsPromised);

@@ -1,5 +1,5 @@
 import {DashboardPageObject} from '../page_objects/main.page';
-import {Given, Then, When} from 'cucumber';
+import {Given, Then, When} from '@cucumber/cucumber';
 import {browser} from 'protractor';
 import {expect} from 'chai';
 

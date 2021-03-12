@@ -1,6 +1,6 @@
 import {expect} from 'chai';
 import {UsersPage} from '../page_objects/users.page';
-import {Then, When} from 'cucumber';
+import {Then, When} from '@cucumber/cucumber';
 
 export interface CucumberTable<T> {
   hashes(): T[];

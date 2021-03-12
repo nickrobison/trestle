@@ -1,6 +1,6 @@
 import {DashboardPageObject} from '../page_objects/main.page';
 import {expect} from 'chai';
-import {Then} from 'cucumber';
+import {Then} from '@cucumber/cucumber';
 import {browser} from 'protractor';
 
 const dashboard = new DashboardPageObject();
