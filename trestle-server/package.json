@@ -74,7 +74,7 @@
     "@types/lodash": "^4.14.168",
     "@types/mapbox-gl": "^2.1.0",
     "@types/node": "^14.14.33",
-    "@types/nodegit": "^0.26.12",
+    "@types/nodegit": "^0.26.15",
     "@types/wellknown": "^0.5.1",
     "@typescript-eslint/eslint-plugin": "4.14.0",
     "@typescript-eslint/parser": "4.17.0",
