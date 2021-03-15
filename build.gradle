@@ -37,7 +37,6 @@ allprojects {
     repositories {
         // This needs to go first, in order to get the jai core jars, which jcenter doesn't have.
         maven { url "https://repo.osgeo.org/repository/release/" }
-        jcenter()
         mavenCentral()
         maven { url "https://clojars.org/repo" }
         maven { url "https://jitpack.io" }
