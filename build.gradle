@@ -58,7 +58,7 @@ subprojects {
             dependency group: 'me.tongfei', name: 'progressbar', version: '0.9.1'
             dependency group: 'org.locationtech.jts', name: 'jts-core', version: "1.18.1"
             dependency group: 'com.esri.geometry', name: 'esri-geometry-api', version: '2.2.4'
-            dependency group: 'com.google.guava', name: 'guava', version: "30.1-jre"
+            dependency group: 'com.google.guava', name: 'guava', version: "30.1.1-jre"
             dependency group: 'com.google.inject', name: 'guice', version: guiceVersion
         }
     }
