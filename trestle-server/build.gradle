@@ -72,7 +72,7 @@ dependencies {
   // This should get replaced with something newer
   implementation group: 'com.jwt4j', name: 'jwt4j', version: '0.1.1'
   implementation group: 'at.favre.lib', name: 'bcrypt', version: '0.9.0'
-  implementation group: 'org.wololo', name: 'jts2geojson', version: '0.14.3'
+  implementation group: 'org.wololo', name: 'jts2geojson', version: '0.16.1'
   implementation group: 'de.grundid.opendatalab', name: 'geojson-jackson', version: '1.14'
   implementation group: 'ru.vyarus', name: 'dropwizard-guicey'
 
