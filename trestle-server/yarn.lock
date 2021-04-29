@@ -162,19 +162,19 @@
   resolved "https://registry.yarnpkg.com/@angular-eslint/builder/-/builder-2.0.2.tgz#39490333cb384e02051670526a23f75889553b1b"
   integrity sha512-bs5ITrQNEaVD+oonrpJN17VSqZ1+094NIsvfkaQ4wQb22sc7BkDAMB2lcfhXgyH1mN+0bw1SP7DYuHSo3+r4Jw==
 
-"@angular-eslint/eslint-plugin-template@2.0.1":
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/@angular-eslint/eslint-plugin-template/-/eslint-plugin-template-2.0.1.tgz#81c47e8c9c4b288702984282c64b76595bcde1bb"
-  integrity sha512-tKdfa6cf1nzUAiEMHOOkE7wv/YxwCNpFw/MEfK21ecMzy59Mv9zgAULobCQIEfmbGTsjSNiIqaRAc+klRI3q6A==
+"@angular-eslint/eslint-plugin-template@2.0.2":
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/@angular-eslint/eslint-plugin-template/-/eslint-plugin-template-2.0.2.tgz#1d874e08c70f31c77218d8ff92b8ba55ccf0b5b6"
+  integrity sha512-STk9bTVSJwX8ctHFNx7G+HanbMfpeX5B3hmaUQ7qloM+JPihk+b7BmXT8BjOnXOT+yN8r3NHF9agekyAiYGRkg==
   dependencies:
     "@typescript-eslint/experimental-utils" "4.16.1"
     aria-query "^4.2.2"
     axobject-query "^2.2.0"
 
-"@angular-eslint/eslint-plugin-template@2.0.2":
-  version "2.0.2"
-  resolved "https://registry.yarnpkg.com/@angular-eslint/eslint-plugin-template/-/eslint-plugin-template-2.0.2.tgz#1d874e08c70f31c77218d8ff92b8ba55ccf0b5b6"
-  integrity sha512-STk9bTVSJwX8ctHFNx7G+HanbMfpeX5B3hmaUQ7qloM+JPihk+b7BmXT8BjOnXOT+yN8r3NHF9agekyAiYGRkg==
+"@angular-eslint/eslint-plugin-template@4.2.0":
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/@angular-eslint/eslint-plugin-template/-/eslint-plugin-template-4.2.0.tgz#2716583530bf2b20069076994816630e299ab67c"
+  integrity sha512-LC8qqqqVmA/OJAsUt6fQCXLmWP5BL30XFvVsPtrORdxMFt0HI1gvkuz5EVak7PeAXEmerdVarNZr5zmCXIWf3g==
   dependencies:
     "@typescript-eslint/experimental-utils" "4.16.1"
     aria-query "^4.2.2"
