@@ -22,8 +22,8 @@ exports[`DashboardComponent should create 1`] = `
         rowspan="1"
         style="left: 0px; top: 0px;"
       >
-        <figure
-          class="mat-figure"
+        <div
+          class="mat-grid-tile-content"
         >
           <mat-card
             class="dashboard-card mat-card mat-focus-indicator"
@@ -34,7 +34,7 @@ exports[`DashboardComponent should create 1`] = `
                Another example card 
             </mat-card-content>
           </mat-card>
-        </figure>
+        </div>
       </mat-grid-tile>
       <mat-grid-tile
         class="mat-grid-tile"
@@ -42,8 +42,8 @@ exports[`DashboardComponent should create 1`] = `
         rowspan="2"
         style="top: 0px;"
       >
-        <figure
-          class="mat-figure"
+        <div
+          class="mat-grid-tile-content"
         >
           <mat-card
             class="dashboard-card mat-card mat-focus-indicator"
@@ -54,7 +54,7 @@ exports[`DashboardComponent should create 1`] = `
                A third example card 
             </mat-card-content>
           </mat-card>
-        </figure>
+        </div>
       </mat-grid-tile>
       <mat-grid-tile
         class="mat-grid-tile"
@@ -62,8 +62,8 @@ exports[`DashboardComponent should create 1`] = `
         rowspan="1"
         style="top: 0px;"
       >
-        <figure
-          class="mat-figure"
+        <div
+          class="mat-grid-tile-content"
         >
           <mat-card
             class="dashboard-card mat-card mat-focus-indicator"
@@ -74,7 +74,7 @@ exports[`DashboardComponent should create 1`] = `
                Final example card 
             </mat-card-content>
           </mat-card>
-        </figure>
+        </div>
       </mat-grid-tile>
     </div>
   </mat-grid-list>
