@@ -2864,10 +2864,10 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-13.13.38.tgz#66a7c068305dbd64cf167d0f6b6b6be71dd453e1"
   integrity sha512-oxo8j9doh7ab9NwDA9bCeFfjHRF/uzk+fTljCy8lMjZ3YzZGAXNDKhTE3Byso/oy32UTUQIXB3HCVHu3d2T3xg==
 
-"@types/nodegit@^0.26.15":
-  version "0.26.15"
-  resolved "https://registry.yarnpkg.com/@types/nodegit/-/nodegit-0.26.15.tgz#5b3e187c8d4b99c1a7ad0ee957287b6251f06573"
-  integrity sha512-gENag14KBX63P83D8ZQt6FtElWJ624Y3hY8aPtMR4A0fM3+iJAsWRlZ9v8ONahZTxTHFmKWrH1c1IZTeGJu3fA==
+"@types/nodegit@^0.27.2":
+  version "0.27.2"
+  resolved "https://registry.yarnpkg.com/@types/nodegit/-/nodegit-0.27.2.tgz#f7db4728786e050751b210d0489a9ec2248030c5"
+  integrity sha512-8UCRm0BOXNTq+KRHq1AC4hZ7SrVuPQYfTsBApRYXgRNNjAicn2CYyMccty5SPoSUx2JfmVD6j+F4uX4XhOQwMw==
   dependencies:
     "@types/node" "*"
 
