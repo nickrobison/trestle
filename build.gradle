@@ -50,7 +50,7 @@ subprojects {
 
     dependencyManagement {
         imports {
-            mavenBom "com.fasterxml.jackson:jackson-bom:2.12.2"
+            mavenBom "com.fasterxml.jackson:jackson-bom:2.12.5"
             mavenBom "org.eclipse.rdf4j:rdf4j-bom:3.7.0"
         }
         dependencies {
