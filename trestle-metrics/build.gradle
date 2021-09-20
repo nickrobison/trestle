@@ -11,7 +11,7 @@ dependencies {
     implementation group: 'com.h2database', name: 'h2', version: h2Version
     implementation group: 'com.google.inject', name: 'guice', version: guiceVersion
     implementation group: 'net.bytebuddy', name: 'byte-buddy', version: byteBuddyVersion
-    implementation group: 'net.bytebuddy', name: 'byte-buddy-agent', version: "1.10.22"
+    implementation group: 'net.bytebuddy', name: 'byte-buddy-agent', version: "1.11.16"
     compileOnly group: 'org.postgresql', name: 'postgresql', version: postgresVersion
 
 }
