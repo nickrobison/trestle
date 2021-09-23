@@ -79,5 +79,5 @@ dependencies {
   // Test dependencies
   testImplementation group: 'io.dropwizard', name: 'dropwizard-testing'
   testImplementation group: 'org.mockito', name: 'mockito-core', version: mockitoVersion
-  testImplementation group: 'org.glassfish.jersey.test-framework.providers', name: 'jersey-test-framework-provider-grizzly2', version: '2.32'
+  testImplementation group: 'org.glassfish.jersey.test-framework.providers', name: 'jersey-test-framework-provider-grizzly2', version: '3.0.3'
 }
