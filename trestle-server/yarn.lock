@@ -265,13 +265,6 @@
   dependencies:
     tslib "^2.1.0"
 
-"@angular/core@^11.0.2":
-  version "11.2.3"
-  resolved "https://registry.yarnpkg.com/@angular/core/-/core-11.2.3.tgz#7dd59f35e0b2410543a61be6048c474c18a43f40"
-  integrity sha512-+G7rZj21Mcmf6nWjQ79EwomwEOVQ1WLqw6YvCXWzgJ9ZlVjLi/Sti0/jIzUpgK0E0Fn86yuXw/vgYq5kjGeOcQ==
-  dependencies:
-    tslib "^2.0.0"
-
 "@angular/core@~12.0.5":
   version "12.0.5"
   resolved "https://registry.yarnpkg.com/@angular/core/-/core-12.0.5.tgz#a91751a13f575fd893abbdee257f60d0747038e7"
@@ -2167,12 +2160,10 @@
   dependencies:
     tslib "^2.0.0"
 
-"@ngrx/schematics@^11.0.1":
-  version "11.0.1"
-  resolved "https://registry.yarnpkg.com/@ngrx/schematics/-/schematics-11.0.1.tgz#c88dc3b09887284863191c8a77beac410d7d5c8e"
-  integrity sha512-hbqYqQ9/svZZouQwqn1xpyA0I+s1TXaOi07gUgheyRzRIpjXQJT7ZIHvU5Vb4iwZKLwSalfRY/rwQHs3zByV4w==
-  dependencies:
-    "@angular/core" "^11.0.2"
+"@ngrx/schematics@^12.5.0":
+  version "12.5.0"
+  resolved "https://registry.yarnpkg.com/@ngrx/schematics/-/schematics-12.5.0.tgz#280333e815cb359c89af5efb9ff515650fa89e84"
+  integrity sha512-lqIbsh/gYjyDvgrr4o7PvaxltHBdJqYCQ117JIRSP459xIceLCWq9dtJTF3oa0jsnvYYs6tivVKgufHJuT00qQ==
 
 "@ngrx/store-devtools@^11.0.1":
   version "11.0.1"
