@@ -13,6 +13,7 @@ trigger:
 
 variables:
   MAVEN_CACHE_FOLDER: $(Pipeline.Workspace)/.m2/repository
+  GRADLE_USER_HOME: $(Pipeline.Workspace)/.gradle
   YARN_CACHE_FOLDER: $(Pipeline.Workspace)/.yarn
 
 resources:
@@ -46,15 +47,20 @@ stages:
                 gradle | "$(Agent.OS)" | "$(jdkVersion)"
                 gradle | "$(Agent.OS)"
                 gradle
-              path: $(MAVEN_CACHE_FOLDER)
+              path: $(GRADLE_USER_HOME)
           - task: Gradle@2
             displayName: Build Java
             inputs:
-              gradleOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+              gradleOptions: '-Xmx3072m'
               javaHomeOption: 'JDKVersion'
               jdkVersionOption: $(jdkVersion)
               tasks: 'assemble'
+              options: '--build-cache'
               jdkArchitectureOption: 'x64'
+          - script: |
+                # stop the Gradle daemon to ensure no files are left open (impacting the save cache operation later)
+                ./gradlew --stop  
+            displayName: Stop Gradle
 #          - task: Maven@3
 #            displayName: Maven Package
 #            inputs:
@@ -123,7 +129,7 @@ stages:
                 gradle | "$(Agent.OS)" | "$(jdkVersion)"
                 gradle | "$(Agent.OS)"
                 gradle
-              path: $(MAVEN_CACHE_FOLDER)
+              path: $(GRADLE_USER_HOME)
             displayName: Cache Gradle local repo
           - task: SonarCloudPrepare@1
             inputs:
@@ -132,15 +138,20 @@ stages:
               scannerMode: 'Other'
           - task: Gradle@2
             inputs:
-              gradleOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+              gradleOptions: '-Xmx3072m'
               javaHomeOption: 'JDKVersion'
               jdkVersionOption: '$(jdkVersion)'
               tasks: 'build jacocoTestReport'
+              options: '--build-cache'
               sonarQubeRunAnalysis: true
               sqGradlePluginVersionChoice: 'build'
               jdkArchitectureOption: 'x64'
               publishJUnitResults: true
               testResultsFiles: '**/test-results/test/TEST-*.xml'
+          - script: |
+                # stop the Gradle daemon to ensure no files are left open (impacting the save cache operation later)
+                ./gradlew --stop  
+            displayName: Stop Gradle
           - task: SonarCloudPublish@1
             inputs:
               pollingTimeoutSec: '300'
@@ -184,7 +195,7 @@ stages:
                 gradle | "$(Agent.OS)" | "$(jdkVersion)"
                 gradle | "$(Agent.OS)"
                 gradle
-              path: $(MAVEN_CACHE_FOLDER)
+              path: $(GRADLE_USER_HOME)
             displayName: Cache Gradle local repo
           - task: Docker@2
             displayName: Login for Private Docker Images
@@ -193,10 +204,11 @@ stages:
               containerRegistry: dockerHub
           - task: Gradle@2
             inputs:
-              gradleOptions: '-Xmx3072m -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+              gradleOptions: '-Xmx3072m'
               javaHomeOption: 'JDKVersion'
               jdkVersionOption: '1.11'
               tasks: 'jibDockerBuild'
+              options: '--build-cache'
               jdkArchitectureOption: 'x64'
           - task: DockerCompose@0
             displayName: Run Stack
