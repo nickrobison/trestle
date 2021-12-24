@@ -12,7 +12,6 @@ trigger:
       - .azure/*
 
 variables:
-  MAVEN_CACHE_FOLDER: $(Pipeline.Workspace)/.m2/repository
   GRADLE_USER_HOME: $(Pipeline.Workspace)/.gradle
   YARN_CACHE_FOLDER: $(Pipeline.Workspace)/.yarn
 
@@ -166,6 +165,8 @@ stages:
                 yarn | "$(Agent.OS)"
                 yarn
               path: $(YARN_CACHE_FOLDER)
+          - script: sudo apt-get install -qq -y krb5-config libkrb5-dev
+            displayName: Install System Dependencies
           - script: yarn --cwd trestle-server/ install
             displayName: Install Dependencies
           - script: yarn --cwd trestle-server/ run test
@@ -197,6 +198,8 @@ stages:
                 gradle
               path: $(GRADLE_USER_HOME)
             displayName: Cache Gradle local repo
+          - script: sudo apt-get install -qq -y krb5-config libkrb5-dev
+            displayName: Install System Dependencies
           - task: Docker@2
             displayName: Login for Private Docker Images
             inputs:
