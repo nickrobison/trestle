@@ -80,6 +80,8 @@ stages:
                 yarn | "$(Agent.OS)"
                 yarn
               path: $(YARN_CACHE_FOLDER)
+          - script: sudo apt-get install -qq -y krb5-config libkrb5-dev
+            displayName: Install System Dependencies
           - script: yarn --cwd trestle-server/ install
             displayName: Install Dependencies
           - script: yarn --cwd trestle-server/ run prod
