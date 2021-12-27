@@ -26,7 +26,6 @@
             "main": "src/main/webapp/src/main.ts",
             "polyfills": "src/main/webapp/src/polyfills.ts",
             "tsConfig": "tsconfig.app.json",
-            "aot": true,
             "assets": [
               "src/main/webapp/src/favicon.ico",
               "src/main/webapp/src/assets"
@@ -36,7 +35,13 @@
               "src/main/webapp/src/styles.scss"
             ],
             "scripts": [],
-            "webWorkerTsConfig": "tsconfig.worker.json"
+            "webWorkerTsConfig": "tsconfig.worker.json",
+            "vendorChunk": true,
+            "extractLicenses": false,
+            "buildOptimizer": false,
+            "sourceMap": true,
+            "optimization": false,
+            "namedChunks": true
           },
           "configurations": {
             "production": {
@@ -65,19 +70,24 @@
                   "maximumError": "10kb"
                 }
               ]
-            }
-          }
+            },
+            "development": {}
+          },
+          "defaultConfiguration": "production"
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "webapp:build"
           },
           "configurations": {
             "production": {
               "browserTarget": "webapp:build:production"
+            },
+            "development": {
+              "browserTarget": "webapp:build:development"
             }
-          }
+          },
+          "defaultConfiguration": "development"
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
@@ -114,14 +124,17 @@
         "e2e": {
           "builder": "@angular-devkit/build-angular:protractor",
           "options": {
-            "protractorConfig": "e2e/protractor.conf.js",
-            "devServerTarget": "webapp:serve"
+            "protractorConfig": "e2e/protractor.conf.js"
           },
           "configurations": {
             "production": {
               "devServerTarget": "webapp:serve:production"
+            },
+            "development": {
+              "devServerTarget": "webapp:serve:development"
             }
-          }
+          },
+          "defaultConfiguration": "development"
         }
       }
     }

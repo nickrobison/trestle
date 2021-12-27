@@ -4,7 +4,7 @@ exports[`NotificationComponent should be error 1`] = `
 NotificationComponent {
   "animationState": "default",
   "buttonState": "out",
-  "intervalId": 15,
+  "intervalId": 16,
   "notification": Object {
     "error": [Error: I'm an error],
     "state": "error",
