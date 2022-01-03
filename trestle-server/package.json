@@ -30,7 +30,7 @@
     "@fortawesome/angular-fontawesome": "^0.8.2",
     "@fortawesome/fontawesome-svg-core": "^1.2.34",
     "@fortawesome/free-regular-svg-icons": "^5.15.2",
-    "@fortawesome/free-solid-svg-icons": "^5.15.2",
+    "@fortawesome/free-solid-svg-icons": "^5.15.4",
     "@mapbox/geojson-extent": "^1.0.0",
     "@ngrx/effects": "^11.0.1",
     "@ngrx/entity": "^11.0.1",
