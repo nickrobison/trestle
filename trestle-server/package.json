@@ -43,7 +43,7 @@
     "d3": "^6.6.0",
     "file-saver": "^2.0.5",
     "mapbox-gl": "^2.6.1",
-    "moment": "^2.29.1",
+    "moment": "^2.29.2",
     "rxjs": "~6.6.6",
     "sorted-array": "^2.0.4",
     "transitory": "^2.1.1",
