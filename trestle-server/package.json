@@ -92,7 +92,7 @@
     "jasmine-spec-reporter": "~7.0.0",
     "jest": "^26.6.3",
     "jest-marbles": "^2.5.1",
-    "node-fetch": "^2.6.1",
+    "node-fetch": "^3.2.10",
     "nodegit": "^0.27.0",
     "protractor": "~7.0.0",
     "protractor-cucumber-framework": "^8.2.9",
