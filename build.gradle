@@ -13,7 +13,7 @@ plugins {
     id "dev.clojurephant.clojure" version "0.6.0" apply false
     id 'com.google.cloud.tools.jib' version '3.1.4' apply false
     id "io.spring.dependency-management" version "1.0.11.RELEASE" apply false
-    id "net.researchgate.release" version "2.8.1"
+    id "net.researchgate.release" version "3.0.2"
 }
 
 ext {
