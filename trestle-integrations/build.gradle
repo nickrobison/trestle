@@ -55,7 +55,9 @@ dependencies {
     testImplementation(group: 'org.apache.hadoop', name: 'hadoop-minicluster', version: hadoopVersion) {
         exclude group: 'org.slf4j', module: 'slf4j-log4j12'
     }
-    testImplementation group: 'org.apache.hadoop', name: 'hadoop-auth', version: hadoopVersion
+    testImplementation(group: 'org.apache.hadoop', name: 'hadoop-auth', version: hadoopVersion)  {
+        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+    }
 
 
     implementation group: "org.geotools", name: "gt-shapefile", version: geotoolsVersion

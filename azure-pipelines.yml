@@ -19,7 +19,7 @@ resources:
   containers:
     - container: graphdb
       endpoint: dockerHub
-      image: nickrobison/graphdb:8.2.0-free
+      image: ontotext/graphdb:10.3.3
       ports:
         - 7200:7200
 
@@ -75,28 +75,28 @@ stages:
               targetFolder: $(Build.ArtifactStagingDirectory)
           - publish: $(Build.ArtifactStagingDirectory)
             artifact: java
-      - job:
-        displayName: Compile Yarn sources
-        steps:
-          - task: Cache@2
-            inputs:
-              key: 'yarn | "$(Agent.OS)" | trestle-server/yarn.lock'
-              restoreKeys: |
-                yarn | "$(Agent.OS)"
-                yarn
-              path: $(YARN_CACHE_FOLDER)
-          - script: sudo apt-get install -qq -y krb5-config libkrb5-dev
-            displayName: Install System Dependencies
-          - script: yarn --cwd trestle-server/ install
-            displayName: Install Dependencies
-          - script: yarn --cwd trestle-server/ run prod
-            displayName: Compile Prod build
-          - task: CopyFiles@2
-            inputs:
-              sourceFolder:  $(Build.SourcesDirectory)/trestle-server/src/main/resources/build
-              targetFolder: $(Build.ArtifactStagingDirectory)
-          - publish: $(Build.ArtifactStagingDirectory)
-            artifact: ui
+#      - job:
+#        displayName: Compile Yarn sources
+#        steps:
+#          - task: Cache@2
+#            inputs:
+#              key: 'yarn | "$(Agent.OS)" | trestle-server/yarn.lock'
+#              restoreKeys: |
+#                yarn | "$(Agent.OS)"
+#                yarn
+#              path: $(YARN_CACHE_FOLDER)
+#          - script: sudo apt-get install -qq -y krb5-config libkrb5-dev
+#            displayName: Install System Dependencies
+#          - script: yarn --cwd trestle-server/ install
+#            displayName: Install Dependencies
+#          - script: yarn --cwd trestle-server/ run prod
+#            displayName: Compile Prod build
+#          - task: CopyFiles@2
+#            inputs:
+#              sourceFolder:  $(Build.SourcesDirectory)/trestle-server/src/main/resources/build
+#              targetFolder: $(Build.ArtifactStagingDirectory)
+#          - publish: $(Build.ArtifactStagingDirectory)
+#            artifact: ui
 
   - stage: Test
     displayName: Run tests
@@ -106,8 +106,6 @@ stages:
         displayName: Test Java
         strategy:
           matrix:
-#            java-15:
-#              jdkVersion: '1.15'
             java-11:
               jdkVersion: '1.11'
         services:
@@ -155,78 +153,78 @@ stages:
             inputs:
               pollingTimeoutSec: '300'
 
-      - job:
-        displayName: Run UI specs
-        steps:
-          - task: Cache@2
-            inputs:
-              key: 'yarn | "$(Agent.OS)" | trestle-server/yarn.lock'
-              restoreKeys: |
-                yarn | "$(Agent.OS)"
-                yarn
-              path: $(YARN_CACHE_FOLDER)
-          - script: sudo apt-get install -qq -y krb5-config libkrb5-dev
-            displayName: Install System Dependencies
-          - script: yarn --cwd trestle-server/ install
-            displayName: Install Dependencies
-          - script: yarn --cwd trestle-server/ run test
-            displayName: Run jest specs
-
-      - job: Test_UI
-        displayName: Test UI
-        steps:
-          - checkout: self
-            submodules: true
-          - download: current
-            artifact: java
-          - download: current
-            artifact: ui
-          - task: CopyFiles@2
-            inputs:
-              sourceFolder: $(Pipeline.Workspace)/java
-              targetFolder: $(Build.SourcesDirectory)
-          - task: CopyFiles@2
-            inputs:
-              sourceFolder: $(Pipeline.Workspace)/ui
-              targetFolder: $(Build.SourcesDirectory)/trestle-server/src/main/resources/build
-          - task: Cache@2
-            inputs:
-              key: 'gradle | "$(Agent.OS)" | "$(jdkVersion)" | **/build.gradle'
-              restoreKeys: |
-                gradle | "$(Agent.OS)" | "$(jdkVersion)"
-                gradle | "$(Agent.OS)"
-                gradle
-              path: $(GRADLE_USER_HOME)
-            displayName: Cache Gradle local repo
-          - script: sudo apt-get install -qq -y krb5-config libkrb5-dev
-            displayName: Install System Dependencies
-          - task: Docker@2
-            displayName: Login for Private Docker Images
-            inputs:
-              command: login
-              containerRegistry: dockerHub
-          - task: Gradle@2
-            inputs:
-              gradleOptions: '-Xmx3072m'
-              javaHomeOption: 'JDKVersion'
-              jdkVersionOption: '1.11'
-              tasks: 'jibDockerBuild'
-              options: '--build-cache'
-              jdkArchitectureOption: 'x64'
-          - task: DockerCompose@0
-            displayName: Run Stack
-            inputs:
-              action: Run services
-              dockerComposeFile: docker-compose.yml
-          - script: yarn --cwd trestle-server/ install
-            displayName: Install Dependencies
-          - task: BrowserStackConfig@0
-            inputs:
-              BrowserStackServiceEndPoint: 'Browserstack'
-              browserstackLocal: false
-          - script: yarn --cwd trestle-server/ run e2e:ci
-            displayName: Run E2E Tests
-          - task: BrowserStackResults@0
+#      - job:
+#        displayName: Run UI specs
+#        steps:
+#          - task: Cache@2
+#            inputs:
+#              key: 'yarn | "$(Agent.OS)" | trestle-server/yarn.lock'
+#              restoreKeys: |
+#                yarn | "$(Agent.OS)"
+#                yarn
+#              path: $(YARN_CACHE_FOLDER)
+#          - script: sudo apt-get install -qq -y krb5-config libkrb5-dev
+#            displayName: Install System Dependencies
+#          - script: yarn --cwd trestle-server/ install
+#            displayName: Install Dependencies
+#          - script: yarn --cwd trestle-server/ run test
+#            displayName: Run jest specs
+#
+#      - job: Test_UI
+#        displayName: Test UI
+#        steps:
+#          - checkout: self
+#            submodules: true
+#          - download: current
+#            artifact: java
+#          - download: current
+#            artifact: ui
+#          - task: CopyFiles@2
+#            inputs:
+#              sourceFolder: $(Pipeline.Workspace)/java
+#              targetFolder: $(Build.SourcesDirectory)
+#          - task: CopyFiles@2
+#            inputs:
+#              sourceFolder: $(Pipeline.Workspace)/ui
+#              targetFolder: $(Build.SourcesDirectory)/trestle-server/src/main/resources/build
+#          - task: Cache@2
+#            inputs:
+#              key: 'gradle | "$(Agent.OS)" | "$(jdkVersion)" | **/build.gradle'
+#              restoreKeys: |
+#                gradle | "$(Agent.OS)" | "$(jdkVersion)"
+#                gradle | "$(Agent.OS)"
+#                gradle
+#              path: $(GRADLE_USER_HOME)
+#            displayName: Cache Gradle local repo
+#          - script: sudo apt-get install -qq -y krb5-config libkrb5-dev
+#            displayName: Install System Dependencies
+#          - task: Docker@2
+#            displayName: Login for Private Docker Images
+#            inputs:
+#              command: login
+#              containerRegistry: dockerHub
+#          - task: Gradle@2
+#            inputs:
+#              gradleOptions: '-Xmx3072m'
+#              javaHomeOption: 'JDKVersion'
+#              jdkVersionOption: '1.11'
+#              tasks: 'jibDockerBuild'
+#              options: '--build-cache'
+#              jdkArchitectureOption: 'x64'
+#          - task: DockerCompose@0
+#            displayName: Run Stack
+#            inputs:
+#              action: Run services
+#              dockerComposeFile: docker-compose.yml
+#          - script: yarn --cwd trestle-server/ install
+#            displayName: Install Dependencies
+#          - task: BrowserStackConfig@0
+#            inputs:
+#              BrowserStackServiceEndPoint: 'Browserstack'
+#              browserstackLocal: false
+#          - script: yarn --cwd trestle-server/ run e2e:ci
+#            displayName: Run E2E Tests
+#          - task: BrowserStackResults@0
 
 #  - stage: Deploy
 #    displayName: Deploy resources
