@@ -19,7 +19,7 @@ resources:
   containers:
     - container: graphdb
       endpoint: dockerHub
-      image: nickrobison/graphdb:8.2.0-free
+      image: ontotext/graphdb:10.3.3
       ports:
         - 7200:7200
 
