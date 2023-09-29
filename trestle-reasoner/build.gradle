@@ -9,6 +9,9 @@ dependencies {
     api group: "org.geotools", name: "gt-main", version: geotoolsVersion
     api group: 'com.esri.geometry', name: 'esri-geometry-api'
     api group: 'org.locationtech.jts', name: 'jts-core'
+    // TODO: Temporary fix until FastTuple vendors the version of Janino it needs
+    api("org.codehaus.janino:janino:3.1.0")
+    api("org.codehaus.janino:commons-compiler:3.1.0")
     implementation project(":trestle-graphdb")
     implementation project(":trestle-querybuilder")
     implementation group: 'net.sourceforge.owlapi', name: 'owlapi-parsers', version: owlVersion
