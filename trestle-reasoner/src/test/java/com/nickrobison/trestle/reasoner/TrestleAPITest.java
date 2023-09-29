@@ -106,7 +106,7 @@ public class TrestleAPITest extends AbstractReasonerTest {
 
         // We verify that we only opened/committed the expected number of transactions, this will need to be reset occasionally as the application changes
         // But should help ensure we don't suddenly start leaking operations outside their parents
-        assertEquals(26, reasoner.getUnderlyingOntology().getCommittedTransactionCount(), "Should have the correct number of committed transactions");
+        assertEquals(25, reasoner.getUnderlyingOntology().getCommittedTransactionCount(), "Should have the correct number of committed transactions");
     }
 
     @Test
